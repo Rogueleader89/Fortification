@@ -396,9 +396,11 @@ public class Fortification extends JavaPlugin  {
 		}
 	}
 	
-	public void econSetup(){
+	public void econSetup()
+	{
 		Plugin test = getServer().getPluginManager().getPlugin("Vault");
-		if(test != null){
+		if(test != null)
+		{
 			RegisteredServiceProvider<Economy> rsp = getServer().getServicesManager().getRegistration(Economy.class);
 			setEconomy(rsp.getProvider());
 			log.info("[Fortification]: " + getEconomy().getName() + " detected: mechanism costs enabled.");

@@ -30,6 +30,9 @@ import com.palmergames.bukkit.towny.object.TownyUniverse;
 
 
 /* 
+ * 0.91 Changelog
+ * 
+ * 
  * 0.9 Changelog
  * Fixed Config Generation
  * All sensors can now be set to go lengths shorter than the standard length using [Sensor:length] for instance, [sensor:5] would make the sensor go out 5 spaces, this also works with
@@ -38,7 +41,7 @@ import com.palmergames.bukkit.towny.object.TownyUniverse;
  * UpSensors can now be made with [uSensor] and DownSensors can be made with [dSensor] (not case sensitive for either)
  * Added healthRange filter to sensors, line 3 being the min health players will be detected and line 4 the max, note that counting is done by half hearts.
  * Added armorDetect and armorIgnore filters to sensors (similar to weapondetect/ignore)
- * Fixed teleblocks not teleporting people (and maybe the vehicles they are in)
+ * Fixed telepads not teleporting people (and maybe the vehicles they are in) (still buggy)
  * Fixed exploit involving send signs and trapdoors
  * Added redstone transmitters and receivers [transmit] or [transmitter] and band [receiver] or band [reciever] Note that bands must be EXACT
  * Added /fort radio [band] command and settings for the range of the radio (0 = unlimited) and whether it can cross worlds -- triggers receivers /fort radio <band> [on/off or true/false] blank = on/true 
@@ -3667,9 +3670,12 @@ public class FortificationListener implements Listener {
 							return;
 						}
 					}
-					if(fort.isEcon()){
-						if(e.getPlayer() != null){
-							if(fort.getTransmitterCost() > 0){
+					if(fort.isEcon())
+					{
+						if(e.getPlayer() != null)
+						{
+							if(fort.getTransmitterCost() > 0)
+							{
 								if(fort.getEconomy().getBalance(e.getPlayer().getName()) >= fort.getTransmitterCost()){
 									fort.getEconomy().withdrawPlayer(e.getPlayer().getName(),fort.getTransmitterCost());
 									return;
@@ -3687,7 +3693,8 @@ public class FortificationListener implements Listener {
 					player.sendMessage(ChatColor.GOLD + "Transmitter created on band: " + e.getLine(0));
 				}
 			//Shields
-					if(e.getLine(1).equalsIgnoreCase("[Shield]")){
+					if(e.getLine(1).equalsIgnoreCase("[Shield]"))
+					{
 						if(fort.isPermissionsEnabled())
 						{
 							if(!player.hasPermission("fortification.shield.*") && !player.hasPermission("fortification.*") && !player.hasPermission("fortification.shield.teleblock") && !player.hasPermission("fortification.shield.chest"))
@@ -3710,51 +3717,63 @@ public class FortificationListener implements Listener {
 									return;
 								}
 							}
-							if(fort.isEcon()){
-								if(e.getPlayer() != null){
-								if(fort.getTeleblockshieldCost() > 0){
-									if(fort.getEconomy().getBalance(e.getPlayer().getName()) >= fort.getTeleblockshieldCost()){
-										fort.getEconomy().withdrawPlayer(e.getPlayer().getName(),fort.getTeleblockshieldCost());
-										return;
+							if(fort.isEcon())
+							{
+								if(e.getPlayer() != null)
+								{
+									if(fort.getTeleblockshieldCost() > 0)
+									{
+										if(fort.getEconomy().getBalance(e.getPlayer().getName()) >= fort.getTeleblockshieldCost())
+										{
+											fort.getEconomy().withdrawPlayer(e.getPlayer().getName(),fort.getTeleblockshieldCost());
+											return;
+										}
+										else
+										{
+											player.sendMessage(ChatColor.RED + "You do not have enough money for this purchase (" + fort.getTeleblockshieldCost() + ")");
+											player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+											player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
+											return;
+										}
 									}
-								else{
-									player.sendMessage(ChatColor.RED + "You do not have enough money for this purchase (" + fort.getTeleblockshieldCost() + ")");
-									player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
-									player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
-									return;
-								}
-								}
 								}
 							}
 						}
-						else if(e.getLine(0).equalsIgnoreCase("chest")){
+						else if(e.getLine(0).equalsIgnoreCase("chest"))
+						{
 							if(fort.isPermissionsEnabled())
 							{
-								if(!player.hasPermission("fortification.shield.*") && !player.hasPermission("fortification.*") && !player.hasPermission("fortification.shield.chest")){
+								if(!player.hasPermission("fortification.shield.*") && !player.hasPermission("fortification.*") && !player.hasPermission("fortification.shield.chest"))
+								{
 									player.sendMessage(ChatColor.RED + "You do not have permission to build chest shields.");
 									player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
 									player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 									return;
 								}
 							}
-							if(fort.isEcon()){
-								if(e.getPlayer() != null){
-								if(fort.getChestshieldCost() > 0){
-									if(fort.getEconomy().getBalance(e.getPlayer().getName()) >= fort.getChestshieldCost()){
-										fort.getEconomy().withdrawPlayer(e.getPlayer().getName(),fort.getChestshieldCost());
-										return;
+							if(fort.isEcon())
+							{
+								if(e.getPlayer() != null)
+								{
+									if(fort.getChestshieldCost() > 0)
+									{
+										if(fort.getEconomy().getBalance(e.getPlayer().getName()) >= fort.getChestshieldCost()){
+											fort.getEconomy().withdrawPlayer(e.getPlayer().getName(),fort.getChestshieldCost());
+											return;
+										}
+										else
+										{
+											player.sendMessage(ChatColor.RED + "You do not have enough money for this purchase (" + fort.getChestshieldCost() + ")");
+											player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+											player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
+											return;
+										}
 									}
-								else{
-									player.sendMessage(ChatColor.RED + "You do not have enough money for this purchase (" + fort.getChestshieldCost() + ")");
-									player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
-									player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
-									return;
-								}
-								}
 								}
 							}
 						}
-						else if(e.getLine(0).equalsIgnoreCase("playerchest")){
+						else if(e.getLine(0).equalsIgnoreCase("playerchest"))
+						{
 							if(fort.isPermissionsEnabled())
 							{
 								if(!player.hasPermission("fortification.shield.*") && !player.hasPermission("fortification.*") && !player.hasPermission("fortification.shield.chest")){
@@ -3764,24 +3783,30 @@ public class FortificationListener implements Listener {
 									return;
 								}
 							}
-							if(fort.isEcon()){
-								if(e.getPlayer() != null){
-								if(fort.getChestshieldCost() > 0){
-									if(fort.getEconomy().getBalance(e.getPlayer().getName()) >= fort.getChestshieldCost()){
-										fort.getEconomy().withdrawPlayer(e.getPlayer().getName(),fort.getChestshieldCost());
-										return;
+							if(fort.isEcon())
+							{
+								if(e.getPlayer() != null)
+								{
+									if(fort.getChestshieldCost() > 0)
+									{
+										if(fort.getEconomy().getBalance(e.getPlayer().getName()) >= fort.getChestshieldCost())
+										{
+											fort.getEconomy().withdrawPlayer(e.getPlayer().getName(),fort.getChestshieldCost());
+											return;
+										}
+										else
+										{
+											player.sendMessage(ChatColor.RED + "You do not have enough money for this purchase (" + fort.getChestshieldCost() + ")");
+											player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+											player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
+											return;
+										}
 									}
-								else{
-									player.sendMessage(ChatColor.RED + "You do not have enough money for this purchase (" + fort.getChestshieldCost() + ")");
-									player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
-									player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
-									return;
-								}
-								}
 								}
 							}
 						}
-						else if(e.getLine(0).equalsIgnoreCase("factionchest")){
+						else if(e.getLine(0).equalsIgnoreCase("factionchest"))
+						{
 							if(fort.isPermissionsEnabled())
 							{
 								if(!player.hasPermission("fortification.shield.*") && !player.hasPermission("fortification.*") && !player.hasPermission("fortification.shield.chest")){
@@ -3791,14 +3816,18 @@ public class FortificationListener implements Listener {
 									return;
 								}
 							}
-							if(fort.isEcon()){
-								if(e.getPlayer() != null){
-								if(fort.getChestshieldCost() > 0){
+							if(fort.isEcon())
+							{
+								if(e.getPlayer() != null)
+								{
+								if(fort.getChestshieldCost() > 0)
+								{
 									if(fort.getEconomy().getBalance(e.getPlayer().getName()) >= fort.getChestshieldCost()){
 										fort.getEconomy().withdrawPlayer(e.getPlayer().getName(),fort.getChestshieldCost());
 										return;
 									}
-								else{
+								else
+								{
 									player.sendMessage(ChatColor.RED + "You do not have enough money for this purchase (" + fort.getChestshieldCost() + ")");
 									player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
 									player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
