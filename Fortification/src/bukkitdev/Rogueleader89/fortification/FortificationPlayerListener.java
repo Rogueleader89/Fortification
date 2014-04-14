@@ -1,7 +1,10 @@
 package bukkitdev.Rogueleader89.fortification;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
+
+import net.minecraft.server.v1_7_R3.PlayerSelector;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -19,11 +22,11 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.plugin.Plugin;
 
-import com.massivecraft.factions.FPlayer;
-import com.massivecraft.factions.FPlayers;
-import com.massivecraft.factions.Faction;
 import com.massivecraft.factions.Factions;
-import com.massivecraft.factions.struct.Rel;
+import com.massivecraft.factions.Rel;
+import com.massivecraft.factions.entity.Faction;
+import com.massivecraft.factions.entity.FactionColls;
+import com.massivecraft.factions.entity.UPlayer;
 import com.palmergames.bukkit.towny.object.Nation;
 import com.palmergames.bukkit.towny.object.Town;
 import com.palmergames.bukkit.towny.object.TownyUniverse;
@@ -256,8 +259,8 @@ public class FortificationPlayerListener implements Listener
 						{
 							if(fort.isFactionsEnabled())
 							{
-								FPlayer me = (FPlayer)e.getPlayer();
-								if(!me.getFaction().getTag().equalsIgnoreCase(signlist.get(i).getLine(2)) && !me.getFaction().getTag().equalsIgnoreCase(signlist.get(i).getLine(3)))
+								UPlayer me = (UPlayer)e.getPlayer();
+								if(!me.getFaction().getName().equalsIgnoreCase(signlist.get(i).getLine(2)) && !me.getFaction().getName().equalsIgnoreCase(signlist.get(i).getLine(3)))
 								{
 									if(e.getPlayer().getWorld().getBlockAt(signlist.get(i).getX(), signlist.get(i).getY(), signlist.get(i).getZ()).getData() == 0x2)
 									{
@@ -377,7 +380,7 @@ public class FortificationPlayerListener implements Listener
 			{
 				return false;
 			}
-			int hp = p.getHealth();
+			double hp = p.getHealth();
 			if(hp >= min && hp <= max)
 			{
 				return true;
@@ -637,11 +640,13 @@ public class FortificationPlayerListener implements Listener
 		{
 				if(fort.isFactionsEnabled())
 				{
-					Factions fac = Factions.i;
-					Faction f = fac.getByTag(l3);
-					Faction f2 = fac.getByTag(l4);
+					UPlayer me = UPlayer.get(p);
 					
-					FPlayer me = FPlayers.i.get(p);
+					//Factions fac = Factions.i;
+					Faction f = FactionColls.get().getForUniverse(me.getUniverse()).getByName(l3);//fac.getByTag(l3);
+					Faction f2 =  FactionColls.get().getForUniverse(me.getUniverse()).getByName(l4);
+					
+					
 					if(f != null)
 					{
 						if(me.getFaction().getId() == f.getId())
@@ -650,13 +655,13 @@ public class FortificationPlayerListener implements Listener
 						}
 						else
 						{
-							Set<FPlayer> fp = f.getFPlayers();
-							FPlayer fp1;
-							Iterator<FPlayer> iter = fp.iterator();
+							List<UPlayer> fp = f.getUPlayers();//.getFPlayers();
+							UPlayer fp1;
+							Iterator<UPlayer> iter = fp.iterator();
 							int i1 = 0;
 							while(iter.hasNext())
 							{
-								fp1 = (FPlayer)iter.next();
+								fp1 = (UPlayer)iter.next();
 									if(fpList.get(i1).getName().equalsIgnoreCase(fp1.getName()))
 									{
 										if(!fpList.get(i1).isIgnoreFactionAlert())
@@ -679,13 +684,13 @@ public class FortificationPlayerListener implements Listener
 						}
 						else
 						{
-							Set<FPlayer> fp = f2.getFPlayers();
-							FPlayer fp1;
-							Iterator<FPlayer> iter = fp.iterator();
+							List<UPlayer> fp = f2.getUPlayers();
+							UPlayer fp1;
+							Iterator<UPlayer> iter = fp.iterator();
 							int i1 = 0;
 							while(iter.hasNext())
 							{
-								fp1 = (FPlayer)iter.next();
+								fp1 = (UPlayer)iter.next();
 									if(fpList.get(i1).getName().equalsIgnoreCase(fp1.getName()))
 									{
 										if(!fpList.get(i1).isIgnoreFactionAlert())
@@ -699,7 +704,7 @@ public class FortificationPlayerListener implements Listener
 							}
 						}
 					}
-					if(!me.getFaction().getTag().equalsIgnoreCase(l3) && !me.getFaction().getTag().equalsIgnoreCase(l4))
+					if(!me.getFaction().getName().equalsIgnoreCase(l3) && !me.getFaction().getName().equalsIgnoreCase(l4))
 					{
 						return true;
 					}
@@ -920,8 +925,7 @@ public class FortificationPlayerListener implements Listener
 		{
 			if(fort.isFactionsEnabled())
 			{
-				FPlayer me = FPlayers.i.get(p);
-				if(me.getFaction().getTag().equalsIgnoreCase(l3) || me.getFaction().getTag().equalsIgnoreCase(l4))
+				if(UPlayer.get(p).getFaction().getName().equalsIgnoreCase(l3) || UPlayer.get(p).getFaction().getName().equalsIgnoreCase(l4))
 				{
 					return true;
 				}
@@ -936,8 +940,7 @@ public class FortificationPlayerListener implements Listener
 		{
 			if(fort.isFactionsEnabled())
 			{
-				FPlayer me = FPlayers.i.get(p);
-				if(!me.getFaction().getTag().equalsIgnoreCase(l3) && !me.getFaction().getTag().equalsIgnoreCase(l4))
+				if(!UPlayer.get(p).getFaction().getName().equalsIgnoreCase(l3) && !UPlayer.get(p).getFaction().getName().equalsIgnoreCase(l4))
 				{
 					return true;
 				}
@@ -951,9 +954,10 @@ public class FortificationPlayerListener implements Listener
 		{
 			if(fort.isFactionsEnabled())
 			{
-				FPlayer me = FPlayers.i.get(p);
-				Faction f = Factions.i.getByTag(l3);
-				Faction f2 = Factions.i.getByTag(l4);
+				UPlayer me = UPlayer.get(p);
+				
+				Faction f = FactionColls.get().getForUniverse(me.getUniverse()).getByName(l3);//fac.getByTag(l3);
+				Faction f2 =  FactionColls.get().getForUniverse(me.getUniverse()).getByName(l4);
 
 				if(f != null)
 				{
@@ -994,11 +998,13 @@ public class FortificationPlayerListener implements Listener
 		{
 			if(fort.isFactionsEnabled())
 			{
-				FPlayer me = FPlayers.i.get(p);
-				Faction f = Factions.i.getByTag(l3);
-				Faction f2 = Factions.i.getByTag(l4);
+				UPlayer me = UPlayer.get(p);
 				
-				if(me.getFaction().getTag().equalsIgnoreCase(l3) || me.getFaction().getTag().equalsIgnoreCase(l4))
+				//Factions fac = Factions.i;
+				Faction f = FactionColls.get().getForUniverse(me.getUniverse()).getByName(l3);//fac.getByTag(l3);
+				Faction f2 =  FactionColls.get().getForUniverse(me.getUniverse()).getByName(l4);
+				
+				if(me.getFaction().getName().equalsIgnoreCase(l3) || me.getFaction().getName().equalsIgnoreCase(l4))
 				{
 					return true;
 				}
