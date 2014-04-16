@@ -1,19 +1,21 @@
 package bukkitdev.Rogueleader89.fortification;
 
+import org.bukkit.Material;
+
 //This exists since making instances of the block class and setting them equal to existing blocks apparently behaves like pointers so if those blocks are changed the saved data is changed as well,
 //causing swapping things between two spots to be virtually impossible, hence this class to work around that issue 
 public class saveBlock {
 
-	int id;
+	Material id;
 	byte d;
 	
-	public saveBlock(int type, byte data)
+	public saveBlock(Material material, byte data)
 	{
-		id = type;
+		id = material;
 		d = data;
 	}
 	
-	public void setId(int type)
+	public void setId(Material type)
 	{
 		id = type;
 	}
@@ -23,7 +25,7 @@ public class saveBlock {
 		d = data;
 	}
 	
-	public int getTypeId()
+	public Material getType()
 	{
 		return id;
 	}

@@ -1,6 +1,7 @@
 package bukkitdev.Rogueleader89.fortification;
 
 import org.bukkit.Location;
+import org.bukkit.Material;
 
 public class Telepad {
 
@@ -36,25 +37,25 @@ public class Telepad {
 			switch(dir)
 			{
 			case 0x2://+z = back
-				if(!(pos.getBlock().getTypeId() == 68 && pos.getWorld().getBlockAt(pos.getBlockX(), pos.getBlockY(), pos.getBlockZ()+1).getTypeId() == fort.getTelepadBlockId()))
+				if(!(pos.getBlock().getType().equals(Material.WALL_SIGN) && pos.getWorld().getBlockAt(pos.getBlockX(), pos.getBlockY(), pos.getBlockZ()+1).getType().toString().equalsIgnoreCase(fort.getTelepadBlockId())))
 				{
 					return false;
 				}
 				break;
 			case 0x3://-z = back
-				if(!(pos.getBlock().getTypeId() == 68 && pos.getWorld().getBlockAt(pos.getBlockX(), pos.getBlockY(), pos.getBlockZ()-1).getTypeId() == fort.getTelepadBlockId()))
+				if(!(pos.getBlock().getType().equals(Material.WALL_SIGN) && pos.getWorld().getBlockAt(pos.getBlockX(), pos.getBlockY(), pos.getBlockZ()-1).getType().toString().equalsIgnoreCase(fort.getTelepadBlockId())))
 				{
 					return false;
 				}
 				break;
 			case 0x4://+x = back
-				if(!(pos.getBlock().getTypeId() == 68 && pos.getWorld().getBlockAt(pos.getBlockX()+1, pos.getBlockY(), pos.getBlockZ()).getTypeId() == fort.getTelepadBlockId()))
+				if(!(pos.getBlock().getType().equals(Material.WALL_SIGN) && pos.getWorld().getBlockAt(pos.getBlockX()+1, pos.getBlockY(), pos.getBlockZ()).getType().toString().equalsIgnoreCase(fort.getTelepadBlockId())))
 				{
 					return false;
 				}
 				break;
 			case 0x5://-x = back
-				if(!(pos.getBlock().getTypeId() == 68 && pos.getWorld().getBlockAt(pos.getBlockX()-1, pos.getBlockY(), pos.getBlockZ()).getTypeId() == fort.getTelepadBlockId()))
+				if(!(pos.getBlock().getType().equals(Material.WALL_SIGN) && pos.getWorld().getBlockAt(pos.getBlockX()-1, pos.getBlockY(), pos.getBlockZ()).getType().toString().equalsIgnoreCase(fort.getTelepadBlockId())))
 				{
 					return false;
 				}
@@ -95,19 +96,19 @@ public class Telepad {
 					{
 					case 0x2://+z = back, left = +x
 						l = fLeft.getLocation().getWorld().getBlockAt(fLeft.getLocation().getBlockX() - 1 - j, fLeft.getLocation().getBlockY() + k, fLeft.getLocation().getBlockZ() + 1 + i).getLocation();
-						b[i][j][k] = new saveBlock(l.getBlock().getTypeId(), l.getBlock().getData());// = l.getBlock();
+						b[i][j][k] = new saveBlock(l.getBlock().getType(), l.getBlock().getData());// = l.getBlock();
 						break;
 					case 0x3://-z = back, left = -x
 						l = fLeft.getLocation().getWorld().getBlockAt(fLeft.getLocation().getBlockX() + 1 + j, fLeft.getLocation().getBlockY() + k, fLeft.getLocation().getBlockZ() - 1 - i).getLocation();
-						b[i][j][k] = new saveBlock(l.getBlock().getTypeId(), l.getBlock().getData());
+						b[i][j][k] = new saveBlock(l.getBlock().getType(), l.getBlock().getData());
 						break;
 					case 0x4://+x = back, left = -z
 						l = fLeft.getLocation().getWorld().getBlockAt(fLeft.getLocation().getBlockX() + 1 + i, fLeft.getLocation().getBlockY() + k, fLeft.getLocation().getBlockZ() + 1 + j).getLocation();
-						b[i][j][k] = new saveBlock(l.getBlock().getTypeId(), l.getBlock().getData());
+						b[i][j][k] = new saveBlock(l.getBlock().getType(), l.getBlock().getData());
 						break;
 					case 0x5://-x = back, left = +z
 						l = fLeft.getLocation().getWorld().getBlockAt(fLeft.getLocation().getBlockX() - 1 - i, fLeft.getLocation().getBlockY() + k, fLeft.getLocation().getBlockZ() - 1 - j).getLocation();
-						b[i][j][k] = new saveBlock(l.getBlock().getTypeId(), l.getBlock().getData());
+						b[i][j][k] = new saveBlock(l.getBlock().getType(), l.getBlock().getData());
 						break;
 					}
 				}
@@ -132,22 +133,22 @@ public class Telepad {
 					{
 					case 0x2://+z = back, left = +x
 						l = fLeft.getLocation().getWorld().getBlockAt(fLeft.getLocation().getBlockX() - 1 - j, fLeft.getLocation().getBlockY() + k, fLeft.getLocation().getBlockZ() + 1 + i).getLocation();
-						l.getBlock().setTypeId(b[i][j][k].getTypeId());
+						l.getBlock().setType(b[i][j][k].getType());
 						l.getBlock().setData(b[i][j][k].getData());
 						break;
 					case 0x3://-z = back, left = -x
 						l = fLeft.getLocation().getWorld().getBlockAt(fLeft.getLocation().getBlockX() + 1 + j, fLeft.getLocation().getBlockY() + k, fLeft.getLocation().getBlockZ() - 1 - i).getLocation();
-						l.getBlock().setTypeId(b[i][j][k].getTypeId());
+						l.getBlock().setType(b[i][j][k].getType());
 						l.getBlock().setData(b[i][j][k].getData());
 						break;
 					case 0x4://+x = back, left = -z
 						l = fLeft.getLocation().getWorld().getBlockAt(fLeft.getLocation().getBlockX() + 1 + i, fLeft.getLocation().getBlockY() + k, fLeft.getLocation().getBlockZ() + 1 + j).getLocation();
-						l.getBlock().setTypeId(b[i][j][k].getTypeId());
+						l.getBlock().setType(b[i][j][k].getType());
 						l.getBlock().setData(b[i][j][k].getData());
 						break;
 					case 0x5://-x = back, left = +z
 						l = fLeft.getLocation().getWorld().getBlockAt(fLeft.getLocation().getBlockX() - 1 - i, fLeft.getLocation().getBlockY() + k, fLeft.getLocation().getBlockZ() - 1 - j).getLocation();
-						l.getBlock().setTypeId(b[i][j][k].getTypeId());
+						l.getBlock().setType(b[i][j][k].getType());
 						l.getBlock().setData(b[i][j][k].getData());
 						break;
 					}

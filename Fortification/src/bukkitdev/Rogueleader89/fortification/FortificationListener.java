@@ -19,6 +19,8 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 
+
+
 //import com.massivecraft.factions.FPlayer;
 //import com.massivecraft.factions.FPlayers;
 //import com.massivecraft.factions.Faction;
@@ -30,7 +32,8 @@ import com.palmergames.bukkit.towny.object.TownyUniverse;
 
 
 /* 
- * 0.91 Changelog
+ * 1.0 Changelog
+ * Changed plugin to rely on material values instead of block id numbers
  * 
  * 
  * 0.9 Changelog
@@ -152,26 +155,27 @@ import com.palmergames.bukkit.towny.object.TownyUniverse;
  * 
  * Next Major Release (0.9):
  * -Update configuration to new style (current one is deprecated..)
- * Add Lift Signs that take standard filters
  * -Add transmitters for sending redstone signal via commands/spout gui or in-world transmitters to recievers filter [transmitter] dest1 dest2.
  * -Fix Teleblock toggle, detect redstone power instead of using a torch.
  * Faction/Town Message Signs
  * Check and make sure trapdoor length can't be increased beyond limit with send signs
  * Allow the use of "fire" as a synonym for flame on flame turrets
  * Consider adding telepads or similar warp gate functionality with standard filter compatibility
- * Consider adding craftbook style gates
  * 
  * 1.0 Release:
+ * Emitters for various effects, blindness, slow digging, limited building/destruction, healing
+ * Add SimpleClan support
  * Re-examine and possibly finish implementation of send signs.
  * Bug fix everything, optimize code where needed.
- * Add lifts in some form (preferably elevators as a vehicle of sorts).
  * Add mob sensors + filters (hostile mob vs non-hostile, mobdetect/ignore).
  * Individual settings per mechanism - Range, direction, radius, filters (if applicable)
  * Send packet to client to show arrows when they are shot from arrow turrets
  * Add forcefield type shields and other such things (with necessary weaknesses, possibly only deflect certain amounts of stuff?)
- * (delayed for 1.3 to see which api catches on..)Add spout support, condensing sensors, turrets, etc. into single custom blocks. Retain old creation methods as well. This may wait till 1.0
+ * Move from block ids to material types -- fix warnings..
  * 
  * Other:
+ * 
+ * Add lifts in some form (preferably elevators as a vehicle of sorts).
  * 
  * Prevent a single message sign from spamming a player constantly with text.
  * This also applies to factionalert signs, possibly delay between messages?
@@ -239,15 +243,15 @@ import com.palmergames.bukkit.towny.object.TownyUniverse;
 public class FortificationListener implements Listener {
 		private Fortification fort;
 	//	private PropertiesFile properties = new PropertiesFile("fortification.properties");
-		private int arrowturretblockId;
+		private String arrowturretblockId;
 		private int flamelength;
-		private int flameturretblockId;
+		private String flameturretblockId;
 		private int weblength;
-		private int webturretblockId;
+		private String webturretblockId;
 		private int webTime;
 		private int maxtraplength;
 		private int sendlength;
-		private int[] trapblocks;
+		private String[] trapblocks;
 		private boolean replacetrap;
 		private boolean sendremovetext;
 		private boolean commandsend;
@@ -323,13 +327,13 @@ public class FortificationListener implements Listener {
 		{
 			//TODO: Fix error here, telepads aren't being deleted properly, transmitters likely have a similar, less noticable, issue. Also console errors out trying to cast to sign..
 			//if its a sign this is really easy
-			if(e.getBlock().getTypeId() == 68 && e.getBlock() instanceof Sign)
+			if(e.getBlock().getType().equals(Material.WALL_SIGN) && e.getBlock() instanceof Sign)
 			{
 				removeReceiver((Sign)e.getBlock());
 				removeTelepad((Sign)e.getBlock());
 			}
 			//see if a sign was attached to whatever was broken
-			if(e.getBlock().getWorld().getBlockTypeIdAt(e.getBlock().getLocation().getBlockX(), e.getBlock().getLocation().getBlockY(), e.getBlock().getLocation().getBlockZ()-1) == 68)
+			if(e.getBlock().getWorld().getBlockAt(e.getBlock().getLocation().getBlockX(), e.getBlock().getLocation().getBlockY(), e.getBlock().getLocation().getBlockZ()-1).getType().equals(Material.WALL_SIGN))
 			{
 				Sign s = (Sign)e.getBlock().getWorld().getBlockAt(e.getBlock().getLocation().getBlockX(), e.getBlock().getLocation().getBlockY(), e.getBlock().getLocation().getBlockZ()-1);
 				if(((Block)s).getData() == 0x2)
@@ -338,7 +342,7 @@ public class FortificationListener implements Listener {
 					removeTelepad(s);
 				}
 			}
-			if(e.getBlock().getWorld().getBlockTypeIdAt(e.getBlock().getLocation().getBlockX(), e.getBlock().getLocation().getBlockY(), e.getBlock().getLocation().getBlockZ()+1) == 68)
+			if(e.getBlock().getWorld().getBlockAt(e.getBlock().getLocation().getBlockX(), e.getBlock().getLocation().getBlockY(), e.getBlock().getLocation().getBlockZ()+1).getType().equals(Material.WALL_SIGN))
 			{
 				Sign s = (Sign)e.getBlock().getWorld().getBlockAt(e.getBlock().getLocation().getBlockX(), e.getBlock().getLocation().getBlockY(), e.getBlock().getLocation().getBlockZ()+1);
 				if(((Block)s).getData() == 0x3)
@@ -347,7 +351,7 @@ public class FortificationListener implements Listener {
 					removeTelepad(s);
 				}
 			}
-			if(e.getBlock().getWorld().getBlockTypeIdAt(e.getBlock().getLocation().getBlockX()-1, e.getBlock().getLocation().getBlockY(), e.getBlock().getLocation().getBlockZ()) == 68)
+			if(e.getBlock().getWorld().getBlockAt(e.getBlock().getLocation().getBlockX()-1, e.getBlock().getLocation().getBlockY(), e.getBlock().getLocation().getBlockZ()).getType().equals(Material.WALL_SIGN))
 			{
 				Sign s = (Sign)e.getBlock().getWorld().getBlockAt(e.getBlock().getLocation().getBlockX()-1, e.getBlock().getLocation().getBlockY(), e.getBlock().getLocation().getBlockZ());
 				if(((Block)s).getData() == 0x4)
@@ -356,7 +360,7 @@ public class FortificationListener implements Listener {
 					removeTelepad(s);
 				}
 			}
-			if(e.getBlock().getWorld().getBlockTypeIdAt(e.getBlock().getLocation().getBlockX()+1, e.getBlock().getLocation().getBlockY(), e.getBlock().getLocation().getBlockZ()) == 68)
+			if(e.getBlock().getWorld().getBlockAt(e.getBlock().getLocation().getBlockX()+1, e.getBlock().getLocation().getBlockY(), e.getBlock().getLocation().getBlockZ()).getType().equals(Material.WALL_SIGN))
 			{
 				Sign s = (Sign)e.getBlock().getWorld().getBlockAt(e.getBlock().getLocation().getBlockX()+1, e.getBlock().getLocation().getBlockY(), e.getBlock().getLocation().getBlockZ());
 				if(((Block)s).getData() == 0x5)
@@ -383,40 +387,52 @@ public class FortificationListener implements Listener {
 				try{
 				//63 = sign post, 68 = wall sign
 			if(rnew != rold){
-				if(e.getBlock().getWorld().getBlockTypeIdAt(mx, my, mz + 1) == 68){
+				if(e.getBlock().getWorld().getBlockAt(mx, my, mz + 1).getType().equals(Material.WALL_SIGN))
+				{
 					handleinput(mx, my, mz+1, rnew, e.getBlock().getWorld());
 				}
-				if(e.getBlock().getWorld().getBlockTypeIdAt(mx, my + 1, mz + 1) == 68){
+				if(e.getBlock().getWorld().getBlockAt(mx, my + 1, mz + 1).getType().equals(Material.WALL_SIGN))
+				{
 					handleinput(mx, my+1, mz+1, rnew, e.getBlock().getWorld());
 				}
-				if(e.getBlock().getWorld().getBlockTypeIdAt(mx, my - 1, mz + 1) == 68){
+				if(e.getBlock().getWorld().getBlockAt(mx, my - 1, mz + 1).getType().equals(Material.WALL_SIGN))
+				{
 					handleinput(mx, my-1, mz+1, rnew, e.getBlock().getWorld());
 				}
-				if(e.getBlock().getWorld().getBlockTypeIdAt(mx, my, mz - 1) == 68){
+				if(e.getBlock().getWorld().getBlockAt(mx, my, mz - 1).getType().equals(Material.WALL_SIGN))
+				{
 					handleinput(mx, my, mz-1, rnew, e.getBlock().getWorld());
 				}
-				if(e.getBlock().getWorld().getBlockTypeIdAt(mx, my + 1, mz - 1) == 68){
+				if(e.getBlock().getWorld().getBlockAt(mx, my + 1, mz - 1).getType().equals(Material.WALL_SIGN))
+				{
 					handleinput(mx, my+1, mz-1, rnew, e.getBlock().getWorld());
 				}
-				if(e.getBlock().getWorld().getBlockTypeIdAt(mx, my - 1, mz - 1) == 68){
+				if(e.getBlock().getWorld().getBlockAt(mx, my - 1, mz - 1).getType().equals(Material.WALL_SIGN))
+				{
 					handleinput(mx, my-1, mz-1, rnew, e.getBlock().getWorld());
 				}
-				if(e.getBlock().getWorld().getBlockTypeIdAt(mx - 1, my, mz) == 68){
+				if(e.getBlock().getWorld().getBlockAt(mx - 1, my, mz).getType().equals(Material.WALL_SIGN))
+				{
 					handleinput(mx-1, my, mz, rnew, e.getBlock().getWorld());
 				}
-				if(e.getBlock().getWorld().getBlockTypeIdAt(mx - 1, my + 1, mz) == 68){
+				if(e.getBlock().getWorld().getBlockAt(mx - 1, my + 1, mz).getType().equals(Material.WALL_SIGN))
+				{
 					handleinput(mx-1, my+1, mz, rnew, e.getBlock().getWorld());
 				}
-				if(e.getBlock().getWorld().getBlockTypeIdAt(mx - 1, my - 1, mz) == 68){
+				if(e.getBlock().getWorld().getBlockAt(mx - 1, my - 1, mz).getType().equals(Material.WALL_SIGN))
+				{
 					handleinput(mx-1, my-1, mz+1, rnew, e.getBlock().getWorld());
 				}
-				if(e.getBlock().getWorld().getBlockTypeIdAt(mx + 1, my, mz) == 68){
+				if(e.getBlock().getWorld().getBlockAt(mx + 1, my, mz).getType().equals(Material.WALL_SIGN))
+				{
 					handleinput(mx+1, my, mz, rnew, e.getBlock().getWorld());
 				}
-				if(e.getBlock().getWorld().getBlockTypeIdAt(mx + 1, my + 1, mz) == 68){
+				if(e.getBlock().getWorld().getBlockAt(mx + 1, my + 1, mz).getType().equals(Material.WALL_SIGN))
+				{
 					handleinput(mx+1, my+1, mz, rnew, e.getBlock().getWorld());
 				}
-				if(e.getBlock().getWorld().getBlockTypeIdAt(mx + 1, my - 1, mz) == 68){
+				if(e.getBlock().getWorld().getBlockAt(mx + 1, my - 1, mz).getType().equals(Material.WALL_SIGN))
+				{
 					handleinput(mx+1, my-1, mz, rnew, e.getBlock().getWorld());
 				}
 			}
@@ -748,10 +764,10 @@ public class FortificationListener implements Listener {
 									{
 										//not a valid telepad, remove k from list and destroy sign.
 										fort.getPadList().remove(k);
-										fort.getPadList().get(k).getLocation().getBlock().setTypeId(0);
+										fort.getPadList().get(k).getLocation().getBlock().setType(Material.AIR);
 										fort.getPadList().get(k).getLocation().getWorld().dropItem(new Location(fort.getPadList().get(k).getLocation().getWorld(),
 												fort.getPadList().get(k).getLocation().getBlock().getX(), fort.getPadList().get(k).getLocation().getBlock().getY(),
-												fort.getPadList().get(k).getLocation().getBlock().getZ()), new ItemStack(323, 1));
+												fort.getPadList().get(k).getLocation().getBlock().getZ()), new ItemStack(Material.SIGN, 1));
 									}
 								}
 							}
@@ -759,8 +775,8 @@ public class FortificationListener implements Listener {
 						else
 						{
 							fort.getPadList().remove(i);
-							b.setTypeId(0);
-							b.getWorld().dropItem(new Location(b.getWorld(), b.getBlock().getX(), b.getBlock().getY(), b.getBlock().getZ()), new ItemStack(323, 1));
+							b.setType(Material.AIR);;
+							b.getWorld().dropItem(new Location(b.getWorld(), b.getBlock().getX(), b.getBlock().getY(), b.getBlock().getZ()), new ItemStack(Material.SIGN, 1));
 						}
 					}
 				}
@@ -779,12 +795,12 @@ public class FortificationListener implements Listener {
 						if(fort.getReceiverList().get(i).exists())
 						{
 							Location l = fort.getReceiverList().get(i).getLocation();
-							if(l.getBlock().getTypeId() == 68)
+							if(l.getBlock().getType().equals(Material.WALL_SIGN))
 							{
 								switch(l.getBlock().getData())
 								{
 								case 0x2:
-									if(l.getWorld().getBlockTypeIdAt(l.getBlockX(), l.getBlockY(), l.getBlockZ() + 2) == 69)
+									if(l.getWorld().getBlockAt(l.getBlockX(), l.getBlockY(), l.getBlockZ() + 2).getType().equals(Material.LEVER))
 									{
 										if(powered)
 										{
@@ -809,7 +825,7 @@ public class FortificationListener implements Listener {
 									}
 									break;
 								case 0x3:
-									if(l.getWorld().getBlockTypeIdAt(l.getBlockX(), l.getBlockY(), l.getBlockZ() - 2) == 69)
+									if(l.getWorld().getBlockAt(l.getBlockX(), l.getBlockY(), l.getBlockZ() - 2).getType().equals(Material.LEVER))
 									{
 										if(powered)
 										{
@@ -834,7 +850,7 @@ public class FortificationListener implements Listener {
 									}
 									break;
 								case 0x4:
-									if(l.getWorld().getBlockTypeIdAt(l.getBlockX() + 2, l.getBlockY(), l.getBlockZ()) == 69)
+									if(l.getWorld().getBlockAt(l.getBlockX() + 2, l.getBlockY(), l.getBlockZ()).getType().equals(Material.LEVER))
 									{
 										if(powered)
 										{
@@ -859,7 +875,7 @@ public class FortificationListener implements Listener {
 									}
 									break;
 								case 0x5:
-									if(l.getWorld().getBlockTypeIdAt(l.getBlockX() - 2, l.getBlockY(), l.getBlockZ()) == 69)
+									if(l.getWorld().getBlockAt(l.getBlockX() - 2, l.getBlockY(), l.getBlockZ()).getType().equals(Material.LEVER))
 									{
 										if(powered)
 										{
@@ -898,7 +914,8 @@ public class FortificationListener implements Listener {
 			//Message Signs//
 			/////////////////
 			
-			if(l2.equalsIgnoreCase("[Message]")){
+			if(l2.equalsIgnoreCase("[Message]"))
+			{
 				try{
 					if(powered){
 						fort.getServer().getPlayer(l1).sendMessage(ChatColor.GOLD + l3 + " " + l4 + "[" + Integer.toString(x) + "," + Integer.toString(y) + "," + Integer.toString(z) + "]");
@@ -911,8 +928,10 @@ public class FortificationListener implements Listener {
 			//////////////
 			//Send Signs//
 			//////////////
-			if(powered){
-			if(l1.equalsIgnoreCase("[Send N]")){
+			if(powered)
+			{
+			if(l1.equalsIgnoreCase("[Send N]"))
+			{
 				int n = x;
 				int p = x;
 				@SuppressWarnings("unused")
@@ -920,11 +939,13 @@ public class FortificationListener implements Listener {
 				Sign s=null, s2 = null;
 				boolean origin = false;
 				boolean destination = false;
-				for(int i = 0; i < sendlength; i++){
+				for(int i = 0; i < sendlength; i++)
+				{
 					//Sign found below
 					if(!origin){
 						n++;
-					if(w.getBlockTypeIdAt(n, y, z) == 68){
+					if(w.getBlockAt(n, y, z).getType().equals(Material.WALL_SIGN))
+					{
 						BlockState c = w.getBlockAt(n, y, z).getState();
 						if(!(c instanceof Sign)){
 							return;
@@ -935,11 +956,14 @@ public class FortificationListener implements Listener {
 							c3 = s.getLine(2);
 							c4 = s.getLine(3);
 						
-						if(!commandsend){
-						  if(c1.startsWith("[") && c1.endsWith("]")){
+						if(!commandsend)
+						{
+						    if(c1.startsWith("[") && c1.endsWith("]"))
+						    {
 								return;
 							}
-							else if(c1.equalsIgnoreCase("AllDo:") || c1.equalsIgnoreCase("PlayerDo:") || c1.equalsIgnoreCase("ServerDo:")){
+							else if(c1.equalsIgnoreCase("AllDo:") || c1.equalsIgnoreCase("PlayerDo:") || c1.equalsIgnoreCase("ServerDo:"))
+							{
 								return;
 							}
 						}
@@ -951,27 +975,34 @@ public class FortificationListener implements Listener {
 					//Sign found above
 					if(!destination){
 						p--;
-					if(w.getBlockTypeIdAt(p, y, z) == 68){
+					if(w.getBlockAt(p, y, z).getType().equals(Material.WALL_SIGN))
+					{
 						BlockState c = w.getBlockAt(p, y, z).getState();
-						if(!(c instanceof Sign)){
+						if(!(c instanceof Sign))
+						{
 							return;
 						}
 						s2 = (Sign)c;
-						if(!sendoverwrite || !sendoverwritescommands){
-							if(s2.getLine(0).trim().length() > 0 && !sendoverwrite){
+						if(!sendoverwrite || !sendoverwritescommands)
+						{
+							if(s2.getLine(0).trim().length() > 0 && !sendoverwrite)
+							{
 								return;
 							}
-							if(!sendoverwritescommands && s2.getLine(0).startsWith("[") && s2.getLine(0).endsWith("]")){
+							if(!sendoverwritescommands && s2.getLine(0).startsWith("[") && s2.getLine(0).endsWith("]"))
+							{
 								return;
 							}
 						}
 						destination = true;
 					}
 					}
-					if(destination && origin){
+					if(destination && origin)
+					{
 						s2.setLine(0, c1);
 						s2.update();
-						if(sendremovetext){
+						if(sendremovetext)
+						{
 							s.setLine(0, "");
 							s.update();
 						}
@@ -979,7 +1010,8 @@ public class FortificationListener implements Listener {
 					}
 				}
 			}
-			if(l1.equalsIgnoreCase("[Send S]")){
+			if(l1.equalsIgnoreCase("[Send S]"))
+			{
 				int n = x;
 				int p = x;
 				@SuppressWarnings("unused")
@@ -987,13 +1019,16 @@ public class FortificationListener implements Listener {
 				Sign s=null, s2 = null;
 				boolean origin = false;
 				boolean destination = false;
-				for(int i = 0; i < sendlength; i++){
+				for(int i = 0; i < sendlength; i++)
+				{
 					//Sign found below
 					if(!origin){
 						n++;
-					if(w.getBlockTypeIdAt(n, y, z) == 68){
+					if(w.getBlockAt(n, y, z).getType().equals(Material.WALL_SIGN))
+					{
 						BlockState c = w.getBlockAt(n, y, z).getState();
-						if(!(c instanceof Sign)){
+						if(!(c instanceof Sign))
+						{
 							return;
 						}
 							s = (Sign)c;
@@ -1003,10 +1038,12 @@ public class FortificationListener implements Listener {
 							c4 = s.getLine(3);
 						
 						if(!commandsend){
-						  if(c1.startsWith("[") && c1.endsWith("]")){
+						  if(c1.startsWith("[") && c1.endsWith("]"))
+						  {
 								return;
 							}
-							else if(c1.equalsIgnoreCase("AllDo:") || c1.equalsIgnoreCase("PlayerDo:") || c1.equalsIgnoreCase("ServerDo:")){
+							else if(c1.equalsIgnoreCase("AllDo:") || c1.equalsIgnoreCase("PlayerDo:") || c1.equalsIgnoreCase("ServerDo:"))
+							{
 								return;
 							}
 						}
@@ -1018,27 +1055,33 @@ public class FortificationListener implements Listener {
 					//Sign found above
 					if(!destination){
 						p--;
-					if(w.getBlockTypeIdAt(p, y, z) == 68){
-						if(!sendoverwrite || !sendoverwritescommands){
+					if(w.getBlockAt(p, y, z).getType().equals(Material.WALL_SIGN))
+					{
+						if(!sendoverwrite || !sendoverwritescommands)
+						{
 							BlockState c = w.getBlockAt(p, y, z).getState();
 							if(!(c instanceof Sign)){
 								return;
 							}
 							s2 = (Sign)c;
-							if(s2.getLine(0).trim().length() > 0 && !sendoverwrite){
+							if(s2.getLine(0).trim().length() > 0 && !sendoverwrite)
+							{
 								return;
 							}
-							if(!sendoverwritescommands && s2.getLine(0).startsWith("[") && s2.getLine(0).endsWith("]")){
+							if(!sendoverwritescommands && s2.getLine(0).startsWith("[") && s2.getLine(0).endsWith("]"))
+							{
 								return;
 							}
 						}
 						destination = true;
 					}
 					}
-					if(destination && origin){
+					if(destination && origin)
+					{
 						s2.setLine(0, c1);
 						s2.update();
-						if(sendremovetext){
+						if(sendremovetext)
+						{
 							s.setLine(0, "");
 							s.update();
 						}
@@ -1046,7 +1089,8 @@ public class FortificationListener implements Listener {
 					}
 				}
 			}
-			if(l1.equalsIgnoreCase("[Send E]")){
+			if(l1.equalsIgnoreCase("[Send E]"))
+			{
 				int n = z;
 				int p = z;
 				@SuppressWarnings("unused")
@@ -1054,13 +1098,16 @@ public class FortificationListener implements Listener {
 				Sign s=null, s2 = null;
 				boolean origin = false;
 				boolean destination = false;
-				for(int i = 0; i < sendlength; i++){
+				for(int i = 0; i < sendlength; i++)
+				{
 					//Sign found below
 					if(!origin){
 						n++;
-					if(w.getBlockTypeIdAt(x, y, n) == 68){
+					if(w.getBlockAt(x, y, n).getType().equals(Material.WALL_SIGN))
+					{
 						BlockState c = w.getBlockAt(x, y, n).getState();
-						if(!(c instanceof Sign)){
+						if(!(c instanceof Sign))
+						{
 							return;
 						}
 							s = (Sign)c;
@@ -1069,11 +1116,14 @@ public class FortificationListener implements Listener {
 							c3 = s.getLine(2);
 							c4 = s.getLine(3);
 						
-						if(!commandsend){
-						  if(c1.startsWith("[") && c1.endsWith("]")){
+						if(!commandsend)
+						{
+						  if(c1.startsWith("[") && c1.endsWith("]"))
+						  {
 								return;
 							}
-							else if(c1.equalsIgnoreCase("AllDo:") || c1.equalsIgnoreCase("PlayerDo:") || c1.equalsIgnoreCase("ServerDo:")){
+							else if(c1.equalsIgnoreCase("AllDo:") || c1.equalsIgnoreCase("PlayerDo:") || c1.equalsIgnoreCase("ServerDo:"))
+							{
 								return;
 							}
 						}
@@ -1083,29 +1133,37 @@ public class FortificationListener implements Listener {
 					}
 					}
 					//Sign found above
-					if(!destination){
+					if(!destination)
+					{
 						p--;
-					if(w.getBlockTypeIdAt(x, y, p) == 68){
+					if(w.getBlockAt(x, y, p).getType().equals(Material.WALL_SIGN))
+					{
 						BlockState c = w.getBlockAt(x, y, p).getState();
-						if(!(c instanceof Sign)){
+						if(!(c instanceof Sign))
+						{
 							return;
 						}
 						s2 = (Sign)c;
-						if(!sendoverwrite || !sendoverwritescommands){
-							if(s2.getLine(0).trim().length() > 0 && !sendoverwrite){
+						if(!sendoverwrite || !sendoverwritescommands)
+						{
+							if(s2.getLine(0).trim().length() > 0 && !sendoverwrite)
+							{
 								return;
 							}
-							if(!sendoverwritescommands && s2.getLine(0).startsWith("[") && s2.getLine(0).endsWith("]")){
+							if(!sendoverwritescommands && s2.getLine(0).startsWith("[") && s2.getLine(0).endsWith("]"))
+							{
 								return;
 							}
 						}
 						destination = true;
 					}
 					}
-					if(destination && origin){
+					if(destination && origin)
+					{
 						s2.setLine(0, c1);
 						s2.update();
-						if(sendremovetext){
+						if(sendremovetext)
+						{
 							s.setLine(0, "");
 							s.update();
 						}
@@ -1113,7 +1171,8 @@ public class FortificationListener implements Listener {
 					}
 				}
 			}
-			if(l1.equalsIgnoreCase("[Send W]")){
+			if(l1.equalsIgnoreCase("[Send W]"))
+			{
 				int n = z;
 				int p = z;
 				@SuppressWarnings("unused")
@@ -1121,11 +1180,14 @@ public class FortificationListener implements Listener {
 				Sign s=null, s2 = null;
 				boolean origin = false;
 				boolean destination = false;
-				for(int i = 0; i < sendlength; i++){
+				for(int i = 0; i < sendlength; i++)
+				{
 					//Sign found below
-					if(w.getBlockTypeIdAt(x, y, n) == 68){
+					if(w.getBlockAt(x, y, n).getType().equals(Material.WALL_SIGN))
+					{
 						BlockState c = w.getBlockAt(x, y, n).getState();
-						if(!(c instanceof Sign)){
+						if(!(c instanceof Sign))
+						{
 							return;
 						}
 							s = (Sign)c;
@@ -1134,11 +1196,14 @@ public class FortificationListener implements Listener {
 							c3 = s.getLine(2);
 							c4 = s.getLine(3);
 						
-						if(!commandsend){
-						  if(c1.startsWith("[") && c1.endsWith("]")){
+						if(!commandsend)
+						{
+						    if(c1.startsWith("[") && c1.endsWith("]"))
+						    {
 								return;
 							}
-							else if(c1.equalsIgnoreCase("AllDo:") || c1.equalsIgnoreCase("PlayerDo:") || c1.equalsIgnoreCase("ServerDo:")){
+							else if(c1.equalsIgnoreCase("AllDo:") || c1.equalsIgnoreCase("PlayerDo:") || c1.equalsIgnoreCase("ServerDo:"))
+							{
 								return;
 							}
 						}
@@ -1148,29 +1213,37 @@ public class FortificationListener implements Listener {
 					}
 					}
 					//Sign found above
-					if(!destination){
+					if(!destination)
+					{
 						p++;
-					if(w.getBlockTypeIdAt(x, y, p) == 68){
+					if(w.getBlockAt(x, y, p).getType().equals(Material.WALL_SIGN))
+					{
 						BlockState c = w.getBlockAt(x, y, p).getState();
-						if(!(c instanceof Sign)){
+						if(!(c instanceof Sign))
+						{
 							return;
 						}
 						s2 = (Sign)c;
-						if(!sendoverwrite || !sendoverwritescommands){
-							if(s2.getLine(0).trim().length() > 0 && !sendoverwrite){
+						if(!sendoverwrite || !sendoverwritescommands)
+						{
+							if(s2.getLine(0).trim().length() > 0 && !sendoverwrite)
+							{
 								return;
 							}
-							if(!sendoverwritescommands && s2.getLine(0).startsWith("[") && s2.getLine(0).endsWith("]")){
+							if(!sendoverwritescommands && s2.getLine(0).startsWith("[") && s2.getLine(0).endsWith("]"))
+							{
 								return;
 							}
 						}
 						destination = true;
 					}
 					}
-					if(destination && origin){
+					if(destination && origin)
+					{
 						s2.setLine(0, c1);
 						s2.update();
-						if(sendremovetext){
+						if(sendremovetext)
+						{
 							s.setLine(0, "");
 							s.update();
 						}
@@ -1178,7 +1251,8 @@ public class FortificationListener implements Listener {
 					}
 				}
 			}
-			if(l1.equalsIgnoreCase("[Send U]")){
+			if(l1.equalsIgnoreCase("[Send U]"))
+			{
 				int n = y;
 				int p = y;
 				@SuppressWarnings("unused")
@@ -1186,11 +1260,13 @@ public class FortificationListener implements Listener {
 				Sign s=null, s2 = null;
 				boolean origin = false;
 				boolean destination = false;
-				for(int i = 0; i < sendlength; i++){
+				for(int i = 0; i < sendlength; i++)
+				{
 					//Sign found below
 					if(!origin){
 						n--;
-					if(w.getBlockTypeIdAt(x, n, z) == 68){
+					if(w.getBlockAt(x, n, z).getType().equals(Material.WALL_SIGN))
+					{
 						BlockState c = w.getBlockAt(x, n, z).getState();
 						if(!(c instanceof Sign)){
 							return;
@@ -1202,10 +1278,12 @@ public class FortificationListener implements Listener {
 							c4 = s.getLine(3);
 						
 						if(!commandsend){
-						  if(c1.startsWith("[") && c1.endsWith("]")){
+						  if(c1.startsWith("[") && c1.endsWith("]"))
+						  {
 								return;
 							}
-							else if(c1.equalsIgnoreCase("AllDo:") || c1.equalsIgnoreCase("PlayerDo:") || c1.equalsIgnoreCase("ServerDo:")){
+							else if(c1.equalsIgnoreCase("AllDo:") || c1.equalsIgnoreCase("PlayerDo:") || c1.equalsIgnoreCase("ServerDo:"))
+							{
 								return;
 							}
 						}
@@ -1215,29 +1293,37 @@ public class FortificationListener implements Listener {
 					}
 					}
 					//Sign found above
-					if(!destination){
+					if(!destination)
+					{
 						p++;
-					if(w.getBlockTypeIdAt(x, p, z) == 68){
+					if(w.getBlockAt(x, p, z).getType().equals(Material.WALL_SIGN))
+					{
 						BlockState c = w.getBlockAt(x, p, z).getState();
-						if(!(c instanceof Sign)){
+						if(!(c instanceof Sign))
+						{
 							return;
 						}
 						s2 = (Sign)c;
-						if(!sendoverwrite || !sendoverwritescommands){
-							if(s2.getLine(0).trim().length() > 0 && !sendoverwrite){
+						if(!sendoverwrite || !sendoverwritescommands)
+						{
+							if(s2.getLine(0).trim().length() > 0 && !sendoverwrite)
+							{
 								return;
 							}
-							if(!sendoverwritescommands && s2.getLine(0).startsWith("[") && s2.getLine(0).endsWith("]")){
+							if(!sendoverwritescommands && s2.getLine(0).startsWith("[") && s2.getLine(0).endsWith("]"))
+							{
 								return;
 							}
 						}
 						destination = true;
 					}
 					}
-					if(destination && origin){
+					if(destination && origin)
+					{
 						s2.setLine(0, c1);
 						s2.update();
-						if(sendremovetext){
+						if(sendremovetext)
+						{
 							s.setLine(0, "");
 							s.update();
 						}
@@ -1245,7 +1331,8 @@ public class FortificationListener implements Listener {
 					}
 				}
 			}
-			if(l1.equalsIgnoreCase("[Send D]")){
+			if(l1.equalsIgnoreCase("[Send D]"))
+			{
 				int n = y;
 				int p = y;
 				@SuppressWarnings("unused")
@@ -1257,9 +1344,11 @@ public class FortificationListener implements Listener {
 					//Sign found below
 					if(!origin){
 						n++;
-					if(w.getBlockTypeIdAt(x, n, z) == 68){
+					if(w.getBlockAt(x, n, z).getType().equals(Material.WALL_SIGN))
+					{
 						BlockState c = w.getBlockAt(x, n, z).getState();
-						if(!(c instanceof Sign)){
+						if(!(c instanceof Sign))
+						{
 							return;
 						}
 							s = (Sign)c;
@@ -1269,10 +1358,12 @@ public class FortificationListener implements Listener {
 							c4 = s.getLine(3);
 						
 						if(!commandsend){
-						  if(c1.startsWith("[") && c1.endsWith("]")){
+						    if(c1.startsWith("[") && c1.endsWith("]"))
+						    {
 								return;
 							}
-							else if(c1.equalsIgnoreCase("AllDo:") || c1.equalsIgnoreCase("PlayerDo:") || c1.equalsIgnoreCase("ServerDo:")){
+							else if(c1.equalsIgnoreCase("AllDo:") || c1.equalsIgnoreCase("PlayerDo:") || c1.equalsIgnoreCase("ServerDo:"))
+							{
 								return;
 							}
 						}
@@ -1284,27 +1375,34 @@ public class FortificationListener implements Listener {
 					//Sign found above
 					if(!destination){
 						p--;
-					if(w.getBlockTypeIdAt(x, p, z) == 68){
+					if(w.getBlockAt(x, p, z).getType().equals(Material.WALL_SIGN))
+					{
 						BlockState c = w.getBlockAt(x, p, z).getState();
-						if(!(c instanceof Sign)){
+						if(!(c instanceof Sign))
+						{
 							return;
 						}
 						s2 = (Sign)c;
-						if(!sendoverwrite || !sendoverwritescommands){
-							if(s2.getLine(0).trim().length() > 0 && !sendoverwrite){
+						if(!sendoverwrite || !sendoverwritescommands)
+						{
+							if(s2.getLine(0).trim().length() > 0 && !sendoverwrite)
+							{
 								return;
 							}
-							if(!sendoverwritescommands && s2.getLine(0).startsWith("[") && s2.getLine(0).endsWith("]")){
+							if(!sendoverwritescommands && s2.getLine(0).startsWith("[") && s2.getLine(0).endsWith("]"))
+							{
 								return;
 							}
 						}
 						destination = true;
 					}
 					}
-					if(destination && origin){
+					if(destination && origin)
+					{
 						s.setLine(0, s2.getLine(0));
 						s2.update();
-						if(sendremovetext){
+						if(sendremovetext)
+						{
 							s.setLine(0, "");
 							s.update();
 						}
@@ -1312,44 +1410,54 @@ public class FortificationListener implements Listener {
 					}
 				}
 			}
-			if(l1.equalsIgnoreCase("[Send R]")){
+			if(l1.equalsIgnoreCase("[Send R]"))
+			{
 				//east, north is to the right.
-				if(w.getBlockAt(x, y, z).getData() == 0x2){
+				if(w.getBlockAt(x, y, z).getData() == 0x2)
+				{
 					
 				}
 				//west, south is to the right
-				if(w.getBlockAt(x, y, z).getData() == 0x3){
+				if(w.getBlockAt(x, y, z).getData() == 0x3)
+				{
 					
 				}
 				//north, east is to the right
-				if(w.getBlockAt(x, y, z).getData() == 0x4){
+				if(w.getBlockAt(x, y, z).getData() == 0x4)
+				{
 					
 				}
 				//south, west is to the right
-				if(w.getBlockAt(x, y, z).getData() == 0x5){
+				if(w.getBlockAt(x, y, z).getData() == 0x5)
+				{
 					
 				}
 			}
 			if(l1.equalsIgnoreCase("[Send L]")){
 				//east, south is to the left
-				if(w.getBlockAt(x, y, z).getData() == 0x2){
+				if(w.getBlockAt(x, y, z).getData() == 0x2)
+				{
 					
 				}
 				//west, north is to the left
-				if(w.getBlockAt(x, y, z).getData() == 0x3){
+				if(w.getBlockAt(x, y, z).getData() == 0x3)
+				{
 					
 				}
 				//north, west is to the left
-				if(w.getBlockAt(x, y, z).getData() == 0x4){
+				if(w.getBlockAt(x, y, z).getData() == 0x4)
+				{
 					
 				}
 				//south, east is to the left
-				if(w.getBlockAt(x, y, z).getData() == 0x5){
+				if(w.getBlockAt(x, y, z).getData() == 0x5)
+				{
 					
 				}
 			}
 			
-			if(l2.equalsIgnoreCase("[Send N]")){
+			if(l2.equalsIgnoreCase("[Send N]"))
+			{
 				int n = x;
 				int p = x;
 				@SuppressWarnings("unused")
@@ -1357,55 +1465,69 @@ public class FortificationListener implements Listener {
 				Sign s=null, s2 = null;
 				boolean origin = false;
 				boolean destination = false;
-				for(int i = 0; i < sendlength; i++){
+				for(int i = 0; i < sendlength; i++)
+				{
 					//Sign found below
-					if(!origin){
+					if(!origin)
+					{
 						n++;
-					if(w.getBlockTypeIdAt(n, y, z) == 68){
-						BlockState c = w.getBlockAt(n, y, z).getState();
-						if(!(c instanceof Sign)){
-							return;
-						}
-							s = (Sign)c;
-							c1 = s.getLine(0);
-							c2 = s.getLine(1);
-							c3 = s.getLine(2);
-							c4 = s.getLine(3);
-						
-						if(!commandsend){
-						  if(c2.startsWith("[") && c2.endsWith("]")){
+						if(w.getBlockAt(n, y, z).getType().equals(Material.WALL_SIGN))
+						{
+							BlockState c = w.getBlockAt(n, y, z).getState();
+							if(!(c instanceof Sign))
+							{
 								return;
 							}
+								s = (Sign)c;
+								c1 = s.getLine(0);
+								c2 = s.getLine(1);
+								c3 = s.getLine(2);
+								c4 = s.getLine(3);
+							
+							if(!commandsend)
+							{
+							    if(c2.startsWith("[") && c2.endsWith("]"))
+							    {
+									return;
+								}
+							}
+								origin = true;
+							
+							
 						}
-							origin = true;
-						
-						
-					}
 					}
 					//Sign found above
-					if(!destination){
+					if(!destination)
+					{
 						p--;
-					if(w.getBlockTypeIdAt(p, y, z) == 68){
-						BlockState c = w.getBlockAt(p, y, z).getState();
-						if(!(c instanceof Sign)){
-							return;
-						}
-						s2 = (Sign)c;
-						if(!sendoverwrite || !sendoverwritescommands){
-							if(s2.getLine(1).trim().length() > 0 && !sendoverwrite){
+						if(w.getBlockAt(p, y, z).getType().equals(Material.WALL_SIGN))
+						{
+							BlockState c = w.getBlockAt(p, y, z).getState();
+							if(!(c instanceof Sign))
+							{
 								return;
 							}
-							if(!sendoverwritescommands && s2.getLine(1).startsWith("[") && s2.getLine(1).endsWith("]")){
-								return;
+							s2 = (Sign)c;
+							if(!sendoverwrite || !sendoverwritescommands)
+							{
+								if(s2.getLine(1).trim().length() > 0 && !sendoverwrite)
+								{
+									return;
+								}
+								if(!sendoverwritescommands && s2.getLine(1).startsWith("[") && s2.getLine(1).endsWith("]"))
+								{
+									return;
+								}
 							}
+							destination = true;
 						}
-						destination = true;
 					}
-					}
-					if(destination && origin){
+					if(destination && origin)
+					{
 						s2.setLine(1, c2);
 						s2.update();
-						if(sendremovetext){
+						if(sendremovetext)
+						{
 							s.setLine(1, "");
 							s.update();
 						}
@@ -1413,7 +1535,8 @@ public class FortificationListener implements Listener {
 					}
 				}
 			}
-			if(l2.equalsIgnoreCase("[Send S]")){
+			if(l2.equalsIgnoreCase("[Send S]"))
+			{
 				int n = x;
 				int p = x;
 				@SuppressWarnings("unused")
@@ -1421,13 +1544,17 @@ public class FortificationListener implements Listener {
 				Sign s=null, s2 = null;
 				boolean origin = false;
 				boolean destination = false;
-				for(int i = 0; i < sendlength; i++){
+				for(int i = 0; i < sendlength; i++)
+				{
 					//Sign found below
-					if(!origin){
+					if(!origin)
+					{
 						n--;
-					if(w.getBlockTypeIdAt(n, y, z) == 68){
+					if(w.getBlockAt(n, y, z).getType().equals(Material.WALL_SIGN))
+					{
 						BlockState c = w.getBlockAt(n, y, z).getState();
-						if(!(c instanceof Sign)){
+						if(!(c instanceof Sign))
+						{
 							return;
 						}
 							s = (Sign)c;
@@ -1436,8 +1563,10 @@ public class FortificationListener implements Listener {
 							c3 = s.getLine(2);
 							c4 = s.getLine(3);
 						
-						if(!commandsend){
-						  if(c2.startsWith("[") && c2.endsWith("]")){
+						if(!commandsend)
+						{
+						    if(c2.startsWith("[") && c2.endsWith("]"))
+						    {
 								return;
 							}
 						}
@@ -1447,29 +1576,37 @@ public class FortificationListener implements Listener {
 					}
 					}
 					//Sign found above
-					if(!destination){
+					if(!destination)
+					{
 						p++;
-					if(w.getBlockTypeIdAt(p, y, z) == 68){
-						BlockState c = w.getBlockAt(p, y, z).getState();
-						if(!(c instanceof Sign)){
-							return;
-						}
-						s2 = (Sign)c;
-						if(!sendoverwrite || !sendoverwritescommands){
-							if(s2.getLine(1).trim().length() > 0 && !sendoverwrite){
+						if(w.getBlockAt(p, y, z).getType().equals(Material.WALL_SIGN))
+						{
+							BlockState c = w.getBlockAt(p, y, z).getState();
+							if(!(c instanceof Sign))
+							{
 								return;
 							}
-							if(!sendoverwritescommands && s2.getLine(1).startsWith("[") && s2.getLine(1).endsWith("]")){
-								return;
+							s2 = (Sign)c;
+							if(!sendoverwrite || !sendoverwritescommands)
+							{
+								if(s2.getLine(1).trim().length() > 0 && !sendoverwrite)
+								{
+									return;
+								}
+								if(!sendoverwritescommands && s2.getLine(1).startsWith("[") && s2.getLine(1).endsWith("]"))
+								{
+									return;
+								}
 							}
+							destination = true;
 						}
-						destination = true;
 					}
-					}
-					if(destination && origin){
+					if(destination && origin)
+					{
 						s2.setLine(1, c2);
 						s2.update();
-						if(sendremovetext){
+						if(sendremovetext)
+						{
 							s.setLine(1, "");
 							s.update();
 						}
@@ -1477,7 +1614,8 @@ public class FortificationListener implements Listener {
 					}
 				}
 			}
-			if(l2.equalsIgnoreCase("[Send E]")){
+			if(l2.equalsIgnoreCase("[Send E]"))
+			{
 				int n = z;
 				int p = z;
 				@SuppressWarnings("unused")
@@ -1485,55 +1623,68 @@ public class FortificationListener implements Listener {
 				Sign s=null, s2 = null;
 				boolean origin = false;
 				boolean destination = false;
-				for(int i = 0; i < sendlength; i++){
+				for(int i = 0; i < sendlength; i++)
+				{
 					//Sign found below
-					if(!origin){
+					if(!origin)
+					{
 						n--;
-					if(w.getBlockTypeIdAt(x, y, n) == 68){
-						BlockState c = w.getBlockAt(x, y, n).getState();
-						if(!(c instanceof Sign)){
-							return;
-						}
-							s = (Sign)c;
-							c1 = s.getLine(0);
-							c2 = s.getLine(1);
-							c3 = s.getLine(2);
-							c4 = s.getLine(3);
-						
-						if(!commandsend){
-						  if(c2.startsWith("[") && c2.endsWith("]")){
+						if(w.getBlockAt(x, y, n).getType().equals(Material.WALL_SIGN))
+						{
+							BlockState c = w.getBlockAt(x, y, n).getState();
+							if(!(c instanceof Sign))
+							{
 								return;
 							}
+								s = (Sign)c;
+								c1 = s.getLine(0);
+								c2 = s.getLine(1);
+								c3 = s.getLine(2);
+								c4 = s.getLine(3);
+							
+							if(!commandsend){
+							    if(c2.startsWith("[") && c2.endsWith("]"))
+							    {
+									return;
+								}
+							}
+								origin = true;
+							
+							
 						}
-							origin = true;
-						
-						
-					}
 					}
 					//Sign found above
-					if(!destination){
+					if(!destination)
+					{
 						p++;
-					if(w.getBlockTypeIdAt(x, y, p) == 68){
+					if(w.getBlockAt(x, y, p).getType().equals(Material.WALL_SIGN))
+					{
 						BlockState c = w.getBlockAt(x, y, p).getState();
-						if(!(c instanceof Sign)){
+						if(!(c instanceof Sign))
+						{
 							return;
 						}
 						s2 = (Sign)c;
-						if(!sendoverwrite || !sendoverwritescommands){
-							if(s2.getLine(1).trim().length() > 0 && !sendoverwrite){
+						if(!sendoverwrite || !sendoverwritescommands)
+						{
+							if(s2.getLine(1).trim().length() > 0 && !sendoverwrite)
+							{
 								return;
 							}
-							if(!sendoverwritescommands && s2.getLine(1).startsWith("[") && s2.getLine(1).endsWith("]")){
+							if(!sendoverwritescommands && s2.getLine(1).startsWith("[") && s2.getLine(1).endsWith("]"))
+							{
 								return;
 							}
 						}
 						destination = true;
 					}
 					}
-					if(destination && origin){
+					if(destination && origin)
+					{
 						s2.setLine(1, c2);
 						s2.update();
-						if(sendremovetext){
+						if(sendremovetext)
+						{
 							s.setLine(1, "");
 							s.update();
 						}
@@ -1541,7 +1692,8 @@ public class FortificationListener implements Listener {
 					}
 				}
 			}
-			if(l2.equalsIgnoreCase("[Send W]")){
+			if(l2.equalsIgnoreCase("[Send W]"))
+			{
 				int n = z;
 				int p = z;
 				@SuppressWarnings("unused")
@@ -1549,55 +1701,65 @@ public class FortificationListener implements Listener {
 				Sign s=null, s2 = null;
 				boolean origin = false;
 				boolean destination = false;
-				for(int i = 0; i < sendlength; i++){
+				for(int i = 0; i < sendlength; i++)
+				{
 					//Sign found below
-					if(!origin){
+					if(!origin)
+					{
 						n++;
-					if(w.getBlockTypeIdAt(x, y, n) == 68){
-						BlockState c = w.getBlockAt(x, y, n).getState();
-						if(!(c instanceof Sign)){
-							return;
-						}
-							s = (Sign)c;
-							c1 = s.getLine(0);
-							c2 = s.getLine(1);
-							c3 = s.getLine(2);
-							c4 = s.getLine(3);
-						
-						if(!commandsend){
-						  if(c2.startsWith("[") && c2.endsWith("]")){
+						if(w.getBlockAt(x, y, n).getType().equals(Material.WALL_SIGN))
+						{
+							BlockState c = w.getBlockAt(x, y, n).getState();
+							if(!(c instanceof Sign)){
 								return;
 							}
+								s = (Sign)c;
+								c1 = s.getLine(0);
+								c2 = s.getLine(1);
+								c3 = s.getLine(2);
+								c4 = s.getLine(3);
+							
+							if(!commandsend)
+							{
+							    if(c2.startsWith("[") && c2.endsWith("]"))
+							    {
+						  			return;
+								}
+							}
+								origin = true;
 						}
-							origin = true;
-						
-						
-					}
 					}
 					//Sign found above
-					if(!destination){
+					if(!destination)
+					{
 						p--;
-					if(w.getBlockTypeIdAt(x, y, p) == 68){
-						BlockState c = w.getBlockAt(x, y, p).getState();
-						if(!(c instanceof Sign)){
-							return;
-						}
-						s2 = (Sign)c;
-						if(!sendoverwrite || !sendoverwritescommands){
-							if(s2.getLine(1).trim().length() > 0 && !sendoverwrite){
+						if(w.getBlockAt(x, y, p).getType().equals(Material.WALL_SIGN))
+						{
+							BlockState c = w.getBlockAt(x, y, p).getState();
+							if(!(c instanceof Sign)){
 								return;
 							}
-							if(!sendoverwritescommands && s2.getLine(1).startsWith("[") && s2.getLine(1).endsWith("]")){
-								return;
+							s2 = (Sign)c;
+							if(!sendoverwrite || !sendoverwritescommands)
+							{
+								if(s2.getLine(1).trim().length() > 0 && !sendoverwrite)
+								{
+									return;
+								}
+								if(!sendoverwritescommands && s2.getLine(1).startsWith("[") && s2.getLine(1).endsWith("]"))
+								{
+									return;
+								}
 							}
+							destination = true;
 						}
-						destination = true;
 					}
-					}
-					if(destination && origin){
+					if(destination && origin)
+					{
 						s2.setLine(1, c2);
 						s2.update();
-						if(sendremovetext){
+						if(sendremovetext)
+						{
 							s.setLine(1, "");
 							s.update();
 						}
@@ -1606,7 +1768,8 @@ public class FortificationListener implements Listener {
 				}
 			}
 			//Send text from sign below to sign above
-			if(l2.equalsIgnoreCase("[Send U]")){
+			if(l2.equalsIgnoreCase("[Send U]"))
+			{
 				int n = y;
 				int p = y;
 				@SuppressWarnings("unused")
@@ -1614,62 +1777,74 @@ public class FortificationListener implements Listener {
 				Sign s=null, s2 = null;
 				boolean origin = false;
 				boolean destination = false;
-				for(int i = 0; i < sendlength; i++){
+				for(int i = 0; i < sendlength; i++)
+				{
 					//Sign found below
-					if(!origin){
+					if(!origin)
+					{
 						n--;
-					if(w.getBlockTypeIdAt(x, n, z) == 68){
-						BlockState c = w.getBlockAt(x, n, z).getState();
-						if(!(c instanceof Sign)){
-							return;
-						}
-							s = (Sign)c;
-							c1 = s.getLine(0);
-							c2 = s.getLine(1);
-							c3 = s.getLine(2);
-							c4 = s.getLine(3);
-						
-						if(!commandsend){
-						/*	Check these for line 1 text sending.
-						 * if(c1.startsWith("[") && c1.endsWith("]")){
+						if(w.getBlockAt(x, n, z).getType().equals(Material.WALL_SIGN))
+						{
+							BlockState c = w.getBlockAt(x, n, z).getState();
+							if(!(c instanceof Sign))
+							{
 								return;
 							}
-							else if(c1.equalsIgnoreCase("AllDo:") || c1.equalsIgnoreCase("PlayerDo:") || c1.equalsIgnoreCase("ServerDo:")){
-								return;
-							}*/
-							if(c2.startsWith("[") && c2.endsWith("]")){
-								return;
+								s = (Sign)c;
+								c1 = s.getLine(0);
+								c2 = s.getLine(1);
+								c3 = s.getLine(2);
+								c4 = s.getLine(3);
+							
+							if(!commandsend)
+							{
+							/*	Check these for line 1 text sending.
+							 * if(c1.startsWith("[") && c1.endsWith("]")){
+									return;
+								}
+								else if(c1.equalsIgnoreCase("AllDo:") || c1.equalsIgnoreCase("PlayerDo:") || c1.equalsIgnoreCase("ServerDo:")){
+									return;
+								}*/
+								if(c2.startsWith("[") && c2.endsWith("]"))
+								{
+									return;
+								}
 							}
+								origin = true;
 						}
-							origin = true;
-						
-						
-					}
 					}
 					//Sign found above
-					if(!destination){
+					if(!destination)
+					{
 						p++;
-					if(w.getBlockTypeIdAt(x, p, z) == 68){
-						BlockState c = w.getBlockAt(x, p, z).getState();
-						if(!(c instanceof Sign)){
-							return;
-						}
-						s2 = (Sign)c;
-						if(!sendoverwrite || !sendoverwritescommands){
-							if(s2.getLine(1).trim().length() > 0 && !sendoverwrite){
+						if(w.getBlockAt(x, p, z).getType().equals(Material.WALL_SIGN))
+						{
+							BlockState c = w.getBlockAt(x, p, z).getState();
+							if(!(c instanceof Sign))
+							{
 								return;
 							}
-							if(!sendoverwritescommands && s2.getLine(1).startsWith("[") && s2.getLine(1).endsWith("]")){
-								return;
+							s2 = (Sign)c;
+							if(!sendoverwrite || !sendoverwritescommands)
+							{
+								if(s2.getLine(1).trim().length() > 0 && !sendoverwrite)
+								{
+									return;
+								}
+								if(!sendoverwritescommands && s2.getLine(1).startsWith("[") && s2.getLine(1).endsWith("]"))
+								{
+									return;
+								}
 							}
+							destination = true;
 						}
-						destination = true;
 					}
-					}
-					if(destination && origin){
+					if(destination && origin)
+					{
 						s2.setLine(1, c2);
 						s2.update();
-						if(sendremovetext){
+						if(sendremovetext)
+						{
 							s.setLine(1, "");
 							s.update();
 						}
@@ -1677,7 +1852,8 @@ public class FortificationListener implements Listener {
 					}
 				}
 			}
-			if(l2.equalsIgnoreCase("[Send D]")){
+			if(l2.equalsIgnoreCase("[Send D]"))
+			{
 				int n = y;
 				int p = y;
 				@SuppressWarnings("unused")
@@ -1685,55 +1861,67 @@ public class FortificationListener implements Listener {
 				Sign s=null, s2 = null;
 				boolean origin = false;
 				boolean destination = false;
-				for(int i = 0; i < sendlength; i++){
+				for(int i = 0; i < sendlength; i++)
+				{
 					//Sign found below
-					if(!origin){
+					if(!origin)
+					{
 						n++;
-					if(w.getBlockTypeIdAt(x, n, z) == 68){
-						BlockState c = w.getBlockAt(x, n, z).getState();
-						if(!(c instanceof Sign)){
-							return;
-						}
-							s = (Sign)c;
-							c1 = s.getLine(0);
-							c2 = s.getLine(1);
-							c3 = s.getLine(2);
-							c4 = s.getLine(3);
-						
-						if(!commandsend){
-						  if(c2.startsWith("[") && c2.endsWith("]")){
+						if(w.getBlockAt(x, n, z).getType().equals(Material.WALL_SIGN))
+						{
+							BlockState c = w.getBlockAt(x, n, z).getState();
+							if(!(c instanceof Sign))
+							{
 								return;
 							}
+								s = (Sign)c;
+								c1 = s.getLine(0);
+								c2 = s.getLine(1);
+								c3 = s.getLine(2);
+								c4 = s.getLine(3);
+							
+							if(!commandsend)
+							{
+							    if(c2.startsWith("[") && c2.endsWith("]"))
+							    {
+									return;
+								}
+							}
+								origin = true;
 						}
-							origin = true;
-						
-						
-					}
 					}
 					//Sign found above
-					if(!destination){
+					if(!destination)
+					{
 						p--;
-					if(w.getBlockTypeIdAt(x, p, z) == 68){
-						BlockState c = w.getBlockAt(x, p, z).getState();
-						if(!(c instanceof Sign)){
-							return;
-						}
-						s2 = (Sign)c;
-						if(!sendoverwrite || !sendoverwritescommands){
-							if(s2.getLine(1).trim().length() > 0 && !sendoverwrite){
+						if(w.getBlockAt(x, p, z).getType().equals(Material.WALL_SIGN))
+						{
+							BlockState c = w.getBlockAt(x, p, z).getState();
+							if(!(c instanceof Sign))
+							{
 								return;
 							}
-							if(!sendoverwritescommands && s2.getLine(1).startsWith("[") && s2.getLine(1).endsWith("]")){
-								return;
+							s2 = (Sign)c;
+							if(!sendoverwrite || !sendoverwritescommands)
+							{
+								if(s2.getLine(1).trim().length() > 0 && !sendoverwrite)
+								{
+									return;
+								}
+								if(!sendoverwritescommands && s2.getLine(1).startsWith("[") && s2.getLine(1).endsWith("]"))
+								{
+									return;
+								}
 							}
+							destination = true;
 						}
-						destination = true;
 					}
-					}
-					if(destination && origin){
+					if(destination && origin)
+					{
 						s2.setLine(1, c2);
 						s2.update();
-						if(sendremovetext){
+						if(sendremovetext)
+						{
 							s.setLine(1, "");
 							s.update();
 						}
@@ -1742,7 +1930,8 @@ public class FortificationListener implements Listener {
 				}
 			}
 			
-			if(l3.equalsIgnoreCase("[Send N]")){
+			if(l3.equalsIgnoreCase("[Send N]"))
+			{
 				int n = x;
 				int p = x;
 				@SuppressWarnings("unused")
@@ -1750,55 +1939,67 @@ public class FortificationListener implements Listener {
 				Sign s=null, s2 = null;
 				boolean origin = false;
 				boolean destination = false;
-				for(int i = 0; i < sendlength; i++){
+				for(int i = 0; i < sendlength; i++)
+				{
 					//Sign found below
-					if(!origin){
+					if(!origin)
+					{
 						n++;
-					if(w.getBlockTypeIdAt(n, y, z) == 68){
-						BlockState c = w.getBlockAt(n, y, z).getState();
-						if(!(c instanceof Sign)){
-							return;
-						}
-							s = (Sign)c;
-							c1 = s.getLine(0);
-							c2 = s.getLine(1);
-							c3 = s.getLine(2);
-							c4 = s.getLine(3);
-						
-						if(!commandsend){
-						  if(c3.startsWith("[") && c3.endsWith("]")){
+						if(w.getBlockAt(n, y, z).getType().equals(Material.WALL_SIGN))
+						{
+							BlockState c = w.getBlockAt(n, y, z).getState();
+							if(!(c instanceof Sign))
+							{
 								return;
 							}
+								s = (Sign)c;
+								c1 = s.getLine(0);
+								c2 = s.getLine(1);
+								c3 = s.getLine(2);
+								c4 = s.getLine(3);
+							
+							if(!commandsend)
+							{
+							    if(c3.startsWith("[") && c3.endsWith("]"))
+							    {
+									return;
+								}
+							}
+								origin = true;
 						}
-							origin = true;
-						
-						
-					}
 					}
 					//Sign found above
-					if(!destination){
+					if(!destination)
+					{
 						p--;
-					if(w.getBlockTypeIdAt(p, y, z) == 68){
-						BlockState c = w.getBlockAt(p, y, z).getState();
-						if(!(c instanceof Sign)){
-							return;
-						}
-						s2 = (Sign)c;
-						if(!sendoverwrite || !sendoverwritescommands){
-							if(s2.getLine(2).trim().length() > 0 && !sendoverwrite){
+						if(w.getBlockAt(p, y, z).getType().equals(Material.WALL_SIGN))
+						{
+							BlockState c = w.getBlockAt(p, y, z).getState();
+							if(!(c instanceof Sign))
+							{
 								return;
 							}
-							if(!sendoverwritescommands && s2.getLine(2).startsWith("[") && s2.getLine(2).endsWith("]")){
-								return;
+							s2 = (Sign)c;
+							if(!sendoverwrite || !sendoverwritescommands)
+							{
+								if(s2.getLine(2).trim().length() > 0 && !sendoverwrite)
+								{
+									return;
+								}
+								if(!sendoverwritescommands && s2.getLine(2).startsWith("[") && s2.getLine(2).endsWith("]"))
+								{
+									return;
+								}
 							}
+							destination = true;
 						}
-						destination = true;
 					}
-					}
-					if(destination && origin){
+					if(destination && origin)
+					{
 						s2.setLine(2, c3);
 						s2.update();
-						if(sendremovetext){
+						if(sendremovetext)
+						{
 							s.setLine(2, "");
 							s.update();
 						}
@@ -1806,7 +2007,8 @@ public class FortificationListener implements Listener {
 					}
 				}
 			}
-			if(l3.equalsIgnoreCase("[Send S]")){
+			if(l3.equalsIgnoreCase("[Send S]"))
+			{
 				int n = x;
 				int p = x;
 				@SuppressWarnings("unused")
@@ -1814,55 +2016,67 @@ public class FortificationListener implements Listener {
 				Sign s=null, s2 = null;
 				boolean origin = false;
 				boolean destination = false;
-				for(int i = 0; i < sendlength; i++){
+				for(int i = 0; i < sendlength; i++)
+				{
 					//Sign found below
-					if(!origin){
+					if(!origin)
+					{
 						n--;
-					if(w.getBlockTypeIdAt(n, y, z) == 68){
-						BlockState c = w.getBlockAt(n, y, z).getState();
-						if(!(c instanceof Sign)){
-							return;
-						}
-							s = (Sign)c;
-							c1 = s.getLine(0);
-							c2 = s.getLine(1);
-							c3 = s.getLine(2);
-							c4 = s.getLine(3);
-						
-						if(!commandsend){
-						  if(c3.startsWith("[") && c3.endsWith("]")){
+						if(w.getBlockAt(n, y, z).getType().equals(Material.WALL_SIGN))
+						{
+							BlockState c = w.getBlockAt(n, y, z).getState();
+							if(!(c instanceof Sign))
+							{
 								return;
 							}
+								s = (Sign)c;
+								c1 = s.getLine(0);
+								c2 = s.getLine(1);
+								c3 = s.getLine(2);
+								c4 = s.getLine(3);
+							
+							if(!commandsend)
+							{
+						    	if(c3.startsWith("[") && c3.endsWith("]"))
+							    {
+									return;
+								}
+							}
+								origin = true;
 						}
-							origin = true;
-						
-						
-					}
 					}
 					//Sign found above
-					if(!destination){
+					if(!destination)
+					{
 						p++;
-					if(w.getBlockTypeIdAt(p, y, z) == 68){
-						BlockState c = w.getBlockAt(p, y, z).getState();
-						if(!(c instanceof Sign)){
-							return;
-						}
-						s2 = (Sign)c;
-						if(!sendoverwrite || !sendoverwritescommands){
-							if(s2.getLine(2).trim().length() > 0 && !sendoverwrite){
+						if(w.getBlockAt(p, y, z).getType().equals(Material.WALL_SIGN))
+						{
+							BlockState c = w.getBlockAt(p, y, z).getState();
+							if(!(c instanceof Sign))
+							{
 								return;
 							}
-							if(!sendoverwritescommands && s2.getLine(2).startsWith("[") && s2.getLine(2).endsWith("]")){
-								return;
+							s2 = (Sign)c;
+							if(!sendoverwrite || !sendoverwritescommands)
+							{
+								if(s2.getLine(2).trim().length() > 0 && !sendoverwrite)
+								{
+									return;
+								}
+								if(!sendoverwritescommands && s2.getLine(2).startsWith("[") && s2.getLine(2).endsWith("]"))
+								{
+									return;
+								}
 							}
+							destination = true;
 						}
-						destination = true;
 					}
-					}
-					if(destination && origin){
+					if(destination && origin)
+					{
 						s2.setLine(2, c3);
 						s2.update();
-						if(sendremovetext){
+						if(sendremovetext)
+						{
 							s.setLine(2, "");
 							s.update();
 						}
@@ -1870,7 +2084,8 @@ public class FortificationListener implements Listener {
 					}
 				}
 			}
-			if(l3.equalsIgnoreCase("[Send E]")){
+			if(l3.equalsIgnoreCase("[Send E]"))
+			{
 				int n = z;
 				int p = z;
 				@SuppressWarnings("unused")
@@ -1878,55 +2093,67 @@ public class FortificationListener implements Listener {
 				Sign s=null, s2 = null;
 				boolean origin = false;
 				boolean destination = false;
-				for(int i = 0; i < sendlength; i++){
+				for(int i = 0; i < sendlength; i++)
+				{
 					//Sign found below
-					if(!origin){
+					if(!origin)
+					{
 						n--;
-					if(w.getBlockTypeIdAt(x, y, n) == 68){
-						BlockState c = w.getBlockAt(x, y, n).getState();
-						if(!(c instanceof Sign)){
-							return;
-						}
-							s = (Sign)c;
-							c1 = s.getLine(0);
-							c2 = s.getLine(1);
-							c3 = s.getLine(2);
-							c4 = s.getLine(3);
-						
-						if(!commandsend){
-						  if(c3.startsWith("[") && c3.endsWith("]")){
+						if(w.getBlockAt(x, y, n).getType().equals(Material.WALL_SIGN))
+						{
+							BlockState c = w.getBlockAt(x, y, n).getState();
+							if(!(c instanceof Sign))
+							{
 								return;
 							}
+								s = (Sign)c;
+								c1 = s.getLine(0);
+								c2 = s.getLine(1);
+								c3 = s.getLine(2);
+								c4 = s.getLine(3);
+							
+							if(!commandsend)
+							{
+							    if(c3.startsWith("[") && c3.endsWith("]"))
+							    {
+									return;
+								}
+							}
+								origin = true;
 						}
-							origin = true;
-						
-						
-					}
 					}
 					//Sign found above
-					if(!destination){
+					if(!destination)
+					{
 						p++;
-					if(w.getBlockTypeIdAt(x, y, p) == 68){
-						BlockState c = w.getBlockAt(x, y, p).getState();
-						if(!(c instanceof Sign)){
-							return;
-						}
-						s2 = (Sign)c;
-						if(!sendoverwrite || !sendoverwritescommands){
-							if(s2.getLine(2).trim().length() > 0 && !sendoverwrite){
+						if(w.getBlockAt(x, y, p).getType().equals(Material.WALL_SIGN))
+						{
+							BlockState c = w.getBlockAt(x, y, p).getState();
+							if(!(c instanceof Sign))
+							{
 								return;
 							}
-							if(!sendoverwritescommands && s2.getLine(2).startsWith("[") && s2.getLine(2).endsWith("]")){
-								return;
+							s2 = (Sign)c;
+							if(!sendoverwrite || !sendoverwritescommands)
+							{
+								if(s2.getLine(2).trim().length() > 0 && !sendoverwrite)
+								{
+									return;
+								}
+								if(!sendoverwritescommands && s2.getLine(2).startsWith("[") && s2.getLine(2).endsWith("]"))
+								{
+									return;
+								}
 							}
+							destination = true;
 						}
-						destination = true;
 					}
-					}
-					if(destination && origin){
+					if(destination && origin)
+					{
 						s2.setLine(2, c3);
 						s2.update();
-						if(sendremovetext){
+						if(sendremovetext)
+						{
 							s.setLine(2, "");
 							s.update();
 						}
@@ -1934,7 +2161,8 @@ public class FortificationListener implements Listener {
 					}
 				}
 			}
-			if(l3.equalsIgnoreCase("[Send W]")){
+			if(l3.equalsIgnoreCase("[Send W]"))
+			{
 				int n = z;
 				int p = z;
 				@SuppressWarnings("unused")
@@ -1942,55 +2170,64 @@ public class FortificationListener implements Listener {
 				Sign s=null, s2 = null;
 				boolean origin = false;
 				boolean destination = false;
-				for(int i = 0; i < sendlength; i++){
+				for(int i = 0; i < sendlength; i++)
+				{
 					//Sign found below
-					if(!origin){
+					if(!origin)
+					{
 						n++;
-					if(w.getBlockTypeIdAt(x, y, n) == 68){
-						BlockState c = w.getBlockAt(x, y, n).getState();
-						if(!(c instanceof Sign)){
-							return;
-						}
-							s = (Sign)c;
-							c1 = s.getLine(0);
-							c2 = s.getLine(1);
-							c3 = s.getLine(2);
-							c4 = s.getLine(3);
-						
-						if(!commandsend){
-						  if(c3.startsWith("[") && c3.endsWith("]")){
+						if(w.getBlockAt(x, y, n).getType().equals(Material.WALL_SIGN))
+						{
+							BlockState c = w.getBlockAt(x, y, n).getState();
+							if(!(c instanceof Sign)){
 								return;
 							}
+								s = (Sign)c;
+								c1 = s.getLine(0);
+								c2 = s.getLine(1);
+								c3 = s.getLine(2);
+								c4 = s.getLine(3);
+							
+							if(!commandsend){
+							  if(c3.startsWith("[") && c3.endsWith("]")){
+									return;
+								}
+							}
+								origin = true;
 						}
-							origin = true;
-						
-						
-					}
 					}
 					//Sign found above
-					if(!destination){
+					if(!destination)
+					{
 						p--;
-					if(w.getBlockTypeIdAt(x, y, p) == 68){
-						BlockState c = w.getBlockAt(x, y, p).getState();
-						if(!(c instanceof Sign)){
-							return;
-						}
-						s2 = (Sign)c;
-						if(!sendoverwrite || !sendoverwritescommands){
-							if(s2.getLine(2).trim().length() > 0 && !sendoverwrite){
+						if(w.getBlockAt(x, y, p).getType().equals(Material.WALL_SIGN))
+						{
+							BlockState c = w.getBlockAt(x, y, p).getState();
+							if(!(c instanceof Sign))
+							{
 								return;
 							}
-							if(!sendoverwritescommands && s2.getLine(2).startsWith("[") && s2.getLine(2).endsWith("]")){
-								return;
+							s2 = (Sign)c;
+							if(!sendoverwrite || !sendoverwritescommands)
+							{
+								if(s2.getLine(2).trim().length() > 0 && !sendoverwrite)
+								{
+									return;
+								}
+								if(!sendoverwritescommands && s2.getLine(2).startsWith("[") && s2.getLine(2).endsWith("]"))
+								{
+									return;
+								}
 							}
+							destination = true;
 						}
-						destination = true;
 					}
-					}
-					if(destination && origin){
+					if(destination && origin)
+					{
 						s2.setLine(2, c3);
 						s2.update();
-						if(sendremovetext){
+						if(sendremovetext)
+						{
 							s.setLine(2, "");
 							s.update();
 						}
@@ -1999,7 +2236,8 @@ public class FortificationListener implements Listener {
 				}
 			}
 			//Send text from sign below to sign above
-			if(l3.equalsIgnoreCase("[Send U]")){
+			if(l3.equalsIgnoreCase("[Send U]"))
+			{
 				int n = y;
 				int p = y;
 				@SuppressWarnings("unused")
@@ -2007,62 +2245,73 @@ public class FortificationListener implements Listener {
 				Sign s=null, s2 = null;
 				boolean origin = false;
 				boolean destination = false;
-				for(int i = 0; i < sendlength; i++){
+				for(int i = 0; i < sendlength; i++)
+				{
 					//Sign found below
-					if(!origin){
+					if(!origin)
+					{
 						n--;
-					if(w.getBlockTypeIdAt(x, n, z) == 68){
-						BlockState c = w.getBlockAt(x, n, z).getState();
-						if(!(c instanceof Sign)){
-							return;
-						}
-							s = (Sign)c;
-							c1 = s.getLine(0);
-							c2 = s.getLine(1);
-							c3 = s.getLine(2);
-							c4 = s.getLine(3);
-						
-						if(!commandsend){
-						/*	Check these for line 1 text sending.
-						 * if(c1.startsWith("[") && c1.endsWith("]")){
+						if(w.getBlockAt(x, n, z).getType().equals(Material.WALL_SIGN))
+						{
+							BlockState c = w.getBlockAt(x, n, z).getState();
+							if(!(c instanceof Sign))
+							{
 								return;
 							}
-							else if(c1.equalsIgnoreCase("AllDo:") || c1.equalsIgnoreCase("PlayerDo:") || c1.equalsIgnoreCase("ServerDo:")){
-								return;
-							}*/
-							if(c3.startsWith("[") && c3.endsWith("]")){
-								return;
+								s = (Sign)c;
+								c1 = s.getLine(0);
+								c2 = s.getLine(1);
+								c3 = s.getLine(2);
+								c4 = s.getLine(3);
+							
+							if(!commandsend)
+							{
+							/*	Check these for line 1 text sending.
+							 * if(c1.startsWith("[") && c1.endsWith("]")){
+									return;
+								}
+								else if(c1.equalsIgnoreCase("AllDo:") || c1.equalsIgnoreCase("PlayerDo:") || c1.equalsIgnoreCase("ServerDo:")){
+									return;
+								}*/
+								if(c3.startsWith("[") && c3.endsWith("]")){
+									return;
+								}
 							}
+								origin = true;
 						}
-							origin = true;
-						
-						
-					}
 					}
 					//Sign found above
-					if(!destination){
+					if(!destination)
+					{
 						p++;
-					if(w.getBlockTypeIdAt(x, p, z) == 68){
-						BlockState c = w.getBlockAt(x, p, z).getState();
-						if(!(c instanceof Sign)){
-							return;
-						}
-						s2 = (Sign)c;
-						if(!sendoverwrite || !sendoverwritescommands){
-							if(s2.getLine(2).trim().length() > 0 && !sendoverwrite){
+						if(w.getBlockAt(x, p, z).getType().equals(Material.WALL_SIGN))
+						{
+							BlockState c = w.getBlockAt(x, p, z).getState();
+							if(!(c instanceof Sign))
+							{
 								return;
 							}
-							if(!sendoverwritescommands && s2.getLine(2).startsWith("[") && s2.getLine(2).endsWith("]")){
-								return;
+							s2 = (Sign)c;
+							if(!sendoverwrite || !sendoverwritescommands)
+							{
+								if(s2.getLine(2).trim().length() > 0 && !sendoverwrite)
+								{
+									return;
+								}
+								if(!sendoverwritescommands && s2.getLine(2).startsWith("[") && s2.getLine(2).endsWith("]"))
+								{
+									return;
+								}
 							}
+							destination = true;
 						}
-						destination = true;
 					}
-					}
-					if(destination && origin){
+					if(destination && origin)
+					{
 						s2.setLine(2, c3);
 						s2.update();
-						if(sendremovetext){
+						if(sendremovetext)
+						{
 							s.setLine(2, "");
 							s.update();
 						}
@@ -2070,7 +2319,8 @@ public class FortificationListener implements Listener {
 					}
 				}
 			}
-			if(l3.equalsIgnoreCase("[Send D]")){
+			if(l3.equalsIgnoreCase("[Send D]"))
+			{
 				int n = y;
 				int p = y;
 				@SuppressWarnings("unused")
@@ -2078,65 +2328,77 @@ public class FortificationListener implements Listener {
 				Sign s=null, s2 = null;
 				boolean origin = false;
 				boolean destination = false;
-				for(int i = 0; i < sendlength; i++){
+				for(int i = 0; i < sendlength; i++)
+				{
 					//Sign found below
-					if(!origin){
+					if(!origin)
+					{
 						n++;
-					if(w.getBlockTypeIdAt(x, n, z) == 68){
-						BlockState c = w.getBlockAt(x, n, z).getState();
-						if(!(c instanceof Sign)){
-							return;
-						}
-							s = (Sign)c;
-							c1 = s.getLine(0);
-							c2 = s.getLine(1);
-							c3 = s.getLine(2);
-							c4 = s.getLine(3);
-						
-						if(!commandsend){
-						  if(c3.startsWith("[") && c3.endsWith("]")){
+						if(w.getBlockAt(x, n, z).getType().equals(Material.WALL_SIGN))
+						{
+							BlockState c = w.getBlockAt(x, n, z).getState();
+							if(!(c instanceof Sign))
+							{
 								return;
 							}
+								s = (Sign)c;
+								c1 = s.getLine(0);
+								c2 = s.getLine(1);
+								c3 = s.getLine(2);
+								c4 = s.getLine(3);
+							
+							if(!commandsend)
+							{
+							    if(c3.startsWith("[") && c3.endsWith("]"))
+							    {
+									return;
+								}
+							}
+								origin = true;
 						}
-							origin = true;
-						
-						
-					}
 					}
 					//Sign found above
-					if(!destination){
+					if(!destination)
+					{
 						p--;
-					if(w.getBlockTypeIdAt(x, p, z) == 68){
-						BlockState c = w.getBlockAt(x, p, z).getState();
-						if(!(c instanceof Sign)){
-							return;
-						}
-						s2 = (Sign)c;
-						if(!sendoverwrite || !sendoverwritescommands){
-							if(s2.getLine(2).trim().length() > 0 && !sendoverwrite){
+						if(w.getBlockAt(x, p, z).getType().equals(Material.WALL_SIGN))
+						{
+							BlockState c = w.getBlockAt(x, p, z).getState();
+							if(!(c instanceof Sign))
+							{
 								return;
 							}
-							if(!sendoverwritescommands && s2.getLine(2).startsWith("[") && s2.getLine(2).endsWith("]")){
-								return;
+							s2 = (Sign)c;
+							if(!sendoverwrite || !sendoverwritescommands)
+							{
+								if(s2.getLine(2).trim().length() > 0 && !sendoverwrite)
+								{
+									return;
+								}
+								if(!sendoverwritescommands && s2.getLine(2).startsWith("[") && s2.getLine(2).endsWith("]"))
+								{
+									return;
+								}
 							}
+							destination = true;
 						}
-						destination = true;
 					}
-					}
-					if(destination && origin){
+					if(destination && origin)
+					{
 						s2.setLine(2, c3);
 						s2.update();
-						if(sendremovetext){
+						if(sendremovetext)
+						{
 							s.setLine(2, "");
 							s.update();
 						}
-						
 					}
 				}
 			}
 			
 			
-			if(l4.equalsIgnoreCase("[Send N]")){
+			if(l4.equalsIgnoreCase("[Send N]"))
+			{
 				int n = x;
 				int p = x;
 				@SuppressWarnings("unused")
@@ -2144,13 +2406,17 @@ public class FortificationListener implements Listener {
 				Sign s=null, s2 = null;
 				boolean origin = false;
 				boolean destination = false;
-				for(int i = 0; i < sendlength; i++){
+				for(int i = 0; i < sendlength; i++)
+				{
 					//Sign found below
-					if(!origin){
+					if(!origin)
+					{
 						n++;
-					if(w.getBlockTypeIdAt(n, y, z) == 68){
+					if(w.getBlockAt(n, y, z).getType().equals(Material.WALL_SIGN))
+					{
 						BlockState c = w.getBlockAt(n, y, z).getState();
-						if(!(c instanceof Sign)){
+						if(!(c instanceof Sign))
+						{
 							return;
 						}
 							s = (Sign)c;
@@ -2159,8 +2425,10 @@ public class FortificationListener implements Listener {
 							c3 = s.getLine(2);
 							c4 = s.getLine(3);
 						
-						if(!commandsend){
-						  if(c4.startsWith("[") && c4.endsWith("]")){
+						if(!commandsend)
+						{
+						    if(c4.startsWith("[") && c4.endsWith("]"))
+						    {
 								return;
 							}
 						}
@@ -2170,37 +2438,45 @@ public class FortificationListener implements Listener {
 					}
 					}
 					//Sign found above
-					if(!destination){
+					if(!destination)
+					{
 						p--;
-					if(w.getBlockTypeIdAt(p, y, z) == 68){
-						BlockState c = w.getBlockAt(p, y, z).getState();
-						if(!(c instanceof Sign)){
-							return;
-						}
-						s2 = (Sign)c;
-						if(!sendoverwrite || !sendoverwritescommands){
-							if(s2.getLine(3).trim().length() > 0 && !sendoverwrite){
+						if(w.getBlockAt(p, y, z).getType().equals(Material.WALL_SIGN))
+						{
+							BlockState c = w.getBlockAt(p, y, z).getState();
+							if(!(c instanceof Sign))
+							{
 								return;
 							}
-							if(!sendoverwritescommands && s2.getLine(3).startsWith("[") && s2.getLine(3).endsWith("]")){
-								return;
+							s2 = (Sign)c;
+							if(!sendoverwrite || !sendoverwritescommands)
+							{
+								if(s2.getLine(3).trim().length() > 0 && !sendoverwrite)
+								{
+									return;
+								}
+								if(!sendoverwritescommands && s2.getLine(3).startsWith("[") && s2.getLine(3).endsWith("]"))
+								{
+									return;
+								}
 							}
+							destination = true;
 						}
-						destination = true;
 					}
-					}
-					if(destination && origin){
+					if(destination && origin)
+					{
 						s2.setLine(3, c4);
 						s2.update();
-						if(sendremovetext){
+						if(sendremovetext)
+						{
 							s.setLine(3, "");
 							s.update();
 						}
-						
 					}
 				}
 			}
-			if(l4.equalsIgnoreCase("[Send S]")){
+			if(l4.equalsIgnoreCase("[Send S]"))
+			{
 				int n = x;
 				int p = x;
 				@SuppressWarnings("unused")
@@ -2208,55 +2484,67 @@ public class FortificationListener implements Listener {
 				Sign s=null, s2 = null;
 				boolean origin = false;
 				boolean destination = false;
-				for(int i = 0; i < sendlength; i++){
+				for(int i = 0; i < sendlength; i++)
+				{
 					//Sign found below
-					if(!origin){
+					if(!origin)
+					{
 						n--;
-					if(w.getBlockTypeIdAt(n, y, z) == 68){
-						BlockState c = w.getBlockAt(n, y, z).getState();
-						if(!(c instanceof Sign)){
-							return;
-						}
-							s = (Sign)c;
-							c1 = s.getLine(0);
-							c2 = s.getLine(1);
-							c3 = s.getLine(2);
-							c4 = s.getLine(3);
-						
-						if(!commandsend){
-						  if(c4.startsWith("[") && c4.endsWith("]")){
+						if(w.getBlockAt(n, y, z).getType().equals(Material.WALL_SIGN))
+						{
+							BlockState c = w.getBlockAt(n, y, z).getState();
+							if(!(c instanceof Sign))
+							{
 								return;
 							}
+								s = (Sign)c;
+								c1 = s.getLine(0);
+								c2 = s.getLine(1);
+								c3 = s.getLine(2);
+								c4 = s.getLine(3);
+							
+							if(!commandsend)
+							{
+							    if(c4.startsWith("[") && c4.endsWith("]"))
+							    {
+									return;
+								}
+							}
+								origin = true;
 						}
-							origin = true;
-						
-						
-					}
 					}
 					//Sign found above
-					if(!destination){
+					if(!destination)
+					{
 						p++;
-					if(w.getBlockTypeIdAt(p, y, z) == 68){
-						BlockState c = w.getBlockAt(p, y, z).getState();
-						if(!(c instanceof Sign)){
-							return;
-						}
-						s2 = (Sign)c;
-						if(!sendoverwrite || !sendoverwritescommands){
-							if(s2.getLine(3).trim().length() > 0 && !sendoverwrite){
+						if(w.getBlockAt(p, y, z).getType().equals(Material.WALL_SIGN))
+						{
+							BlockState c = w.getBlockAt(p, y, z).getState();
+							if(!(c instanceof Sign))
+							{
 								return;
 							}
-							if(!sendoverwritescommands && s2.getLine(3).startsWith("[") && s2.getLine(3).endsWith("]")){
-								return;
+							s2 = (Sign)c;
+							if(!sendoverwrite || !sendoverwritescommands)
+							{
+								if(s2.getLine(3).trim().length() > 0 && !sendoverwrite)
+								{
+									return;
+								}
+								if(!sendoverwritescommands && s2.getLine(3).startsWith("[") && s2.getLine(3).endsWith("]"))
+								{
+									return;
+								}
 							}
+							destination = true;
 						}
-						destination = true;
 					}
-					}
-					if(destination && origin){
+					if(destination && origin)
+					{
 						s2.setLine(3, c2);
 						s2.update();
-						if(sendremovetext){
+						if(sendremovetext)
+						{
 							s.setLine(3, "");
 							s.update();
 						}
@@ -2264,7 +2552,8 @@ public class FortificationListener implements Listener {
 					}
 				}
 			}
-			if(l4.equalsIgnoreCase("[Send W]")){
+			if(l4.equalsIgnoreCase("[Send W]"))
+			{
 				int n = z;
 				int p = z;
 				@SuppressWarnings("unused")
@@ -2272,63 +2561,75 @@ public class FortificationListener implements Listener {
 				Sign s=null, s2 = null;
 				boolean origin = false;
 				boolean destination = false;
-				for(int i = 0; i < sendlength; i++){
+				for(int i = 0; i < sendlength; i++)
+				{
 					//Sign found below
-					if(!origin){
+					if(!origin)
+					{
 						n++;
-					if(w.getBlockTypeIdAt(x, y, n) == 68){
-						BlockState c = w.getBlockAt(x, y, n).getState();
-						if(!(c instanceof Sign)){
-							return;
-						}
-							s = (Sign)c;
-							c1 = s.getLine(0);
-							c2 = s.getLine(1);
-							c3 = s.getLine(2);
-							c4 = s.getLine(3);
-						
-						if(!commandsend){
-						  if(c4.startsWith("[") && c4.endsWith("]")){
+						if(w.getBlockAt(x, y, n).getType().equals(Material.WALL_SIGN))
+						{
+							BlockState c = w.getBlockAt(x, y, n).getState();
+							if(!(c instanceof Sign))
+							{
 								return;
 							}
+								s = (Sign)c;
+								c1 = s.getLine(0);
+								c2 = s.getLine(1);
+								c3 = s.getLine(2);
+								c4 = s.getLine(3);
+							
+							if(!commandsend)
+							{
+							    if(c4.startsWith("[") && c4.endsWith("]"))
+							    {
+									return;
+								}
+							}
+								origin = true;
 						}
-							origin = true;
-						
-						
-					}
 					}
 					//Sign found above
-					if(!destination){
+					if(!destination)
+					{
 						p--;
-					if(w.getBlockTypeIdAt(x, y, p) == 68){
-						BlockState c = w.getBlockAt(x, y, p).getState();
-						if(!(c instanceof Sign)){
-							return;
-						}
-						s2 = (Sign)c;
-						if(!sendoverwrite || !sendoverwritescommands){
-							if(s2.getLine(3).trim().length() > 0 && !sendoverwrite){
+						if(w.getBlockAt(x, y, p).getType().equals(Material.WALL_SIGN))
+						{
+							BlockState c = w.getBlockAt(x, y, p).getState();
+							if(!(c instanceof Sign))
+							{
 								return;
 							}
-							if(!sendoverwritescommands && s2.getLine(3).startsWith("[") && s2.getLine(3).endsWith("]")){
-								return;
+							s2 = (Sign)c;
+							if(!sendoverwrite || !sendoverwritescommands)
+							{
+								if(s2.getLine(3).trim().length() > 0 && !sendoverwrite)
+								{
+									return;
+								}
+								if(!sendoverwritescommands && s2.getLine(3).startsWith("[") && s2.getLine(3).endsWith("]"))
+								{
+									return;
+								}
 							}
+							destination = true;
 						}
-						destination = true;
 					}
-					}
-					if(destination && origin){
+					if(destination && origin)
+					{
 						s2.setLine(3, c4);
 						s2.update();
-						if(sendremovetext){
+						if(sendremovetext)
+						{
 							s.setLine(3, "");
 							s.update();
 						}
-						
 					}
 				}
 			}
-			if(l4.equalsIgnoreCase("[Send E]")){
+			if(l4.equalsIgnoreCase("[Send E]"))
+			{
 				int n = z;
 				int p = z;
 				@SuppressWarnings("unused")
@@ -2336,55 +2637,67 @@ public class FortificationListener implements Listener {
 				Sign s=null, s2 = null;
 				boolean origin = false;
 				boolean destination = false;
-				for(int i = 0; i < sendlength; i++){
+				for(int i = 0; i < sendlength; i++)
+				{
 					//Sign found below
-					if(!origin){
+					if(!origin)
+					{
 						n--;
-					if(w.getBlockTypeIdAt(x, y, n) == 68){
-						BlockState c = w.getBlockAt(x, y, n).getState();
-						if(!(c instanceof Sign)){
-							return;
-						}
-							s = (Sign)c;
-							c1 = s.getLine(0);
-							c2 = s.getLine(1);
-							c3 = s.getLine(2);
-							c4 = s.getLine(3);
-						
-						if(!commandsend){
-						  if(c4.startsWith("[") && c4.endsWith("]")){
+						if(w.getBlockAt(x, y, n).getType().equals(Material.WALL_SIGN))
+						{
+							BlockState c = w.getBlockAt(x, y, n).getState();
+							if(!(c instanceof Sign))
+							{
 								return;
 							}
+								s = (Sign)c;
+								c1 = s.getLine(0);
+								c2 = s.getLine(1);
+								c3 = s.getLine(2);
+								c4 = s.getLine(3);
+							
+							if(!commandsend)
+							{
+							    if(c4.startsWith("[") && c4.endsWith("]"))
+							    {
+									return;
+								}
+							}
+								origin = true;
 						}
-							origin = true;
-						
-						
-					}
 					}
 					//Sign found above
-					if(!destination){
+					if(!destination)
+					{
 						p++;
-					if(w.getBlockTypeIdAt(x, y, p) == 68){
-						BlockState c = w.getBlockAt(x, y, p).getState();
-						if(!(c instanceof Sign)){
-							return;
-						}
-						s2 = (Sign)c;
-						if(!sendoverwrite || !sendoverwritescommands){
-							if(s2.getLine(3).trim().length() > 0 && !sendoverwrite){
+						if(w.getBlockAt(x, y, p).getType().equals(Material.WALL_SIGN))
+						{
+							BlockState c = w.getBlockAt(x, y, p).getState();
+							if(!(c instanceof Sign))
+							{
 								return;
 							}
-							if(!sendoverwritescommands && s2.getLine(3).startsWith("[") && s2.getLine(3).endsWith("]")){
-								return;
+							s2 = (Sign)c;
+							if(!sendoverwrite || !sendoverwritescommands)
+							{
+								if(s2.getLine(3).trim().length() > 0 && !sendoverwrite)
+								{
+									return;
+								}
+								if(!sendoverwritescommands && s2.getLine(3).startsWith("[") && s2.getLine(3).endsWith("]"))
+								{
+									return;
+								}
 							}
+							destination = true;
 						}
-						destination = true;
 					}
-					}
-					if(destination && origin){
+					if(destination && origin)
+					{
 						s2.setLine(3, c4);
 						s2.update();
-						if(sendremovetext){
+						if(sendremovetext)
+						{
 							s.setLine(3, "");
 							s.update();
 						}
@@ -2393,7 +2706,8 @@ public class FortificationListener implements Listener {
 				}
 			}
 			//Send text from sign below to sign above
-			if(l4.equalsIgnoreCase("[Send U]")){
+			if(l4.equalsIgnoreCase("[Send U]"))
+			{
 				int n = y;
 				int p = y;
 				@SuppressWarnings("unused")
@@ -2401,62 +2715,74 @@ public class FortificationListener implements Listener {
 				Sign s=null, s2 = null;
 				boolean origin = false;
 				boolean destination = false;
-				for(int i = 0; i < sendlength; i++){
+				for(int i = 0; i < sendlength; i++)
+				{
 					//Sign found below
-					if(!origin){
+					if(!origin)
+					{
 						n--;
-					if(w.getBlockTypeIdAt(x, n, z) == 68){
-						BlockState c = w.getBlockAt(x, n, z).getState();
-						if(!(c instanceof Sign)){
-							return;
-						}
-							s = (Sign)c;
-							c1 = s.getLine(0);
-							c2 = s.getLine(1);
-							c3 = s.getLine(2);
-							c4 = s.getLine(3);
-						
-						if(!commandsend){
-						/*	Check these for line 1 text sending.
-						 * if(c1.startsWith("[") && c1.endsWith("]")){
+						if(w.getBlockAt(x, n, z).getType().equals(Material.WALL_SIGN))
+						{
+							BlockState c = w.getBlockAt(x, n, z).getState();
+							if(!(c instanceof Sign))
+							{
 								return;
 							}
-							else if(c1.equalsIgnoreCase("AllDo:") || c1.equalsIgnoreCase("PlayerDo:") || c1.equalsIgnoreCase("ServerDo:")){
-								return;
-							}*/
-							if(c4.startsWith("[") && c4.endsWith("]")){
-								return;
+								s = (Sign)c;
+								c1 = s.getLine(0);
+								c2 = s.getLine(1);
+								c3 = s.getLine(2);
+								c4 = s.getLine(3);
+							
+							if(!commandsend)
+							{
+							/*	Check these for line 1 text sending.
+							 * if(c1.startsWith("[") && c1.endsWith("]")){
+									return;
+								}
+								else if(c1.equalsIgnoreCase("AllDo:") || c1.equalsIgnoreCase("PlayerDo:") || c1.equalsIgnoreCase("ServerDo:")){
+									return;
+								}*/
+								if(c4.startsWith("[") && c4.endsWith("]"))
+								{
+									return;
+								}
 							}
+								origin = true;
 						}
-							origin = true;
-						
-						
-					}
 					}
 					//Sign found above
-					if(!destination){
+					if(!destination)
+					{
 						p++;
-					if(w.getBlockTypeIdAt(x, p, z) == 68){
-						BlockState c = w.getBlockAt(x, p, z).getState();
-						if(!(c instanceof Sign)){
-							return;
-						}
-						s2 = (Sign)c;
-						if(!sendoverwrite || !sendoverwritescommands){
-							if(s2.getLine(3).trim().length() > 0 && !sendoverwrite){
+						if(w.getBlockAt(x, p, z).getType().equals(Material.WALL_SIGN))
+						{
+							BlockState c = w.getBlockAt(x, p, z).getState();
+							if(!(c instanceof Sign))
+							{
 								return;
 							}
-							if(!sendoverwritescommands && s2.getLine(3).startsWith("[") && s2.getLine(3).endsWith("]")){
-								return;
+							s2 = (Sign)c;
+							if(!sendoverwrite || !sendoverwritescommands)
+							{
+								if(s2.getLine(3).trim().length() > 0 && !sendoverwrite)
+								{
+									return;
+								}
+								if(!sendoverwritescommands && s2.getLine(3).startsWith("[") && s2.getLine(3).endsWith("]"))
+								{
+									return;
+								}
 							}
+							destination = true;
 						}
-						destination = true;
 					}
-					}
-					if(destination && origin){
+					if(destination && origin)
+					{
 						s2.setLine(3, c4);
 						s2.update();
-						if(sendremovetext){
+						if(sendremovetext)
+						{
 							s.setLine(3, "");
 							s.update();
 						}
@@ -2464,7 +2790,8 @@ public class FortificationListener implements Listener {
 					}
 				}
 			}
-			if(l4.equalsIgnoreCase("[Send D]")){
+			if(l4.equalsIgnoreCase("[Send D]"))
+			{
 				int n = y;
 				int p = y;
 				@SuppressWarnings("unused")
@@ -2472,55 +2799,67 @@ public class FortificationListener implements Listener {
 				Sign s=null, s2 = null;
 				boolean origin = false;
 				boolean destination = false;
-				for(int i = 0; i < sendlength; i++){
+				for(int i = 0; i < sendlength; i++)
+				{
 					//Sign found below
-					if(!origin){
+					if(!origin)
+					{
 						n++;
-					if(w.getBlockTypeIdAt(x, n, z) == 68){
-						BlockState c = w.getBlockAt(x, n, z).getState();
-						if(!(c instanceof Sign)){
-							return;
-						}
-							s = (Sign)c;
-							c1 = s.getLine(0);
-							c2 = s.getLine(1);
-							c3 = s.getLine(2);
-							c4 = s.getLine(3);
-						
-						if(!commandsend){
-						  if(c4.startsWith("[") && c4.endsWith("]")){
+						if(w.getBlockAt(x, n, z).getType().equals(Material.WALL_SIGN))
+						{
+							BlockState c = w.getBlockAt(x, n, z).getState();
+							if(!(c instanceof Sign))
+							{
 								return;
 							}
+								s = (Sign)c;
+								c1 = s.getLine(0);
+								c2 = s.getLine(1);
+								c3 = s.getLine(2);
+								c4 = s.getLine(3);
+							
+							if(!commandsend)
+							{
+							    if(c4.startsWith("[") && c4.endsWith("]"))
+							    {
+									return;
+								}
+							}
+								origin = true;
 						}
-							origin = true;
-						
-						
-					}
 					}
 					//Sign found above
-					if(!destination){
+					if(!destination)
+					{
 						p--;
-					if(w.getBlockTypeIdAt(x, p, z) == 68){
-						BlockState c = w.getBlockAt(x, p, z).getState();
-						if(!(c instanceof Sign)){
-							return;
-						}
-						s2 = (Sign)c;
-						if(!sendoverwrite || !sendoverwritescommands){
-							if(s2.getLine(3).trim().length() > 0 && !sendoverwrite){
+						if(w.getBlockAt(x, p, z).getType().equals(Material.WALL_SIGN))
+						{
+							BlockState c = w.getBlockAt(x, p, z).getState();
+							if(!(c instanceof Sign))
+							{
 								return;
 							}
-							if(!sendoverwritescommands && s2.getLine(3).startsWith("[") && s2.getLine(3).endsWith("]")){
-								return;
+							s2 = (Sign)c;
+							if(!sendoverwrite || !sendoverwritescommands)
+							{
+								if(s2.getLine(3).trim().length() > 0 && !sendoverwrite)
+								{
+									return;
+								}
+								if(!sendoverwritescommands && s2.getLine(3).startsWith("[") && s2.getLine(3).endsWith("]"))
+								{
+									return;
+								}
 							}
+							destination = true;
 						}
-						destination = true;
 					}
-					}
-					if(destination && origin){
+					if(destination && origin)
+					{
 						s2.setLine(3, c4);
 						s2.update();
-						if(sendremovetext){
+						if(sendremovetext)
+						{
 							s.setLine(3, "");
 							s.update();
 						}
@@ -2532,86 +2871,127 @@ public class FortificationListener implements Listener {
 			//////////////
 			//Trap Doors//
 			//////////////
-			if(l2.equalsIgnoreCase("[TrapDoor]")){
+			if(l2.equalsIgnoreCase("[TrapDoor]"))
+			{
 				//get integer for range on first line, error checking to avoid non-ints is done onsignchange.
 				int r = Integer.parseInt(l1);
 				if(r > fort.getMaxtraplength())
 				{
 					r = fort.getMaxtraplength();
 				}
-				int id = 0;
+				Material id = Material.AIR;
 				Block d = w.getBlockAt(x, y, z);
-				if(!(d.getType() == Material.WALL_SIGN)){
+				if(!(d.getType() == Material.WALL_SIGN))
+				{
 					return;
 				}
 				//east
-				if(d.getData() == 0x2){
-					id = w.getBlockTypeIdAt(x, y, z+1);
-					if(powered){
-						for(int i = 0; i < r; i++){
-							if(w.getBlockTypeIdAt(x, y, z+2+i) == id){
-								w.getBlockAt(x, y, z+2+i).setTypeId(0);
+				if(d.getData() == 0x2)
+				{
+					id = w.getBlockAt(x, y, z+1).getType();
+					if(powered)
+					{
+						for(int i = 0; i < r; i++)
+						{
+							if(w.getBlockAt(x, y, z+2+i).getType().equals(id))
+							{
+								w.getBlockAt(x, y, z+2+i).setType(Material.AIR);
 							}
 						}
-						}
-						if(replacetrap && !powered){
-							for(int k = 0; k < r; k++){
-								if(w.getBlockTypeIdAt(x, y, z+2+k) == 0 || w.getBlockTypeIdAt(x, y, z+2+k) == 8 || w.getBlockTypeIdAt(x, y, z+2+k) == 9 || w.getBlockTypeIdAt(x, y, z+2+k) == 10 || w.getBlockTypeIdAt(x, y, z+2+k) == 11){
-									w.getBlockAt(x, y, z+2+k).setTypeId(id);
-								}
+					}
+					if(replacetrap && !powered)
+					{
+						for(int k = 0; k < r; k++)
+						{
+							if(w.getBlockAt(x, y, z+2+k).getType().equals(Material.AIR) || w.getBlockAt(x, y, z+2+k).getType().equals(Material.WATER) || 
+									w.getBlockAt(x, y, z+2+k).getType().equals(Material.STATIONARY_WATER)|| 
+									w.getBlockAt(x, y, z+2+k).getType().equals(Material.LAVA) || 
+									w.getBlockAt(x, y, z+2+k).getType().equals(Material.STATIONARY_LAVA))
+							{
+								w.getBlockAt(x, y, z+2+k).setType(id);
 							}
 						}
+					}
 				}
 				//west
-				if(d.getData() == 0x3){
-					id = w.getBlockTypeIdAt(x, y, z-1);
-					if(powered){
-						for(int i = 0; i < r; i++){
-							if(w.getBlockTypeIdAt(x, y, z-2-i) == id){
-								w.getBlockAt(x, y, z-2-i).setTypeId(0);
+				if(d.getData() == 0x3)
+				{
+					id = w.getBlockAt(x, y, z-1).getType();
+					if(powered)
+					{
+						for(int i = 0; i < r; i++)
+						{
+							if(w.getBlockAt(x, y, z-2-i).getType().equals(id))
+							{
+								w.getBlockAt(x, y, z-2-i).setType(Material.AIR);
 							}
 						}
 						}
-						if(replacetrap && !powered){
-							for(int k = 0; k < r; k++){
-								if(w.getBlockTypeIdAt(x, y, z-2-k) == 0 || w.getBlockTypeIdAt(x, y, z-2-k) == 10 || w.getBlockTypeIdAt(x, y, z-2-k) == 11 || w.getBlockTypeIdAt(x, y, z-2-k) == 8 || w.getBlockTypeIdAt(x, y, z-2-k) == 9){
-									w.getBlockAt(x, y, z-2-k).setTypeId(id);
+						if(replacetrap && !powered)
+						{
+							for(int k = 0; k < r; k++)
+							{
+								if(w.getBlockAt(x, y, z-2-k).equals(Material.AIR) || w.getBlockAt(x, y, z-2-k).getType().equals(Material.WATER) ||
+										w.getBlockAt(x, y, z-2-k).getType().equals(Material.STATIONARY_WATER) ||
+										w.getBlockAt(x, y, z-2-k).getType().equals(Material.LAVA) ||
+										w.getBlockAt(x, y, z-2-k).getType().equals(Material.STATIONARY_LAVA))
+								{
+									w.getBlockAt(x, y, z-2-k).setType(id);
 								}
 							}
 						}
 				}
 				//north
-				if(d.getData() == 0x4){
-					id = w.getBlockTypeIdAt(x+1, y, z);
-					if(powered){
-						for(int i = 0; i < r; i++){
-							if(w.getBlockTypeIdAt(x+2+i, y, z) == id){
-								w.getBlockAt(x+2+i, y, z).setTypeId(0);
+				if(d.getData() == 0x4)
+				{
+					id = w.getBlockAt(x+1, y, z).getType();
+					if(powered)
+					{
+						for(int i = 0; i < r; i++)
+						{
+							if(w.getBlockAt(x+2+i, y, z).getType().equals(id))
+							{
+								w.getBlockAt(x+2+i, y, z).setType(Material.AIR);
 							}
 						}
-						}
-						if(replacetrap && !powered){
-							for(int k = 0; k < r; k++){
-								if(w.getBlockTypeIdAt(x+2+k, y, z) == 0 || w.getBlockTypeIdAt(x+2+k, y, z) == 8 || w.getBlockTypeIdAt(x+2+k, y, z) == 9 || w.getBlockTypeIdAt(x+2+k, y, z) == 10 || w.getBlockTypeIdAt(x+2+k, y, z) == 11){
-									w.getBlockAt(x+2+k, y, z).setTypeId(id);
+						
+					}
+						if(replacetrap && !powered)
+						{
+							for(int k = 0; k < r; k++)
+							{
+								if(w.getBlockAt(x+2+k, y, z).getType().equals(Material.AIR) || w.getBlockAt(x+2+k, y, z).getType().equals(Material.WATER) ||
+										w.getBlockAt(x+2+k, y, z).getType().equals(Material.STATIONARY_WATER) ||
+										w.getBlockAt(x+2+k, y, z).getType().equals(Material.LAVA) ||
+										w.getBlockAt(x+2+k, y, z).getType().equals(Material.STATIONARY_LAVA))
+								{
+									w.getBlockAt(x+2+k, y, z).setType(id);
 								}
 							}
 						}
 				}
 				//south
-				if(d.getData() == 0x5){
-					id = w.getBlockTypeIdAt(x-1, y, z);
-					if(powered){
-					for(int i = 0; i < r; i++){
-						if(w.getBlockTypeIdAt(x-2-i, y, z) == id){
-							w.getBlockAt(x-2-i, y, z).setTypeId(0);
+				if(d.getData() == 0x5)
+				{
+					id = w.getBlockAt(x-1, y, z).getType();
+					if(powered)
+					{
+						for(int i = 0; i < r; i++)
+						{
+							if(w.getBlockAt(x-2-i, y, z).getType().equals(id))
+							{
+								w.getBlockAt(x-2-i, y, z).setType(Material.AIR);
+							}
 						}
-					}
 					}
 					if(replacetrap && !powered){
 						for(int k = 0; k < r; k++){
-							if(w.getBlockTypeIdAt(x-2-k, y, z) == 0 || w.getBlockTypeIdAt(x-2-k, y, z) == 8 || w.getBlockTypeIdAt(x-2-k, y, z) == 9 || w.getBlockTypeIdAt(x-2-k, y, z) == 10 || w.getBlockTypeIdAt(x-2-k, y, z) == 11){
-								w.getBlockAt(x-2-k, y, z).setTypeId(id);
+							if(w.getBlockAt(x-2-k, y, z).getType().equals(Material.AIR)|| w.getBlockAt(x-2-k, y, z).getType().equals(Material.WATER) ||
+									w.getBlockAt(x-2-k, y, z).getType().equals(Material.STATIONARY_WATER) ||
+									w.getBlockAt(x-2-k, y, z).getType().equals(Material.LAVA) ||
+									w.getBlockAt(x-2-k, y, z).getType().equals(Material.STATIONARY_LAVA))
+							{
+								w.getBlockAt(x-2-k, y, z).setType(id);
 							}
 						}
 					}
@@ -2619,86 +2999,128 @@ public class FortificationListener implements Listener {
 			}
 			/////////////////////////////////////
 			//Upward trapdoor
-			if(l2.equalsIgnoreCase("[UpTrapDoor]")){
+			if(l2.equalsIgnoreCase("[UpTrapDoor]"))
+			{
 				//get integer for range on first line, error checking to avoid non-ints is done onsignchange.
 				int r = Integer.parseInt(l1);
 				if(r > fort.getMaxtraplength())
 				{
 					r = fort.getMaxtraplength();
 				}
-				int id = 0;
+				Material id = Material.AIR;
 				Block d = w.getBlockAt(x, y, z);
-				if(!(d.getType() == Material.WALL_SIGN)){
+				if(!(d.getType() == Material.WALL_SIGN))
+				{
 					return;
 				}
 				//east
-				if(d.getData() == 0x2){
-					id = w.getBlockTypeIdAt(x, y, z+1);
-					if(powered){
-						for(int i = 0; i < r; i++){
-							if(w.getBlockTypeIdAt(x, y+1+i, z+1) == id){
+				if(d.getData() == 0x2)
+				{
+					id = w.getBlockAt(x, y, z+1).getType();
+					if(powered)
+					{
+						for(int i = 0; i < r; i++)
+						{
+							if(w.getBlockAt(x, y+1+i, z+1).equals(id))
+							{
 								w.getBlockAt(x, y+1+i, z+1).setTypeId(0);
 							}
 						}
-						}
-						if(replacetrap && !powered){
-							for(int k = 0; k < r; k++){
-								if(w.getBlockTypeIdAt(x, y+1+k, z+1) == 0 || w.getBlockTypeIdAt(x, y+1+k, z+1) == 8 || w.getBlockTypeIdAt(x, y+1+k, z+1) == 9 || w.getBlockTypeIdAt(x, y+1+k, z+1) == 10 || w.getBlockTypeIdAt(x, y+1+k, z+1) == 11){
-									w.getBlockAt(x, y+1+k, z+1).setTypeId(id);
-								}
+					}
+					if(replacetrap && !powered)
+					{
+						for(int k = 0; k < r; k++)
+						{
+							if(w.getBlockAt(x, y+1+k, z+1).getType().equals(Material.AIR) || w.getBlockAt(x, y+1+k, z+1).getType().equals(Material.WATER) ||
+									w.getBlockAt(x, y+1+k, z+1).getType().equals(Material.STATIONARY_WATER) ||
+									w.getBlockAt(x, y+1+k, z+1).getType().equals(Material.LAVA) ||
+									w.getBlockAt(x, y+1+k, z+1).getType().equals(Material.STATIONARY_LAVA))
+							{
+								w.getBlockAt(x, y+1+k, z+1).setType(id);
 							}
 						}
+					}
 				}
 				//west
-				if(d.getData() == 0x3){
-					id = w.getBlockTypeIdAt(x, y, z-1);
-					if(powered){
-						for(int i = 0; i < r; i++){
-							if(w.getBlockTypeIdAt(x, y+1+i, z-1) == id){
-								w.getBlockAt(x, y+1+i, z-1).setTypeId(0);
+				if(d.getData() == 0x3)
+				{
+					id = w.getBlockAt(x, y, z-1).getType();
+					if(powered)
+					{
+						for(int i = 0; i < r; i++)
+						{
+							if(w.getBlockAt(x, y+1+i, z-1).getType().equals(id))
+							{
+								w.getBlockAt(x, y+1+i, z-1).setType(Material.AIR);
 							}
 						}
-						}
-						if(replacetrap && !powered){
-							for(int k = 0; k < r; k++){
-								if(w.getBlockTypeIdAt(x, y+1+k, z-1) == 0 || w.getBlockTypeIdAt(x, y+1+k, z-1) == 10 || w.getBlockTypeIdAt(x, y+1+k, z-1) == 11 || w.getBlockTypeIdAt(x, y+1+k, z-1) == 8 || w.getBlockTypeIdAt(x, y+1+k, z-1) == 9){
-									w.getBlockAt(x, y+1+k, z-1).setTypeId(id);
-								}
+					}
+					if(replacetrap && !powered)
+					{
+						for(int k = 0; k < r; k++)
+						{
+							if(w.getBlockAt(x, y+1+k, z-1).getType().equals(Material.AIR) || w.getBlockAt(x, y+1+k, z-1).getType().equals(Material.WATER) ||
+									w.getBlockAt(x, y+1+k, z-1).getType().equals(Material.STATIONARY_WATER) ||
+									w.getBlockAt(x, y+1+k, z-1).getType().equals(Material.LAVA) ||
+									w.getBlockAt(x, y+1+k, z-1).getType().equals(Material.STATIONARY_LAVA))
+							{
+								w.getBlockAt(x, y+1+k, z-1).setType(id);
 							}
 						}
+					}
 				}
 				//north
-				if(d.getData() == 0x4){
-					id = w.getBlockTypeIdAt(x+1, y, z);
-					if(powered){
-						for(int i = 0; i < r; i++){
-							if(w.getBlockTypeIdAt(x+1, y+1+i, z) == id){
+				if(d.getData() == 0x4)
+				{
+					id = w.getBlockAt(x+1, y, z).getType();
+					if(powered)
+					{
+						for(int i = 0; i < r; i++)
+						{
+							if(w.getBlockAt(x+1, y+1+i, z).getType().equals(id))
+							{
 								w.getBlockAt(x+1, y+1+i, z).setTypeId(0);
 							}
 						}
-						}
-						if(replacetrap && !powered){
-							for(int k = 0; k < r; k++){
-								if(w.getBlockTypeIdAt(x+1, y+1+k, z) == 0 || w.getBlockTypeIdAt(x+1, y+1+k, z) == 8 || w.getBlockTypeIdAt(x+1, y+1+k, z) == 9 || w.getBlockTypeIdAt(x+1, y+1+k, z) == 10 || w.getBlockTypeIdAt(x+1, y+1+k, z) == 11){
-									w.getBlockAt(x+1, y+1+k, z).setTypeId(id);
-								}
+					}
+					if(replacetrap && !powered)
+					{
+						for(int k = 0; k < r; k++)
+						{
+							if(w.getBlockAt(x+1, y+1+k, z).getType().equals(Material.AIR) || w.getBlockAt(x+1, y+1+k, z).getType().equals(Material.WATER) ||
+									w.getBlockAt(x+1, y+1+k, z).getType().equals(Material.STATIONARY_WATER) ||
+									w.getBlockAt(x+1, y+1+k, z).getType().equals(Material.LAVA) ||
+									w.getBlockAt(x+1, y+1+k, z).getType().equals(Material.STATIONARY_LAVA))
+							{
+								w.getBlockAt(x+1, y+1+k, z).setType(id);
 							}
 						}
+					}
 				}
 				//south
-				if(d.getData() == 0x5){
-					id = w.getBlockTypeIdAt(x-1, y, z);
-					if(powered){
-					for(int i = 0; i < r; i++){
-						if(w.getBlockTypeIdAt(x-1, y+1+i, z) == id){
-							w.getBlockAt(x-1, y+1+i, z).setTypeId(0);
+				if(d.getData() == 0x5)
+				{
+					id = w.getBlockAt(x-1, y, z).getType();
+					if(powered)
+					{
+						for(int i = 0; i < r; i++)
+						{
+							if(w.getBlockAt(x-1, y+1+i, z).getType().equals(id))
+							{
+								w.getBlockAt(x-1, y+1+i, z).setType(Material.AIR);
+							}
 						}
 					}
-					}
-					if(replacetrap && !powered){
-						for(int k = 0; k < r; k++){
-							if(w.getBlockTypeIdAt(x-1, y+1+k, z) == 0 || w.getBlockTypeIdAt(x-1, y+1+k, z) == 8 || w.getBlockTypeIdAt(x-1, y+1+k, z) == 9 || w.getBlockTypeIdAt(x-1, y+1+k, z) == 10 || w.getBlockTypeIdAt(x-1, y+1+k, z) == 11){
-								w.getBlockAt(x-1, y+1+k, z).setTypeId(id);
+					if(replacetrap && !powered)
+					{
+						for(int k = 0; k < r; k++)
+						{
+							if(w.getBlockAt(x-1, y+1+k, z).getType().equals(Material.AIR) || w.getBlockAt(x-1, y+1+k, z).getType().equals(Material.WATER)||
+									w.getBlockAt(x-1, y+1+k, z).getType().equals(Material.STATIONARY_WATER) ||
+									w.getBlockAt(x-1, y+1+k, z).getType().equals(Material.LAVA) ||
+									w.getBlockAt(x-1, y+1+k, z).getType().equals(Material.STATIONARY_LAVA))
+							{
+								w.getBlockAt(x-1, y+1+k, z).setType(id);
 							}
 						}
 					}
@@ -2706,86 +3128,128 @@ public class FortificationListener implements Listener {
 			}
 			/////////////////////////////////////
 			//Downward trapdoor
-			if(l2.equalsIgnoreCase("[DownTrapDoor]")){
+			if(l2.equalsIgnoreCase("[DownTrapDoor]"))
+			{
 				//get integer for range on first line, error checking to avoid non-ints is done onsignchange.
 				int r = Integer.parseInt(l1);
 				if(r > fort.getMaxtraplength())
 				{
 					r = fort.getMaxtraplength();
 				}
-				int id = 0;
+				Material id = Material.AIR;
 				Block d = w.getBlockAt(x, y, z);
-				if(!(d.getType() == Material.WALL_SIGN)){
+				if(!(d.getType() == Material.WALL_SIGN))
+				{
 					return;
 				}
 				//east
-				if(d.getData() == 0x2){
-					id = w.getBlockTypeIdAt(x, y, z+1);
-					if(powered){
-						for(int i = 0; i < r; i++){
-							if(w.getBlockTypeIdAt(x, y-1-i, z+1) == id){
+				if(d.getData() == 0x2)
+				{
+					id = w.getBlockAt(x, y, z+1).getType();
+					if(powered)
+					{
+						for(int i = 0; i < r; i++)
+						{
+							if(w.getBlockAt(x, y-1-i, z+1).getType().equals(id))
+							{
 								w.getBlockAt(x, y-1-i, z+1).setTypeId(0);
 							}
 						}
-						}
-						if(replacetrap && !powered){
-							for(int k = 0; k < r; k++){
-								if(w.getBlockTypeIdAt(x, y-1-k, z+1) == 0 || w.getBlockTypeIdAt(x, y-1-k, z+1) == 8 || w.getBlockTypeIdAt(x, y-1-k, z+1) == 9 || w.getBlockTypeIdAt(x, y-1-k, z+1) == 10 || w.getBlockTypeIdAt(x, y-1-k, z+1) == 11){
-									w.getBlockAt(x, y-1-k, z+1).setTypeId(id);
-								}
+					}
+					if(replacetrap && !powered)
+					{
+						for(int k = 0; k < r; k++)
+						{
+							if(w.getBlockAt(x, y-1-k, z+1).getType().equals(Material.AIR) || w.getBlockAt(x, y-1-k, z+1).getType().equals(Material.WATER) ||
+									w.getBlockAt(x, y-1-k, z+1).getType().equals(Material.STATIONARY_WATER) ||
+									w.getBlockAt(x, y-1-k, z+1).getType().equals(Material.LAVA) ||
+									w.getBlockAt(x, y-1-k, z+1).getType().equals(Material.STATIONARY_LAVA))
+							{
+								w.getBlockAt(x, y-1-k, z+1).setType(id);
 							}
 						}
+					}
 				}
 				//west
-				if(d.getData() == 0x3){
-					id = w.getBlockTypeIdAt(x, y, z-1);
-					if(powered){
-						for(int i = 0; i < r; i++){
-							if(w.getBlockTypeIdAt(x, y-1-i, z-1) == id){
-								w.getBlockAt(x, y-1-i, z-1).setTypeId(0);
+				if(d.getData() == 0x3)
+				{
+					id = w.getBlockAt(x, y, z-1).getType();
+					if(powered)
+					{
+						for(int i = 0; i < r; i++)
+						{
+							if(w.getBlockAt(x, y-1-i, z-1).getType().equals(id))
+							{
+								w.getBlockAt(x, y-1-i, z-1).setType(Material.AIR);
 							}
 						}
-						}
-						if(replacetrap && !powered){
-							for(int k = 0; k < r; k++){
-								if(w.getBlockTypeIdAt(x, y-1-k, z-1) == 0 || w.getBlockTypeIdAt(x, y-1-k, z-1) == 10 || w.getBlockTypeIdAt(x, y-1-k, z-1) == 11 || w.getBlockTypeIdAt(x, y-1-k, z-1) == 8 || w.getBlockTypeIdAt(x, y-1-k, z-1) == 9){
-									w.getBlockAt(x, y-1-k, z-1).setTypeId(id);
-								}
+					}
+					if(replacetrap && !powered)
+					{
+						for(int k = 0; k < r; k++)
+						{
+							if(w.getBlockAt(x, y-1-k, z-1).getType().equals(Material.AIR) || w.getBlockAt(x, y-1-k, z-1).getType().equals(Material.WATER) ||
+									w.getBlockAt(x, y-1-k, z-1).getType().equals(Material.STATIONARY_WATER) ||
+									w.getBlockAt(x, y-1-k, z-1).getType().equals(Material.LAVA) ||
+									w.getBlockAt(x, y-1-k, z-1).getType().equals(Material.STATIONARY_LAVA))
+							{
+								w.getBlockAt(x, y-1-k, z-1).setType(id);
 							}
 						}
+					}
 				}
 				//north
-				if(d.getData() == 0x4){
-					id = w.getBlockTypeIdAt(x+1, y, z);
-					if(powered){
-						for(int i = 0; i < r; i++){
-							if(w.getBlockTypeIdAt(x+1, y-1-i, z) == id){
+				if(d.getData() == 0x4)
+				{
+					id = w.getBlockAt(x+1, y, z).getType();
+					if(powered)
+					{
+						for(int i = 0; i < r; i++)
+						{
+							if(w.getBlockAt(x+1, y-1-i, z).getType().equals(id))
+							{
 								w.getBlockAt(x+1, y-1-i, z).setTypeId(0);
 							}
 						}
-						}
-						if(replacetrap && !powered){
-							for(int k = 0; k < r; k++){
-								if(w.getBlockTypeIdAt(x+1, y-1-k, z) == 0 || w.getBlockTypeIdAt(x+1, y-1-k, z) == 8 || w.getBlockTypeIdAt(x+1, y-1-k, z) == 9 || w.getBlockTypeIdAt(x+1, y-1-k, z) == 10 || w.getBlockTypeIdAt(x+1, y-1-k, z) == 11){
-									w.getBlockAt(x+1, y-1-k, z).setTypeId(id);
-								}
+					}
+					if(replacetrap && !powered)
+					{
+						for(int k = 0; k < r; k++)
+						{
+							if(w.getBlockAt(x+1, y-1-k, z).getType().equals(Material.AIR) || w.getBlockAt(x+1, y-1-k, z).getType().equals(Material.WATER) ||
+									w.getBlockAt(x+1, y-1-k, z).getType().equals(Material.STATIONARY_WATER)||
+									w.getBlockAt(x+1, y-1-k, z).getType().equals(Material.LAVA) ||
+									w.getBlockAt(x+1, y-1-k, z).getType().equals(Material.STATIONARY_LAVA))
+							{
+								w.getBlockAt(x+1, y-1-k, z).setType(id);
 							}
 						}
+					}
 				}
 				//south
-				if(d.getData() == 0x5){
-					id = w.getBlockTypeIdAt(x-1, y, z);
-					if(powered){
-					for(int i = 0; i < r; i++){
-						if(w.getBlockTypeIdAt(x-1, y-1-i, z) == id){
-							w.getBlockAt(x-1, y-1-i, z).setTypeId(0);
+				if(d.getData() == 0x5)
+				{
+					id = w.getBlockAt(x-1, y, z).getType();
+					if(powered)
+					{
+						for(int i = 0; i < r; i++)
+						{
+							if(w.getBlockAt(x-1, y-1-i, z).getType().equals(id))
+							{
+								w.getBlockAt(x-1, y-1-i, z).setType(Material.AIR);
+							}
 						}
 					}
-					}
-					if(replacetrap && !powered){
-						for(int k = 0; k < r; k++){
-							if(w.getBlockTypeIdAt(x-1, y-1-k, z) == 0 || w.getBlockTypeIdAt(x-1, y-1-k, z) == 8 || w.getBlockTypeIdAt(x-1, y-1-k, z) == 9 || w.getBlockTypeIdAt(x-1, y-1-k, z) == 10 || w.getBlockTypeIdAt(x-1, y-1-k, z) == 11){
-								w.getBlockAt(x-1, y-1-k, z).setTypeId(id);
+					if(replacetrap && !powered)
+					{
+						for(int k = 0; k < r; k++)
+						{
+							if(w.getBlockAt(x-1, y-1-k, z).getType().equals(Material.AIR) || w.getBlockAt(x-1, y-1-k, z).getType().equals(Material.WATER) ||
+									w.getBlockAt(x-1, y-1-k, z).getType().equals(Material.STATIONARY_WATER) ||
+									w.getBlockAt(x-1, y-1-k, z).getType().equals(Material.LAVA) ||
+									w.getBlockAt(x-1, y-1-k, z).getType().equals(Material.STATIONARY_LAVA))
+							{
+								w.getBlockAt(x-1, y-1-k, z).setType(id);
 							}
 						}
 					}
@@ -2794,92 +3258,156 @@ public class FortificationListener implements Listener {
 			///////////
 			//Turrets//
 			///////////
-			if(l2.equalsIgnoreCase("[Turret]")){
+			if(l2.equalsIgnoreCase("[Turret]"))
+			{
 			//	List<Player> p = fort.getServer().getOnlinePlayers();
 				//Web Turret - Shoots web out to web length.
-				if(l1.equalsIgnoreCase("web")){
-					if(powered){
+				if(l1.equalsIgnoreCase("web"))
+				{
+					if(powered)
+					{
 					//Sign facing east, so fire west, z increases
-					if(w.getBlockAt(x, y, z).getData() == 0x2){
+					if(w.getBlockAt(x, y, z).getData() == 0x2)
+					{
 						//If sign is on ice...
-					if(w.getBlockTypeIdAt(x, y, z+1)==webturretblockId || webturretblockId == 0){
-								if(w.getBlockTypeIdAt(x, y, z+2+weblength) == 0 || w.getBlockTypeIdAt(x, y, z+2+weblength) == 8 || w.getBlockTypeIdAt(x, y, z+2+weblength) == 9){
-									w.getBlockAt(x, y, z+2+weblength).setTypeId(30);
+						if(w.getBlockAt(x, y, z+1).getType().toString().equalsIgnoreCase(webturretblockId) || webturretblockId.equalsIgnoreCase(Material.AIR.toString()))
+						{
+								if(w.getBlockAt(x, y, z+2+weblength).getType().equals(Material.AIR) ||
+										w.getBlockAt(x, y, z+2+weblength).getType().equals(Material.WATER) ||
+										w.getBlockAt(x, y, z+2+weblength).getType().equals(Material.STATIONARY_WATER))
+								{
+									w.getBlockAt(x, y, z+2+weblength).setType(Material.WEB);
 									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x, y, z+2+weblength, w, 30), webTime*20);
 								}
-								if(w.getBlockTypeIdAt(x, y, z+2+weblength+1) == 0 || w.getBlockTypeIdAt(x, y, z+2+weblength+1) == 8 || w.getBlockTypeIdAt(x, y, z+2+weblength+1) == 9){
-									w.getBlockAt(x, y, z+2+weblength+1).setTypeId(30);
+								if(w.getBlockAt(x, y, z+2+weblength+1).getType().equals(Material.AIR) ||
+										w.getBlockAt(x, y, z+2+weblength+1).getType().equals(Material.WATER) ||
+										w.getBlockAt(x, y, z+2+weblength+1).getType().equals(Material.STATIONARY_WATER))
+								{
+									w.getBlockAt(x, y, z+2+weblength+1).setType(Material.WEB);
 									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x, y, z+2+weblength+1, w, 30), webTime*20);
 								}
-								if(w.getBlockTypeIdAt(x, y, z+2+weblength-1) == 0 || w.getBlockTypeIdAt(x, y, z+2+weblength-1) == 8 || w.getBlockTypeIdAt(x, y, z+2+weblength-1) == 9){
-									w.getBlockAt(x, y, z+2+weblength-1).setTypeId(30);
+								if(w.getBlockAt(x, y, z+2+weblength-1).getType().equals(Material.AIR) ||
+										w.getBlockAt(x, y, z+2+weblength-1).getType().equals(Material.WATER) ||
+										w.getBlockAt(x, y, z+2+weblength-1).getType().equals(Material.STATIONARY_WATER))
+								{
+									w.getBlockAt(x, y, z+2+weblength-1).setType(Material.WEB);
 									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x, y, z+2+weblength-1, w, 30), webTime*20);
 								}
-								if(w.getBlockTypeIdAt(x-1, y, z+2+weblength) == 0 || w.getBlockTypeIdAt(x-1, y, z+2+weblength) == 8 || w.getBlockTypeIdAt(x-1, y, z+2+weblength) == 9){
-									w.getBlockAt(x-1, y, z+2+weblength).setTypeId(30);
+								if(w.getBlockAt(x-1, y, z+2+weblength).getType().equals(Material.AIR) ||
+										w.getBlockAt(x-1, y, z+2+weblength).getType().equals(Material.WATER) ||
+										w.getBlockAt(x-1, y, z+2+weblength).getType().equals(Material.STATIONARY_WATER))
+								{
+									w.getBlockAt(x-1, y, z+2+weblength).setType(Material.WEB);
 									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x-1, y, z+2+weblength, w, 30), webTime*20);
 								}
-								if(w.getBlockTypeIdAt(x+1, y, z+2+weblength) == 0 || w.getBlockTypeIdAt(x+1, y, z+2+weblength) == 8 || w.getBlockTypeIdAt(x+1, y, z+2+weblength) == 9){
-									w.getBlockAt(x+1, y, z+2+weblength).setTypeId(30);
+								if(w.getBlockAt(x+1, y, z+2+weblength).getType().equals(Material.AIR) ||
+										w.getBlockAt(x+1, y, z+2+weblength).getType().equals(Material.WATER) ||
+										w.getBlockAt(x+1, y, z+2+weblength).getType().equals(Material.STATIONARY_WATER))
+								{
+									w.getBlockAt(x+1, y, z+2+weblength).setType(Material.WEB);
 									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x+1, y, z+2+weblength, w, 30), webTime*20);
 								}
-								if(w.getBlockTypeIdAt(x+1, y, z+2+weblength+1) == 0 || w.getBlockTypeIdAt(x+1, y, z+2+weblength+1) == 8 || w.getBlockTypeIdAt(x+1, y, z+2+weblength+1) == 9){
-									w.getBlockAt(x+1, y, z+2+weblength+1).setTypeId(30);
+								if(w.getBlockAt(x+1, y, z+2+weblength+1).getType().equals(Material.AIR) ||
+										w.getBlockAt(x+1, y, z+2+weblength+1).getType().equals(Material.WATER) ||
+										w.getBlockAt(x+1, y, z+2+weblength+1).getType().equals(Material.STATIONARY_WATER))
+								{
+									w.getBlockAt(x+1, y, z+2+weblength+1).setType(Material.WEB);
 									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x+1, y, z+2+weblength+1, w, 30), webTime*20);
 								}
-								if(w.getBlockTypeIdAt(x-1, y, z+2+weblength+1) == 0 || w.getBlockTypeIdAt(x-1, y, z+2+weblength+1) == 8 || w.getBlockTypeIdAt(x-1, y, z+2+weblength+1) == 9){
-									w.getBlockAt(x-1, y, z+2+weblength+1).setTypeId(30);
+								if(w.getBlockAt(x-1, y, z+2+weblength+1).getType().equals(Material.AIR) ||
+										w.getBlockAt(x-1, y, z+2+weblength+1).getType().equals(Material.WATER) ||
+										w.getBlockAt(x-1, y, z+2+weblength+1).getType().equals(Material.STATIONARY_WATER))
+								{
+									w.getBlockAt(x-1, y, z+2+weblength+1).setType(Material.WEB);
 									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x-1, y, z+2+weblength+1, w, 30), webTime*20);
 								}
-								if(w.getBlockTypeIdAt(x+1, y, z+2+weblength-1) == 0 || w.getBlockTypeIdAt(x+1, y, z+2+weblength-1) == 8 || w.getBlockTypeIdAt(x+1, y, z+2+weblength-1) == 9){
-									w.getBlockAt(x+1, y, z+2+weblength-1).setTypeId(30);
+								if(w.getBlockAt(x+1, y, z+2+weblength-1).getType().equals(Material.AIR) ||
+										w.getBlockAt(x+1, y, z+2+weblength-1).getType().equals(Material.WATER) ||
+										w.getBlockAt(x+1, y, z+2+weblength-1).getType().equals(Material.STATIONARY_WATER))
+								{
+									w.getBlockAt(x+1, y, z+2+weblength-1).setType(Material.WEB);
 									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x+1, y, z+2+weblength-1, w, 30), webTime*20);
 								}
-								if(w.getBlockTypeIdAt(x-1, y, z+2+weblength-1) == 0 || w.getBlockTypeIdAt(x-1, y, z+2+weblength-1) == 8 || w.getBlockTypeIdAt(x-1, y, z+2+weblength-1) == 9){
-									w.getBlockAt(x-1, y, z+2+weblength-1).setTypeId(30);
+								if(w.getBlockAt(x-1, y, z+2+weblength-1).getType().equals(Material.AIR) ||
+										w.getBlockAt(x-1, y, z+2+weblength-1).getType().equals(Material.WATER) ||
+										w.getBlockAt(x-1, y, z+2+weblength-1).getType().equals(Material.STATIONARY_WATER))
+								{
+									w.getBlockAt(x-1, y, z+2+weblength-1).setType(Material.WEB);
 									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x-1, y, z+2+weblength-1, w, 30), webTime*20);
 								}
-					}
+						}
 					}
 					//Sign facing west, so fire east, z decreases
-					if(w.getBlockAt(x, y, z).getData() == 0x3){
+					if(w.getBlockAt(x, y, z).getData() == 0x3)
+					{
 						//If sign is on ice...
-						if(w.getBlockTypeIdAt(x, y, z-1)==webturretblockId || webturretblockId == 0){
-							if(w.getBlockTypeIdAt(x, y, z-1)==webturretblockId || webturretblockId == 0){
-								if(w.getBlockTypeIdAt(x, y, z-2-weblength) == 0 || w.getBlockTypeIdAt(x, y, z-2-weblength) == 8 || w.getBlockTypeIdAt(x, y, z-2-weblength) == 9){
-									w.getBlockAt(x, y, z-2-weblength).setTypeId(30);
+						if(w.getBlockAt(x, y, z-1).getType().toString().equalsIgnoreCase(webturretblockId) ||
+								webturretblockId.equalsIgnoreCase(Material.AIR.toString()))
+						{
+							if(w.getBlockAt(x, y, z-1).getType().toString().equalsIgnoreCase(webturretblockId) ||
+									webturretblockId.equalsIgnoreCase(Material.AIR.toString()))
+							{
+								if(w.getBlockAt(x, y, z-2-weblength).getType().equals(Material.AIR) ||
+										w.getBlockAt(x, y, z-2-weblength).getType().equals(Material.WATER) ||
+										w.getBlockAt(x, y, z-2-weblength).getType().equals(Material.STATIONARY_WATER))
+								{
+									w.getBlockAt(x, y, z-2-weblength).setType(Material.WEB);
 									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x, y, z-2-weblength, w, 30), webTime*20);
 								}
-								if(w.getBlockTypeIdAt(x, y, z-2-weblength+1) == 0 || w.getBlockTypeIdAt(x, y, z-2-weblength+1) == 8 || w.getBlockTypeIdAt(x, y, z-2-weblength+1) == 9){
-									w.getBlockAt(x, y, z-2-weblength+1).setTypeId(30);
+								if(w.getBlockAt(x, y, z-2-weblength+1).getType().equals(Material.AIR) ||
+										w.getBlockAt(x, y, z-2-weblength+1).getType().equals(Material.WATER) ||
+										w.getBlockAt(x, y, z-2-weblength+1).getType().equals(Material.STATIONARY_WATER))
+								{
+									w.getBlockAt(x, y, z-2-weblength+1).setType(Material.WEB);
 									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x, y, z-2-weblength+1, w, 30), webTime*20);
 								}
-								if(w.getBlockTypeIdAt(x, y, z-2-weblength-1) == 0 || w.getBlockTypeIdAt(x, y, z-2-weblength-1) == 8 || w.getBlockTypeIdAt(x, y, z-2-weblength-1) == 9){
-									w.getBlockAt(x, y, z-2-weblength-1).setTypeId(30);
+								if(w.getBlockAt(x, y, z-2-weblength-1).getType().equals(Material.AIR) ||
+										w.getBlockAt(x, y, z-2-weblength-1).getType().equals(Material.WATER) ||
+										w.getBlockAt(x, y, z-2-weblength-1).getType().equals(Material.STATIONARY_WATER))
+								{
+									w.getBlockAt(x, y, z-2-weblength-1).setType(Material.WEB);
 									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x, y, z-2-weblength-1, w, 30), webTime*20);
 								}
-								if(w.getBlockTypeIdAt(x-1, y, z-2-weblength) == 0 || w.getBlockTypeIdAt(x-1, y, z-2-weblength) == 8 || w.getBlockTypeIdAt(x-1, y, z-2-weblength) == 9){
-									w.getBlockAt(x-1, y, z-2-weblength).setTypeId(30);
+								if(w.getBlockAt(x-1, y, z-2-weblength).getType().equals(Material.AIR)||
+										w.getBlockAt(x-1, y, z-2-weblength).getType().equals(Material.WATER) ||
+										w.getBlockAt(x-1, y, z-2-weblength).getType().equals(Material.STATIONARY_WATER))
+								{
+									w.getBlockAt(x-1, y, z-2-weblength).setType(Material.WEB);
 									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x-1, y, z-2-weblength, w, 30), webTime*20);
 								}
-								if(w.getBlockTypeIdAt(x+1, y, z-2-weblength) == 0 || w.getBlockTypeIdAt(x+1, y, z-2-weblength) == 8 || w.getBlockTypeIdAt(x+1, y, z-2-weblength) == 9){
-									w.getBlockAt(x+1, y, z-2-weblength).setTypeId(30);
+								if(w.getBlockAt(x+1, y, z-2-weblength).getType().equals(Material.AIR) ||
+										w.getBlockAt(x+1, y, z-2-weblength).getType().equals(Material.WATER) ||
+										w.getBlockAt(x+1, y, z-2-weblength).getType().equals(Material.STATIONARY_WATER))
+								{
+									w.getBlockAt(x+1, y, z-2-weblength).setType(Material.WEB);
 									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x+1, y, z-2-weblength, w, 30), webTime*20);
 								}
-								if(w.getBlockTypeIdAt(x+1, y, z-2-weblength+1) == 0 || w.getBlockTypeIdAt(x+1, y, z-2-weblength+1) == 8 || w.getBlockTypeIdAt(x+1, y, z-2-weblength+1) == 9){
-									w.getBlockAt(x+1, y, z-2-weblength+1).setTypeId(30);
+								if(w.getBlockAt(x+1, y, z-2-weblength+1).getType().equals(Material.AIR) ||
+										w.getBlockAt(x+1, y, z-2-weblength+1).getType().equals(Material.WATER) ||
+										w.getBlockAt(x+1, y, z-2-weblength+1).getType().equals(Material.STATIONARY_WATER))
+								{
+									w.getBlockAt(x+1, y, z-2-weblength+1).setType(Material.WEB);
 									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x+1, y, z-2-weblength+1, w, 30), webTime*20);
 								}
-								if(w.getBlockTypeIdAt(x-1, y, z-2-weblength+1) == 0 || w.getBlockTypeIdAt(x-1, y, z-2-weblength+1) == 8 || w.getBlockTypeIdAt(x-1, y, z-2-weblength+1) == 9){
-									w.getBlockAt(x-1, y, z-2-weblength+1).setTypeId(30);
+								if(w.getBlockAt(x-1, y, z-2-weblength+1).getType().equals(Material.AIR) ||
+										w.getBlockAt(x-1, y, z-2-weblength+1).getType().equals(Material.WATER) ||
+										w.getBlockAt(x-1, y, z-2-weblength+1).getType().equals(Material.STATIONARY_WATER))
+								{
+									w.getBlockAt(x-1, y, z-2-weblength+1).setType(Material.WEB);
 									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x-1, y, z-2-weblength+1, w, 30), webTime*20);
 								}
-								if(w.getBlockTypeIdAt(x+1, y, z-2-weblength-1) == 0 || w.getBlockTypeIdAt(x+1, y, z-2-weblength-1) == 8 || w.getBlockTypeIdAt(x+1, y, z-2-weblength-1) == 9){
-									w.getBlockAt(x+1, y, z-2-weblength-1).setTypeId(30);
+								if(w.getBlockAt(x+1, y, z-2-weblength-1).getType().equals(Material.AIR) ||
+										w.getBlockAt(x+1, y, z-2-weblength-1).getType().equals(Material.WATER) ||
+										w.getBlockAt(x+1, y, z-2-weblength-1).getType().equals(Material.STATIONARY_WATER))
+								{
+									w.getBlockAt(x+1, y, z-2-weblength-1).setType(Material.WEB);
 									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x+1, y, z-2-weblength-1, w, 30), webTime*20);
 								}
-								if(w.getBlockTypeIdAt(x-1, y, z-2-weblength-1) == 0 || w.getBlockTypeIdAt(x-1, y, z-2-weblength-1) == 8 || w.getBlockTypeIdAt(x-1, y, z-2-weblength-1) == 9){
-									w.getBlockAt(x-1, y, z-2-weblength-1).setTypeId(30);
+								if(w.getBlockAt(x-1, y, z-2-weblength-1).getType().equals(Material.AIR) ||
+										w.getBlockAt(x-1, y, z-2-weblength-1).getType().equals(Material.WATER) ||
+										w.getBlockAt(x-1, y, z-2-weblength-1).getType().equals(Material.STATIONARY_WATER))
+								{
+									w.getBlockAt(x-1, y, z-2-weblength-1).setType(Material.WEB);
 									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x-1, y, z-2-weblength-1, w, 30), webTime*20);
 								}
 					}
@@ -2887,164 +3415,255 @@ public class FortificationListener implements Listener {
 					}
 						
 					//Sign facing north, so fire north, x increases
-					if(w.getBlockAt(x, y, z).getData() == 0x4){
+					if(w.getBlockAt(x, y, z).getData() == 0x4)
+					{
 						//If sign is on ice...
-						if(w.getBlockTypeIdAt(x+1, y, z)==webturretblockId || webturretblockId == 0){
-							if(w.getBlockTypeIdAt(x+1, y, z)==webturretblockId || webturretblockId == 0){
-								if(w.getBlockTypeIdAt(x+2+weblength, y, z) == 0 || w.getBlockTypeIdAt(x+2+weblength, y, z) == 8 || w.getBlockTypeIdAt(x+2+weblength, y, z) == 9){
-									w.getBlockAt(x+2+weblength, y, z).setTypeId(30);
+						if(w.getBlockAt(x+1, y, z).getType().toString().equalsIgnoreCase(webturretblockId) ||
+								webturretblockId.equalsIgnoreCase(Material.AIR.toString()))
+						{
+							if(w.getBlockAt(x+1, y, z).getType().toString().equalsIgnoreCase(webturretblockId) ||
+									webturretblockId.equalsIgnoreCase(Material.AIR.toString()))
+							{
+								if(w.getBlockAt(x+2+weblength, y, z).getType().equals(Material.AIR) ||
+										w.getBlockAt(x+2+weblength, y, z).getType().equals(Material.WATER) ||
+										w.getBlockAt(x+2+weblength, y, z).getType().equals(Material.STATIONARY_WATER))
+								{
+									w.getBlockAt(x+2+weblength, y, z).setType(Material.WEB);
 									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x+2+weblength, y, z, w, 30), webTime*20);
 								}
-								if(w.getBlockTypeIdAt(x+2+weblength, y, z+1) == 0 || w.getBlockTypeIdAt(x+2+weblength, y, z+1) == 8 || w.getBlockTypeIdAt(x+2+weblength, y, z+1) == 9){
-									w.getBlockAt(x+2+weblength, y, z+1).setTypeId(30);
+								if(w.getBlockAt(x+2+weblength, y, z+1).getType().equals(Material.AIR) ||
+										w.getBlockAt(x+2+weblength, y, z+1).getType().equals(Material.WATER) ||
+										w.getBlockAt(x+2+weblength, y, z+1).getType().equals(Material.STATIONARY_WATER))
+								{
+									w.getBlockAt(x+2+weblength, y, z+1).setType(Material.WEB);
 									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x+2+weblength, y, z+1, w, 30), webTime*20);
 								}
-								if(w.getBlockTypeIdAt(x+2+weblength, y, z-1) == 0 || w.getBlockTypeIdAt(x+2+weblength, y, z-1) == 8 || w.getBlockTypeIdAt(x+2+weblength, y, z-1) == 9){
-									w.getBlockAt(x+2+weblength, y, z-1).setTypeId(30);
+								if(w.getBlockAt(x+2+weblength, y, z-1).getType().equals(Material.AIR) ||
+										w.getBlockAt(x+2+weblength, y, z-1).getType().equals(Material.WATER) ||
+										w.getBlockAt(x+2+weblength, y, z-1).getType().equals(Material.STATIONARY_WATER))
+								{
+									w.getBlockAt(x+2+weblength, y, z-1).setType(Material.WEB);
 									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x+2+weblength, y, z-1, w, 30), webTime*20);
 								}
-								if(w.getBlockTypeIdAt(x+2+weblength-1, y, z) == 0 || w.getBlockTypeIdAt(x+2+weblength-1, y, z) == 8 || w.getBlockTypeIdAt(x+2+weblength-1, y, z) == 9){
-									w.getBlockAt(x+2+weblength-1, y, z).setTypeId(30);
+								if(w.getBlockAt(x+2+weblength-1, y, z).getType().equals(Material.AIR) ||
+										w.getBlockAt(x+2+weblength-1, y, z).getType().equals(Material.WATER) ||
+										w.getBlockAt(x+2+weblength-1, y, z).getType().equals(Material.STATIONARY_WATER))
+								{
+									w.getBlockAt(x+2+weblength-1, y, z).setType(Material.WEB);
 									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x+2+weblength-1, y, z, w, 30), webTime*20);
 								}
-								if(w.getBlockTypeIdAt(x+2+weblength+1, y, z) == 0 || w.getBlockTypeIdAt(x+2+weblength+1, y, z) == 8 || w.getBlockTypeIdAt(x+2+weblength+1, y, z) == 9){
-									w.getBlockAt(x+2+weblength+1, y, z).setTypeId(30);
+								if(w.getBlockAt(x+2+weblength+1, y, z).getType().equals(Material.AIR) ||
+										w.getBlockAt(x+2+weblength+1, y, z).getType().equals(Material.WATER) ||
+										w.getBlockAt(x+2+weblength+1, y, z).getType().equals(Material.STATIONARY_WATER))
+								{
+									w.getBlockAt(x+2+weblength+1, y, z).setType(Material.WEB);
 									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x+2+weblength+1, y, z, w, 30), webTime*20);
 								}
-								if(w.getBlockTypeIdAt(x+2+weblength+1, y, z+1) == 0 || w.getBlockTypeIdAt(x+2+weblength+1, y, z+1) == 8 || w.getBlockTypeIdAt(x+2+weblength+1, y, z+1) == 9){
-									w.getBlockAt(x+2+weblength+1, y, z+1).setTypeId(30);
+								if(w.getBlockAt(x+2+weblength+1, y, z+1).getType().equals(Material.AIR) ||
+										w.getBlockAt(x+2+weblength+1, y, z+1).getType().equals(Material.WATER) ||
+										w.getBlockAt(x+2+weblength+1, y, z+1).getType().equals(Material.STATIONARY_WATER))
+								{
+									w.getBlockAt(x+2+weblength+1, y, z+1).setType(Material.WEB);
 									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x+2+weblength+1, y, z+1, w, 30), webTime*20);
 								}
-								if(w.getBlockTypeIdAt(x+2+weblength-1, y, z+1) == 0 || w.getBlockTypeIdAt(x+2+weblength-1, y, z+1) == 8 || w.getBlockTypeIdAt(x+2+weblength-1, y, z+1) == 9){
-									w.getBlockAt(x+2+weblength-1, y, z+1).setTypeId(30);
+								if(w.getBlockAt(x+2+weblength-1, y, z+1).getType().equals(Material.AIR) ||
+										w.getBlockAt(x+2+weblength-1, y, z+1).getType().equals(Material.WATER) ||
+										w.getBlockAt(x+2+weblength-1, y, z+1).getType().equals(Material.STATIONARY_WATER))
+								{
+									w.getBlockAt(x+2+weblength-1, y, z+1).setType(Material.WEB);
 									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x+2+weblength-1, y, z+1, w, 30), webTime*20);
 								}
-								if(w.getBlockTypeIdAt(x+2+weblength+1, y, z-1) == 0 || w.getBlockTypeIdAt(x+2+weblength+1, y, z-1) == 8 || w.getBlockTypeIdAt(x+2+weblength+1, y, z-1) == 9){
-									w.getBlockAt(x+2+weblength+1, y, z-1).setTypeId(30);
+								if(w.getBlockAt(x+2+weblength+1, y, z-1).getType().equals(Material.AIR) ||
+										w.getBlockAt(x+2+weblength+1, y, z-1).getType().equals(Material.WATER) ||
+										w.getBlockAt(x+2+weblength+1, y, z-1).getType().equals(Material.STATIONARY_WATER))
+								{
+									w.getBlockAt(x+2+weblength+1, y, z-1).setType(Material.WEB);
 									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x+2+weblength+1, y, z-1, w, 30), webTime*20);
 								}
-								if(w.getBlockTypeIdAt(x+2+weblength-1, y, z-1) == 0 || w.getBlockTypeIdAt(x+2+weblength-1, y, z-1) == 8 || w.getBlockTypeIdAt(x+2+weblength-1, y, z-1) == 9){
-									w.getBlockAt(x+2+weblength-1, y, z-1).setTypeId(30);
+								if(w.getBlockAt(x+2+weblength-1, y, z-1).getType().equals(Material.AIR) ||
+										w.getBlockAt(x+2+weblength-1, y, z-1).getType().equals(Material.WATER) ||
+										w.getBlockAt(x+2+weblength-1, y, z-1).getType().equals(Material.STATIONARY_WATER))
+								{
+									w.getBlockAt(x+2+weblength-1, y, z-1).setType(Material.WEB);
 									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x+2+weblength-1, y, z-1, w, 30), webTime*20);
 								}
-					}
-					}
+							}
+						}
 					}
 					//Sign facing south, so fire south, x decreases
-					if(w.getBlockAt(x, y, z).getData() == 0x5){
+					if(w.getBlockAt(x, y, z).getData() == 0x5)
+					{
 						//If sign is on ice...
-						if(w.getBlockTypeIdAt(x-1, y, z)==webturretblockId || webturretblockId == 0){
-							if(w.getBlockTypeIdAt(x-1, y, z)==webturretblockId || webturretblockId == 0){
-								if(w.getBlockTypeIdAt(x-2-weblength, y, z) == 0 || w.getBlockTypeIdAt(x-2-weblength, y, z) == 8 || w.getBlockTypeIdAt(x-2-weblength, y, z) == 9){
-									w.getBlockAt(x-2-weblength, y, z).setTypeId(30);
+						if(w.getBlockAt(x-1, y, z).getType().toString().equalsIgnoreCase(webturretblockId) ||
+								webturretblockId.equalsIgnoreCase(Material.AIR.toString()))
+						{
+							if(w.getBlockAt(x-1, y, z).getType().toString().equalsIgnoreCase(webturretblockId) ||
+									webturretblockId.equalsIgnoreCase(Material.AIR.toString()))
+							{
+								if(w.getBlockAt(x-2-weblength, y, z).getType().equals(Material.AIR) ||
+										w.getBlockAt(x-2-weblength, y, z).getType().equals(Material.WATER) ||
+										w.getBlockAt(x-2-weblength, y, z).getType().equals(Material.STATIONARY_WATER))
+								{
+									w.getBlockAt(x-2-weblength, y, z).setType(Material.WEB);
 									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x-2-weblength, y, z, w, 30), webTime*20);
 								}
-								if(w.getBlockTypeIdAt(x-2-weblength, y, z+1) == 0 || w.getBlockTypeIdAt(x-2-weblength, y, z+1) == 8 || w.getBlockTypeIdAt(x-2-weblength, y, z+1) == 9){
-									w.getBlockAt(x-2-weblength, y, z+1).setTypeId(30);
+								if(w.getBlockAt(x-2-weblength, y, z+1).getType().equals(Material.AIR) ||
+										w.getBlockAt(x-2-weblength, y, z+1).getType().equals(Material.WATER) ||
+										w.getBlockAt(x-2-weblength, y, z+1).getType().equals(Material.STATIONARY_WATER))
+								{
+									w.getBlockAt(x-2-weblength, y, z+1).setType(Material.WEB);
 									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x-2-weblength, y, z+1, w, 30), webTime*20);
 								}
-								if(w.getBlockTypeIdAt(x-2-weblength, y, z-1) == 0 || w.getBlockTypeIdAt(x-2-weblength, y, z-1) == 8 || w.getBlockTypeIdAt(x-2-weblength, y, z-1) == 9){
-									w.getBlockAt(x-2-weblength, y, z-1).setTypeId(30);
+								if(w.getBlockAt(x-2-weblength, y, z-1).getType().equals(Material.AIR) ||
+										w.getBlockAt(x-2-weblength, y, z-1).getType().equals(Material.WATER) ||
+										w.getBlockAt(x-2-weblength, y, z-1).getType().equals(Material.STATIONARY_WATER))
+								{
+									w.getBlockAt(x-2-weblength, y, z-1).setType(Material.WEB);
 									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x-2-weblength, y, z-1, w, 30), webTime*20);
 								}
-								if(w.getBlockTypeIdAt(x-2-weblength-1, y, z) == 0 || w.getBlockTypeIdAt(x-2-weblength-1, y, z) == 8 || w.getBlockTypeIdAt(x-2-weblength-1, y, z) == 9){
-									w.getBlockAt(x-2-weblength-1, y, z).setTypeId(30);
+								if(w.getBlockAt(x-2-weblength-1, y, z).getType().equals(Material.AIR) ||
+										w.getBlockAt(x-2-weblength-1, y, z).getType().equals(Material.WATER) ||
+										w.getBlockAt(x-2-weblength-1, y, z).getType().equals(Material.STATIONARY_WATER))
+								{
+									w.getBlockAt(x-2-weblength-1, y, z).setType(Material.WEB);
 									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x-2-weblength-1, y, z, w, 30), webTime*20);
 								}
-								if(w.getBlockTypeIdAt(x-2-weblength+1, y, z) == 0 || w.getBlockTypeIdAt(x-2-weblength+1, y, z) == 8 || w.getBlockTypeIdAt(x-2-weblength+1, y, z) == 9){
-									w.getBlockAt(x-2-weblength+1, y, z).setTypeId(30);
+								if(w.getBlockAt(x-2-weblength+1, y, z).getType().equals(Material.AIR) ||
+										w.getBlockAt(x-2-weblength+1, y, z).getType().equals(Material.WATER) ||
+										w.getBlockAt(x-2-weblength+1, y, z).getType().equals(Material.STATIONARY_WATER))
+								{
+									w.getBlockAt(x-2-weblength+1, y, z).setType(Material.WEB);
 									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x-2-weblength+1, y, z, w, 30), webTime*20);
 								}
-								if(w.getBlockTypeIdAt(x-2-weblength+1, y, z+1) == 0 || w.getBlockTypeIdAt(x-2-weblength+1, y, z+1) == 8 || w.getBlockTypeIdAt(x-2-weblength+1, y, z+1) == 9){
-									w.getBlockAt(x-2-weblength+1, y, z+1).setTypeId(30);
+								if(w.getBlockAt(x-2-weblength+1, y, z+1).getType().equals(Material.AIR) ||
+										w.getBlockAt(x-2-weblength+1, y, z+1).getType().equals(Material.WATER) ||
+										w.getBlockAt(x-2-weblength+1, y, z+1).getType().equals(Material.STATIONARY_WATER))
+								{
+									w.getBlockAt(x-2-weblength+1, y, z+1).setType(Material.WEB);
 									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x-2-weblength+1, y, z+1, w, 30), webTime*20);
 								}
-								if(w.getBlockTypeIdAt(x-2-weblength-1, y, z+1) == 0 || w.getBlockTypeIdAt(x-2-weblength-1, y, z+1) == 8 || w.getBlockTypeIdAt(x-2-weblength-1, y, z+1) == 9){
-									w.getBlockAt(x-2-weblength-1, y, z+1).setTypeId(30);
+								if(w.getBlockAt(x-2-weblength-1, y, z+1).getType().equals(Material.AIR) ||
+										w.getBlockAt(x-2-weblength-1, y, z+1).getType().equals(Material.WATER) ||
+										w.getBlockAt(x-2-weblength-1, y, z+1).getType().equals(Material.STATIONARY_WATER))
+								{
+									w.getBlockAt(x-2-weblength-1, y, z+1).setType(Material.WEB);
 									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x-2-weblength-1, y, z+1, w, 30), webTime*20);
 								}
-								if(w.getBlockTypeIdAt(x-2-weblength+1, y, z-1) == 0 || w.getBlockTypeIdAt(x-2-weblength+1, y, z-1) == 8 || w.getBlockTypeIdAt(x-2-weblength+1, y, z-1) == 9){
-									w.getBlockAt(x-2-weblength+1, y, z-1).setTypeId(30);
+								if(w.getBlockAt(x-2-weblength+1, y, z-1).getType().equals(Material.AIR) ||
+										w.getBlockAt(x-2-weblength+1, y, z-1).getType().equals(Material.WATER) ||
+										w.getBlockAt(x-2-weblength+1, y, z-1).getType().equals(Material.STATIONARY_WATER))
+								{
+									w.getBlockAt(x-2-weblength+1, y, z-1).setType(Material.WEB);
 									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x-2-weblength+1, y, z-1, w, 30), webTime*20);
 								}
-								if(w.getBlockTypeIdAt(x-2-weblength-1, y, z-1) == 0 || w.getBlockTypeIdAt(x-2-weblength-1, y, z-1) == 8 || w.getBlockTypeIdAt(x-2-weblength-1, y, z-1) == 9){
-									w.getBlockAt(x-2-weblength-1, y, z-1).setTypeId(30);
+								if(w.getBlockAt(x-2-weblength-1, y, z-1).getType().equals(Material.AIR) ||
+										w.getBlockAt(x-2-weblength-1, y, z-1).getType().equals(Material.WATER) ||
+										w.getBlockAt(x-2-weblength-1, y, z-1).getType().equals(Material.STATIONARY_WATER))
+								{
+									w.getBlockAt(x-2-weblength-1, y, z-1).setType(Material.WEB);
 									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x-2-weblength-1, y, z-1, w, 30), webTime*20);
 								}
-					}
-					}
+							}
+						}
 					}
 				}
 				}
 				
 				//Flame Turret - Shoots fire out to flamelength
-				if(l1.equalsIgnoreCase("flame")){
+				if(l1.equalsIgnoreCase("flame"))
+				{
 					//Sign facing east, so fire west, z increases
-					if(w.getBlockAt(x, y, z).getData() == 0x2){
+					if(w.getBlockAt(x, y, z).getData() == 0x2)
+					{
 						//If sign is on bloodstone...
-					if(w.getBlockTypeIdAt(x, y, z+1)==flameturretblockId || flameturretblockId == 0){
-						for(int i = 0; i < flamelength; i++){
-							if(w.getBlockTypeIdAt(x, y, z+2+i) == 0){
-								w.getBlockAt(x, y, z+2+i).setTypeId(51);
-							}
-							else{
-								break;
-							}
-							}
-					}
-					}
-					//Sign facing west, so fire east, z decreases
-					if(w.getBlockAt(x, y, z).getData() == 0x3){
-						//If sign is on bloodstone...
-						if(w.getBlockTypeIdAt(x, y, z-1)==flameturretblockId || flameturretblockId == 0){
-						for(int i = 0; i < flamelength; i++){
-							if(w.getBlockTypeIdAt(x, y, z-2-i) == 0){
-								w.getBlockAt(x, y, z-2-i).setTypeId(51);
-							}
-							else{
-								break;
+						if(w.getBlockAt(x, y, z+1).getType().toString().equalsIgnoreCase(flameturretblockId) ||
+								flameturretblockId.equalsIgnoreCase(Material.AIR.toString()))
+						{
+							for(int i = 0; i < flamelength; i++)
+							{
+								if(w.getBlockAt(x, y, z+2+i).getType().equals(Material.AIR))
+								{
+									w.getBlockAt(x, y, z+2+i).setType(Material.FIRE);
+								}
+								else
+								{
+									break;
+								}
 							}
 						}
 					}
+					//Sign facing west, so fire east, z decreases
+					if(w.getBlockAt(x, y, z).getData() == 0x3)
+					{
+						//If sign is on bloodstone...
+						if(w.getBlockAt(x, y, z-1).getType().toString().equalsIgnoreCase(flameturretblockId) ||
+								flameturretblockId.equalsIgnoreCase(Material.AIR.toString()))
+						{
+							for(int i = 0; i < flamelength; i++)
+							{
+								if(w.getBlockAt(x, y, z-2-i).getType().equals(Material.AIR))
+								{
+									w.getBlockAt(x, y, z-2-i).setType(Material.FIRE);
+								}
+								else
+								{
+									break;
+								}
+							}
+						}
 					}
 						
 					//Sign facing north, so fire north, x increases
-					if(w.getBlockAt(x, y, z).getData() == 0x4){
+					if(w.getBlockAt(x, y, z).getData() == 0x4)
+					{
 						//If sign is on bloodstone...
-						if(w.getBlockTypeIdAt(x+1, y, z)==flameturretblockId || flameturretblockId == 0){
-						for(int i = 0; i < flamelength; i++){
-							if(w.getBlockTypeIdAt(x+2+i, y, z) == 0){
-								w.getBlockAt(x+2+i, y, z).setTypeId(51);
+						if(w.getBlockAt(x+1, y, z).getType().toString().equalsIgnoreCase(flameturretblockId) ||
+								flameturretblockId.equalsIgnoreCase(Material.AIR.toString()))
+						{
+							for(int i = 0; i < flamelength; i++)
+							{
+								if(w.getBlockAt(x+2+i, y, z).getType().equals(Material.AIR))
+								{
+									w.getBlockAt(x+2+i, y, z).setType(Material.FIRE);
+								}
+								else
+								{
+									break;
+								}
 							}
-							else{
-								break;
-							}
-							}
-	
-					}
+						}
 					}
 					//Sign facing south, so fire south, x decreases
-					if(w.getBlockAt(x, y, z).getData() == 0x5){
+					if(w.getBlockAt(x, y, z).getData() == 0x5)
+					{
 						//If sign is on bloodstone...
-						if(w.getBlockTypeIdAt(x-1, y, z)==flameturretblockId || flameturretblockId == 0){
-						for(int i = 0; i < flamelength; i++){
-							if(w.getBlockTypeIdAt(x-2-i, y, z) == 0){
-								w.getBlockAt(x-2-i, y, z).setTypeId(51);
+						if(w.getBlockAt(x-1, y, z).getType().toString().equalsIgnoreCase(flameturretblockId) ||
+								flameturretblockId.equalsIgnoreCase(Material.AIR.toString()))
+						{
+							for(int i = 0; i < flamelength; i++)
+							{
+								if(w.getBlockAt(x-2-i, y, z).getType().equals(Material.AIR))
+								{
+									w.getBlockAt(x-2-i, y, z).setType(Material.FIRE);
+								}
+								else
+								{
+									break;
+								}
 							}
-							else{
-								break;
-							}
-							}
-	
-					}
+						}
 					}
 				}
 				//Arrow Turret - fires an arrow in direction it is facing.
-				if(l1.equalsIgnoreCase("arrow") || l1.equalsIgnoreCase("default") || l1.equalsIgnoreCase("") || l1 == null){
+				if(l1.equalsIgnoreCase("arrow") || l1.equalsIgnoreCase("default") || l1.equalsIgnoreCase("") || l1 == null)
+				{
 					//Sign facing east, so fire west, z increases
-					if(w.getBlockAt(x, y, z).getData() == 0x2){
+					if(w.getBlockAt(x, y, z).getData() == 0x2)
+					{
 						//If sign is on specified block type...
-						if(w.getBlockTypeIdAt(x, y, z+1)==arrowturretblockId || arrowturretblockId == 0){
+						if(w.getBlockAt(x, y, z+1).getType().toString().equalsIgnoreCase(arrowturretblockId) ||
+								arrowturretblockId.equalsIgnoreCase(Material.AIR.toString()))
+						{
 							//fire arrow
 							Location target = new Location(w,x,y+1.5,z+10);
 							Location origin = new Location(w,x,y+1.5,z+1.5);
@@ -3054,7 +3673,9 @@ public class FortificationListener implements Listener {
 					//Sign facing west, so fire east, z decreases
 					if(w.getBlockAt(x, y, z).getData() == 0x3){
 						//If sign is on specified block type...
-						if(w.getBlockTypeIdAt(x, y, z-1)==arrowturretblockId || arrowturretblockId == 0){
+						if(w.getBlockAt(x, y, z-1).getType().toString().equalsIgnoreCase(arrowturretblockId) ||
+								arrowturretblockId.equalsIgnoreCase(Material.AIR.toString()))
+						{
 							//fire arrow
 							Location target = new Location(w,x,y+1.5,z-10);
 							Location origin = new Location(w,x,y+1.5,z-1.5);
@@ -3065,7 +3686,9 @@ public class FortificationListener implements Listener {
 					//Sign facing north, so fire north, x increases
 					if(w.getBlockAt(x, y, z).getData() == 0x4){
 						//If sign is on specified block type...
-						if(w.getBlockTypeIdAt(x+1, y, z)==arrowturretblockId || arrowturretblockId == 0){
+						if(w.getBlockAt(x+1, y, z).getType().toString().equalsIgnoreCase(arrowturretblockId) ||
+								arrowturretblockId.equalsIgnoreCase(Material.AIR.toString()))
+						{
 							//fire arrow
 							Location target = new Location(w,x+10,y+1.5,z);
 							Location origin = new Location(w,x+1.5,y+1.5,z);
@@ -3075,7 +3698,9 @@ public class FortificationListener implements Listener {
 					//Sign facing south, so fire south, x decreases
 					if(w.getBlockAt(x, y, z).getData() == 0x5){
 						//If sign is on specified block type...
-						if(w.getBlockTypeIdAt(x-1, y, z)==arrowturretblockId || arrowturretblockId == 0){
+						if(w.getBlockAt(x-1, y, z).getType().toString().equalsIgnoreCase(arrowturretblockId) ||
+								arrowturretblockId.equalsIgnoreCase(Material.AIR.toString()))
+						{
 							//fire arrow
 							Location target = new Location(w,x-10,y+1.5,z);
 							Location origin = new Location(w,x-1.5,y+1.5,z);
@@ -3094,7 +3719,7 @@ public class FortificationListener implements Listener {
 		{
 			if(e.getPlayer() != null)
 			{
-			ItemStack si = new ItemStack(323, 1);
+			ItemStack si = new ItemStack(Material.SIGN, 1);
 			Player player = e.getPlayer();
 			//message sign
 				if(e.getLine(1).equalsIgnoreCase("[Message]"))
@@ -3104,7 +3729,7 @@ public class FortificationListener implements Listener {
 						if(!player.hasPermission("fortification.msgsign") && !player.hasPermission("fortification.*"))
 						{
 							player.sendMessage(ChatColor.RED + "You do not have permission to build message signs.");
-							player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+							player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
 							player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 							return;
 						}
@@ -3127,7 +3752,7 @@ public class FortificationListener implements Listener {
 								else
 								{
 									player.sendMessage(ChatColor.RED + "You do not have enough money for this purchase (" + fort.getMsgsignCost() + ")");
-									player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+									player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
 									player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 									return;
 								}
@@ -3144,7 +3769,7 @@ public class FortificationListener implements Listener {
 						if(!player.hasPermission("fortification.*") && !player.hasPermission("fortification.receiver"))
 						{
 							player.sendMessage(ChatColor.RED + "You do not have permission to build receivers.");
-							player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+							player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
 							player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 							return;
 						}
@@ -3163,7 +3788,7 @@ public class FortificationListener implements Listener {
 								else
 								{
 									player.sendMessage(ChatColor.RED + "You do not have enough money for this purchase (" + fort.getReceiverCost() + ")");
-									player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+									player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
 									player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 									return;
 								}
@@ -3184,7 +3809,7 @@ public class FortificationListener implements Listener {
 						if(!player.hasPermission("fortification.*") && !player.hasPermission("fortification.telepad"))
 						{
 							player.sendMessage(ChatColor.RED + "You do not have permission to build telepads.");
-							player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+							player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
 							player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 							return;
 						}
@@ -3196,7 +3821,7 @@ public class FortificationListener implements Listener {
 						if(e.getLine(2).equals(fort.getPadList().get(i).getRecBand()))
 						{
 							player.sendMessage(ChatColor.RED + "The Receiving band is already in use.");
-							player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+							player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
 							player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 							return;
 						}
@@ -3250,22 +3875,22 @@ public class FortificationListener implements Listener {
 					switch(w.getBlockAt(new Location(w,x,y,z)).getData())
 					{
 					case 0x3: //-z = back, left = -x
-						if(w.getBlockAt(new Location(w,x,y,z-1)).getTypeId() == fort.getTelepadBlockId() || fort.getTeleblockId() == 0)
+						if(w.getBlockAt(new Location(w,x,y,z-1)).getType().toString().equalsIgnoreCase(fort.getTelepadBlockId()) || fort.getTeleblockId() == "0")
 						{
 							//find front left tower
 							for(int i = 0; i < teleLength; i++)
 							{
-								if(w.getBlockTypeIdAt(new Location(w,x-i,y,z-1)) == fort.getTelepadTowerId())
+								if(w.getBlockAt(new Location(w,x-i,y,z-1)).getType().toString().equalsIgnoreCase(fort.getTelepadTowerId()))
 								{
 									//still a telepad, keep going, but check support height while we are here
-									if(w.getBlockTypeIdAt(x-i-1,y,z-1) == fort.getTelepadSupportId() && w.getBlockTypeIdAt(x-i, y, z) == fort.getTelepadSupportId())
+									if(w.getBlockAt(x-i-1,y,z-1).getType().toString().equalsIgnoreCase(fort.getTelepadSupportId()) && w.getBlockAt(x-i, y, z).getType().toString().equalsIgnoreCase(fort.getTelepadSupportId()))
 									{
 										//Found front left tower
 										fLeft = new TelepadTower(new Location(w,x-i,y,z-1), new Location(w,x-i-1,y,z-1), new Location(w,x-i, y, z), fort);
 										if(!fLeft.checkIntegrity())
 										{
 											player.sendMessage(ChatColor.RED + "Telepad front left tower integrity compromised.");
-											player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+											player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
 											player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 											return;
 										}
@@ -3274,14 +3899,15 @@ public class FortificationListener implements Listener {
 											//find back left tower
 											for(int k = 0; k < teleLength; k++)
 											{
-												if(w.getBlockTypeIdAt(x-i,y,z-1-k) == fort.getTelepadTowerId() && w.getBlockTypeIdAt(x-i,y,z-2-k) == fort.getTelepadSupportId() 
-														&& w.getBlockTypeIdAt(x-i-1,y,z-1-k) == fort.getTelepadSupportId())
+												if(w.getBlockAt(x-i,y,z-1-k).getType().toString().equalsIgnoreCase(fort.getTelepadTowerId()) &&
+														w.getBlockAt(x-i,y,z-2-k).getType().toString().equalsIgnoreCase(fort.getTelepadSupportId()) 
+														&& w.getBlockAt(x-i-1,y,z-1-k).getType().toString().equalsIgnoreCase(fort.getTelepadSupportId()))
 												{
 													bLeft = new TelepadTower(new Location(w,x-i,y,z-1-k), new Location(w,x-i,y,z-2-k), new Location(w,x-i-1,y,z-1-k), fort);
 													if(!bLeft.checkIntegrity())
 													{
 														player.sendMessage(ChatColor.RED + "Telepad back left tower integrity compromised.");
-														player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+														player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
 														player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 														return;
 													}
@@ -3290,14 +3916,15 @@ public class FortificationListener implements Listener {
 														//find back right tower
 														for(int j = 0; j < teleLength; j++)
 														{
-															if(w.getBlockTypeIdAt(x-i+j,y,z-1-k) == fort.getTelepadTowerId() && w.getBlockTypeIdAt(x-i+j,y,z-2-k) == fort.getTelepadSupportId() 
-																	&& w.getBlockTypeIdAt(x-i+1+j,y,z-1-k) == fort.getTelepadSupportId())
+															if(w.getBlockAt(x-i+j,y,z-1-k).getType().toString().equalsIgnoreCase(fort.getTelepadTowerId()) &&
+																	w.getBlockAt(x-i+j,y,z-2-k).getType().toString().equalsIgnoreCase(fort.getTelepadSupportId()) 
+																	&& w.getBlockAt(x-i+1+j,y,z-1-k).getType().toString().equalsIgnoreCase(fort.getTelepadSupportId()))
 															{
 																bRight = new TelepadTower(new Location(w,x-i+j,y,z-1-k), new Location(w, x-i+1+j,y,z-1-k), new Location(w,x-i+j,y,z-2-k), fort);
 																if(!bRight.checkIntegrity())
 																{
 																	player.sendMessage(ChatColor.RED + "Telepad back right tower integrity compromised.");
-																	player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+																	player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
 																	player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 																	return;
 																}
@@ -3308,7 +3935,7 @@ public class FortificationListener implements Listener {
 																	if(!fRight.checkIntegrity())
 																	{
 																		player.sendMessage(ChatColor.RED + "Telepad front right tower integrity compromised.");
-																		player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+																		player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
 																		player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 																		return;
 																	}
@@ -3318,7 +3945,7 @@ public class FortificationListener implements Listener {
 																	if(!t.checkIntegrity())
 																	{
 																		player.sendMessage(ChatColor.RED + "Telepad integrity compromised.");
-																		player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+																		player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
 																		player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 																		return;
 																	}
@@ -3351,22 +3978,24 @@ public class FortificationListener implements Listener {
 							return;
 						}
 					case 0x2://+z = back, left = +x
-						if(w.getBlockAt(new Location(w,x,y,z+1)).getTypeId() == fort.getTelepadBlockId() || fort.getTeleblockId() == 0)
+						if(w.getBlockAt(new Location(w,x,y,z+1)).getType().toString().equalsIgnoreCase(fort.getTelepadBlockId()) ||
+								fort.getTeleblockId().equalsIgnoreCase(Material.AIR.toString()))
 						{
 							//find front left tower
 							for(int i = 0; i < teleLength; i++)
 							{
-								if(w.getBlockTypeIdAt(new Location(w,x+i,y,z+1)) == fort.getTelepadTowerId())
+								if(w.getBlockAt(new Location(w,x+i,y,z+1)).getType().toString().equalsIgnoreCase(fort.getTelepadTowerId()))
 								{
 									//still a telepad, keep going, but check support height while we are here
-									if(w.getBlockTypeIdAt(x+i+1,y,z+1) == fort.getTelepadSupportId() && w.getBlockTypeIdAt(x+i, y, z) == fort.getTelepadSupportId())
+									if(w.getBlockAt(x+i+1,y,z+1).getType().toString().equalsIgnoreCase(fort.getTelepadSupportId()) &&
+											w.getBlockAt(x+i, y, z).getType().toString().equalsIgnoreCase(fort.getTelepadSupportId()))
 									{
 										//Found front left tower
 										fLeft = new TelepadTower(new Location(w,x+i,y,z+1), new Location(w,x+i+1,y,z+1), new Location(w,x+i, y, z), fort);
 										if(!fLeft.checkIntegrity())
 										{
 											player.sendMessage(ChatColor.RED + "Telepad front left tower integrity compromised.");
-											player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+											player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
 											player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 											return;
 										}
@@ -3375,14 +4004,15 @@ public class FortificationListener implements Listener {
 											//find back left tower
 											for(int k = 0; k < teleLength; k++)
 											{
-												if(w.getBlockTypeIdAt(x+i,y,z+1+k) == fort.getTelepadTowerId() && w.getBlockTypeIdAt(x+i,y,z+2+k) == fort.getTelepadSupportId() 
-														&& w.getBlockTypeIdAt(x+i+1,y,z+1+k) == fort.getTelepadSupportId())
+												if(w.getBlockAt(x+i,y,z+1+k).getType().toString().equalsIgnoreCase(fort.getTelepadTowerId()) &&
+														w.getBlockAt(x+i,y,z+2+k).getType().toString().equalsIgnoreCase(fort.getTelepadSupportId()) 
+														&& w.getBlockAt(x+i+1,y,z+1+k).getType().toString().equalsIgnoreCase(fort.getTelepadSupportId()))
 												{
 													bLeft = new TelepadTower(new Location(w,x+i,y,z+1+k), new Location(w,x+i,y,z+2+k), new Location(w,x+i+1,y,z+1+k), fort);
 													if(!bLeft.checkIntegrity())
 													{
 														player.sendMessage(ChatColor.RED + "Telepad back left tower integrity compromised.");
-														player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+														player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
 														player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 														return;
 													}
@@ -3391,14 +4021,15 @@ public class FortificationListener implements Listener {
 														//find back right tower
 														for(int j = 0; j < teleLength; j++)
 														{
-															if(w.getBlockTypeIdAt(x+i-j,y,z+1+k) == fort.getTelepadTowerId() && w.getBlockTypeIdAt(x+i-j,y,z+2+k) == fort.getTelepadSupportId() 
-																	&& w.getBlockTypeIdAt(x+i-1-j,y,z+1+k) == fort.getTelepadSupportId())
+															if(w.getBlockAt(x+i-j,y,z+1+k).getType().toString().equalsIgnoreCase(fort.getTelepadTowerId()) &&
+																	w.getBlockAt(x+i-j,y,z+2+k).getType().toString().equalsIgnoreCase(fort.getTelepadSupportId()) 
+																	&& w.getBlockAt(x+i-1-j,y,z+1+k).getType().toString().equalsIgnoreCase(fort.getTelepadSupportId()))
 															{
 																bRight = new TelepadTower(new Location(w,x+i-j,y,z+1+k), new Location(w, x+i-j,y,z+2+k), new Location(w,x+i-1-j,y,z+1+k), fort);
 																if(!bRight.checkIntegrity())
 																{
 																	player.sendMessage(ChatColor.RED + "Telepad back right tower integrity compromised.");
-																	player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+																	player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
 																	player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 																	return;
 																}
@@ -3409,7 +4040,7 @@ public class FortificationListener implements Listener {
 																	if(!fRight.checkIntegrity())
 																	{
 																		player.sendMessage(ChatColor.RED + "Telepad front right tower integrity compromised.");
-																		player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+																		player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
 																		player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 																		return;
 																	}
@@ -3419,7 +4050,7 @@ public class FortificationListener implements Listener {
 																	if(!t.checkIntegrity())
 																	{
 																		player.sendMessage(ChatColor.RED + "Telepad integrity compromised.");
-																		player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+																		player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
 																		player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 																		return;
 																	}
@@ -3440,34 +4071,36 @@ public class FortificationListener implements Listener {
 								}
 							}
 							player.sendMessage(ChatColor.RED + "Telepad - tower missing, integrity compromised.");
-							player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+							player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
 							player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 							return;
 						}
 						else
 						{
 							player.sendMessage(ChatColor.RED + "You must use a block of id: " + fort.getTeleblockId() + " behind the [Telepad] sign");
-							player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+							player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
 							player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 							return;
 						}
 					case 0x5://-x = back, left = +z
-						if(w.getBlockAt(new Location(w,x-1,y,z)).getTypeId() == fort.getTelepadBlockId() || fort.getTeleblockId() == 0)
+						if(w.getBlockAt(new Location(w,x-1,y,z)).getType().toString().equalsIgnoreCase(fort.getTelepadBlockId()) ||
+								fort.getTeleblockId().equalsIgnoreCase(Material.AIR.toString()))
 						{
 							//find front left tower
 							for(int i = 0; i < teleLength; i++)
 							{
-								if(w.getBlockTypeIdAt(new Location(w,x-1,y,z+i)) == fort.getTelepadTowerId())
+								if(w.getBlockAt(new Location(w,x-1,y,z+i)).getType().toString().equalsIgnoreCase(fort.getTelepadTowerId()))
 								{
 									//still a telepad, keep going, but check support height while we are here
-									if(w.getBlockTypeIdAt(x-1,y,z+i+1) == fort.getTelepadSupportId() && w.getBlockTypeIdAt(x, y, z+i) == fort.getTelepadSupportId())
+									if(w.getBlockAt(x-1,y,z+i+1).getType().toString().equalsIgnoreCase(fort.getTelepadSupportId()) &&
+											w.getBlockAt(x, y, z+i).getType().toString().equalsIgnoreCase(fort.getTelepadSupportId()))
 									{
 										//Found front left tower
 										fLeft = new TelepadTower(new Location(w,x-1,y,z+i), new Location(w,x-1,y,z+i+1), new Location(w,x, y, z+i), fort);
 										if(!fLeft.checkIntegrity())
 										{
 											player.sendMessage(ChatColor.RED + "Telepad front left tower integrity compromised.");
-											player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+											player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
 											player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 											return;
 										}
@@ -3476,14 +4109,15 @@ public class FortificationListener implements Listener {
 											//find back left tower
 											for(int k = 0; k < teleLength; k++)
 											{
-												if(w.getBlockTypeIdAt(x-k-1,y,z+i) == fort.getTelepadTowerId() && w.getBlockTypeIdAt(x-k-1,y,z+i+1) == fort.getTelepadSupportId() 
-														&& w.getBlockTypeIdAt(x-k-2,y,z+i) == fort.getTelepadSupportId())
+												if(w.getBlockAt(x-k-1,y,z+i).getType().toString().equalsIgnoreCase(fort.getTelepadTowerId()) &&
+														w.getBlockAt(x-k-1,y,z+i+1).getType().toString().equalsIgnoreCase(fort.getTelepadSupportId()) 
+														&& w.getBlockAt(x-k-2,y,z+i).getType().toString().equalsIgnoreCase(fort.getTelepadSupportId()))
 												{
 													bLeft = new TelepadTower(new Location(w,x-k-1,y,z+i), new Location(w,x-k-1,y,z+i+1), new Location(w,x-k-2,y,z+i), fort);
 													if(!bLeft.checkIntegrity())
 													{
 														player.sendMessage(ChatColor.RED + "Telepad back left tower integrity compromised.");
-														player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+														player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
 														player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 														return;
 													}
@@ -3492,14 +4126,15 @@ public class FortificationListener implements Listener {
 														//find back right tower
 														for(int j = 0; j < teleLength; j++)
 														{
-															if(w.getBlockTypeIdAt(x-k-1,y,z+i-j) == fort.getTelepadTowerId() && w.getBlockTypeIdAt(x-k-1,y,z+i-j-1) == fort.getTelepadSupportId() 
-																	&& w.getBlockTypeIdAt(x-k-2,y,z+i-j) == fort.getTelepadSupportId())
+															if(w.getBlockAt(x-k-1,y,z+i-j).getType().toString().equalsIgnoreCase(fort.getTelepadTowerId()) &&
+																	w.getBlockAt(x-k-1,y,z+i-j-1).getType().toString().equalsIgnoreCase(fort.getTelepadSupportId()) 
+																	&& w.getBlockAt(x-k-2,y,z+i-j).getType().toString().equalsIgnoreCase(fort.getTelepadSupportId()))
 															{
 																bRight = new TelepadTower(new Location(w,x-k-1,y,z+i-j), new Location(w, x-k-1,y,z+i-j-1), new Location(w,x-k-2,y,z+i-j), fort);
 																if(!bRight.checkIntegrity())
 																{
 																	player.sendMessage(ChatColor.RED + "Telepad back right tower integrity compromised.");
-																	player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+																	player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
 																	player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 																	return;
 																}
@@ -3510,7 +4145,7 @@ public class FortificationListener implements Listener {
 																	if(!fRight.checkIntegrity())
 																	{
 																		player.sendMessage(ChatColor.RED + "Telepad front right tower integrity compromised.");
-																		player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+																		player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
 																		player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 																		return;
 																	}
@@ -3520,7 +4155,7 @@ public class FortificationListener implements Listener {
 																	if(!t.checkIntegrity())
 																	{
 																		player.sendMessage(ChatColor.RED + "Telepad integrity compromised.");
-																		player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+																		player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
 																		player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 																		return;
 																	}
@@ -3541,34 +4176,36 @@ public class FortificationListener implements Listener {
 								}
 							}
 							player.sendMessage(ChatColor.RED + "Telepad - tower missing, integrity compromised.");
-							player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+							player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
 							player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 							return;
 						}
 						else
 						{
 							player.sendMessage(ChatColor.RED + "You must use a block of id: " + fort.getTeleblockId() + " behind the [Telepad] sign");
-							player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+							player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
 							player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 							return;
 						}
 					case 0x4://+x = back, left = -z
-						if(w.getBlockAt(new Location(w,x+1,y,z)).getTypeId() == fort.getTelepadBlockId() || fort.getTeleblockId() == 0)
+						if(w.getBlockAt(new Location(w,x+1,y,z)).getType().toString().equalsIgnoreCase(fort.getTelepadBlockId()) ||
+								fort.getTeleblockId().equalsIgnoreCase(Material.AIR.toString()))
 						{
 							//find front left tower
 							for(int i = 0; i < teleLength; i++)
 							{
-								if(w.getBlockTypeIdAt(new Location(w,x+1,y,z-i)) == fort.getTelepadTowerId())
+								if(w.getBlockAt(new Location(w,x+1,y,z-i)).getType().toString().equalsIgnoreCase(fort.getTelepadTowerId()))
 								{
 									//still a telepad, keep going, but check support height while we are here
-									if(w.getBlockTypeIdAt(x+1,y,z-i-1) == fort.getTelepadSupportId() && w.getBlockTypeIdAt(x, y, z-i) == fort.getTelepadSupportId())
+									if(w.getBlockAt(x+1,y,z-i-1).getType().toString().equalsIgnoreCase(fort.getTelepadSupportId()) &&
+											w.getBlockAt(x, y, z-i).getType().toString().equalsIgnoreCase(fort.getTelepadSupportId()))
 									{
 										//Found front left tower
 										fLeft = new TelepadTower(new Location(w,x+1,y,z-i), new Location(w,x+1,y,z-i-1), new Location(w,x, y, z-i), fort);
 										if(!fLeft.checkIntegrity())
 										{
 											player.sendMessage(ChatColor.RED + "Telepad front left tower integrity compromised.");
-											player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+											player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
 											player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 											return;
 										}
@@ -3577,14 +4214,15 @@ public class FortificationListener implements Listener {
 											//find back left tower
 											for(int k = 0; k < teleLength; k++)
 											{
-												if(w.getBlockTypeIdAt(x+1+k,y,z-i) == fort.getTelepadTowerId() && w.getBlockTypeIdAt(x+k+1,y,z-i-1) == fort.getTelepadSupportId() 
-														&& w.getBlockTypeIdAt(x+2+k,y,z-i) == fort.getTelepadSupportId())
+												if(w.getBlockAt(x+1+k,y,z-i).getType().toString().equalsIgnoreCase(fort.getTelepadTowerId()) &&
+														w.getBlockAt(x+k+1,y,z-i-1).getType().toString().equalsIgnoreCase(fort.getTelepadSupportId()) 
+														&& w.getBlockAt(x+2+k,y,z-i).getType().toString().equalsIgnoreCase(fort.getTelepadSupportId()))
 												{
 													bLeft = new TelepadTower(new Location(w,x+k+1,y,z-i), new Location(w,x+k+1,y,z-i-1), new Location(w,x+k+2,y,z-i), fort);
 													if(!bLeft.checkIntegrity())
 													{
 														player.sendMessage(ChatColor.RED + "Telepad back left tower integrity compromised.");
-														player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+														player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
 														player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 														return;
 													}
@@ -3593,14 +4231,15 @@ public class FortificationListener implements Listener {
 														//find back right tower
 														for(int j = 0; j < teleLength; j++)
 														{
-															if(w.getBlockTypeIdAt(x+k+1,y,z-i+j) == fort.getTelepadTowerId() && w.getBlockTypeIdAt(x+k+1,y,z-i+j+1) == fort.getTelepadSupportId() 
-																	&& w.getBlockTypeIdAt(x+k+2,y,z-i+j) == fort.getTelepadSupportId())
+															if(w.getBlockAt(x+k+1,y,z-i+j).getType().toString().equalsIgnoreCase(fort.getTelepadTowerId()) &&
+																	w.getBlockAt(x+k+1,y,z-i+j+1).getType().toString().equalsIgnoreCase(fort.getTelepadSupportId()) 
+																	&& w.getBlockAt(x+k+2,y,z-i+j).getType().toString().equalsIgnoreCase(fort.getTelepadSupportId()))
 															{
 																bRight = new TelepadTower(new Location(w,x+k+1,y,z-i+j), new Location(w, x+k+1,y,z-i+j+1), new Location(w,x+k+2,y,z-i+j), fort);
 																if(!bRight.checkIntegrity())
 																{
 																	player.sendMessage(ChatColor.RED + "Telepad back right integrity compromised.");
-																	player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+																	player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
 																	player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 																	return;
 																}
@@ -3611,7 +4250,7 @@ public class FortificationListener implements Listener {
 																	if(!fRight.checkIntegrity())
 																	{
 																		player.sendMessage(ChatColor.RED + "Telepad front right tower integrity compromised.");
-																		player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+																		player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
 																		player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 																		return;
 																	}
@@ -3621,7 +4260,7 @@ public class FortificationListener implements Listener {
 																	if(!t.checkIntegrity())
 																	{
 																		player.sendMessage(ChatColor.RED + "Telepad integrity compromised.");
-																		player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+																		player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
 																		player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 																		return;
 																	}
@@ -3644,14 +4283,14 @@ public class FortificationListener implements Listener {
 								}
 							}
 							player.sendMessage(ChatColor.RED + "Telepad - tower missing, integrity compromised.");
-							player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+							player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
 							player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 							return;
 						}
 						else
 						{
 							player.sendMessage(ChatColor.RED + "You must use a block of id: " + fort.getTeleblockId() + " behind the [Telepad] sign");
-							player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+							player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
 							player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 							return;
 						}
@@ -3665,7 +4304,7 @@ public class FortificationListener implements Listener {
 						if(!player.hasPermission("fortification.*") && !player.hasPermission("fortification.transmitter"))
 						{
 							player.sendMessage(ChatColor.RED + "You do not have permission to build transmitters.");
-							player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+							player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
 							player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 							return;
 						}
@@ -3676,14 +4315,15 @@ public class FortificationListener implements Listener {
 						{
 							if(fort.getTransmitterCost() > 0)
 							{
-								if(fort.getEconomy().getBalance(e.getPlayer().getName()) >= fort.getTransmitterCost()){
+								if(fort.getEconomy().getBalance(e.getPlayer().getName()) >= fort.getTransmitterCost())
+								{
 									fort.getEconomy().withdrawPlayer(e.getPlayer().getName(),fort.getTransmitterCost());
 									return;
 								}
 								else
 								{
 									player.sendMessage(ChatColor.RED + "You do not have enough money for this purchase (" + fort.getTransmitterCost() + ")");
-									player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+									player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
 									player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 									return;
 								}
@@ -3700,7 +4340,7 @@ public class FortificationListener implements Listener {
 							if(!player.hasPermission("fortification.shield.*") && !player.hasPermission("fortification.*") && !player.hasPermission("fortification.shield.teleblock") && !player.hasPermission("fortification.shield.chest"))
 							{
 								player.sendMessage(ChatColor.RED + "You do not have permission to build shields.");
-								player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+								player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
 								player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 								return;
 							}
@@ -3712,7 +4352,7 @@ public class FortificationListener implements Listener {
 								if(!player.hasPermission("fortification.shield.*") && !player.hasPermission("fortification.*") && !player.hasPermission("fortification.shield.teleblock"))
 								{
 									player.sendMessage(ChatColor.RED + "You do not have permission to build teleblock shields.");
-									player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+									player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
 									player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 									return;
 								}
@@ -3731,7 +4371,7 @@ public class FortificationListener implements Listener {
 										else
 										{
 											player.sendMessage(ChatColor.RED + "You do not have enough money for this purchase (" + fort.getTeleblockshieldCost() + ")");
-											player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+											player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
 											player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 											return;
 										}
@@ -3746,7 +4386,7 @@ public class FortificationListener implements Listener {
 								if(!player.hasPermission("fortification.shield.*") && !player.hasPermission("fortification.*") && !player.hasPermission("fortification.shield.chest"))
 								{
 									player.sendMessage(ChatColor.RED + "You do not have permission to build chest shields.");
-									player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+									player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
 									player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 									return;
 								}
@@ -3764,7 +4404,7 @@ public class FortificationListener implements Listener {
 										else
 										{
 											player.sendMessage(ChatColor.RED + "You do not have enough money for this purchase (" + fort.getChestshieldCost() + ")");
-											player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+											player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
 											player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 											return;
 										}
@@ -3778,7 +4418,7 @@ public class FortificationListener implements Listener {
 							{
 								if(!player.hasPermission("fortification.shield.*") && !player.hasPermission("fortification.*") && !player.hasPermission("fortification.shield.chest")){
 									player.sendMessage(ChatColor.RED + "You do not have permission to build playerchest shields.");
-									player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+									player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
 									player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 									return;
 								}
@@ -3797,7 +4437,7 @@ public class FortificationListener implements Listener {
 										else
 										{
 											player.sendMessage(ChatColor.RED + "You do not have enough money for this purchase (" + fort.getChestshieldCost() + ")");
-											player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+											player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
 											player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 											return;
 										}
@@ -3811,7 +4451,7 @@ public class FortificationListener implements Listener {
 							{
 								if(!player.hasPermission("fortification.shield.*") && !player.hasPermission("fortification.*") && !player.hasPermission("fortification.shield.chest")){
 									player.sendMessage(ChatColor.RED + "You do not have permission to build factionchest shields");
-									player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+									player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
 									player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 									return;
 								}
@@ -3822,14 +4462,15 @@ public class FortificationListener implements Listener {
 								{
 								if(fort.getChestshieldCost() > 0)
 								{
-									if(fort.getEconomy().getBalance(e.getPlayer().getName()) >= fort.getChestshieldCost()){
+									if(fort.getEconomy().getBalance(e.getPlayer().getName()) >= fort.getChestshieldCost())
+									{
 										fort.getEconomy().withdrawPlayer(e.getPlayer().getName(),fort.getChestshieldCost());
 										return;
 									}
 								else
 								{
 									player.sendMessage(ChatColor.RED + "You do not have enough money for this purchase (" + fort.getChestshieldCost() + ")");
-									player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+									player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
 									player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 									return;
 								}
@@ -3843,125 +4484,150 @@ public class FortificationListener implements Listener {
 					if(e.getLine(0).equalsIgnoreCase("[Send]") || e.getLine(1).equalsIgnoreCase("[Send]") || e.getLine(2).equalsIgnoreCase("[Send]") || e.getLine(3).equalsIgnoreCase("[Send]")){
 						if(fort.isPermissionsEnabled())
 						{
-							if(!player.hasPermission("fortification.sendsign") && !player.hasPermission("fortification.*")){
+							if(!player.hasPermission("fortification.sendsign") && !player.hasPermission("fortification.*"))
+							{
 								player.sendMessage(ChatColor.RED + "You do not have permission to build send signs.");
-								player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+								player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
 								player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 								return;
 							}
 						}
-						if(fort.isEcon()){
-							if(e.getPlayer() != null){
-							if(fort.getSendsignCost() > 0){
-								if(fort.getEconomy().getBalance(e.getPlayer().getName()) >= fort.getSendsignCost()){
-									fort.getEconomy().withdrawPlayer(e.getPlayer().getName(),fort.getSendsignCost());
-									return;
+						if(fort.isEcon())
+						{
+							if(e.getPlayer() != null)
+							{
+								if(fort.getSendsignCost() > 0)
+								{
+									if(fort.getEconomy().getBalance(e.getPlayer().getName()) >= fort.getSendsignCost())
+									{
+										fort.getEconomy().withdrawPlayer(e.getPlayer().getName(),fort.getSendsignCost());
+										return;
+									}
+									else
+									{
+										player.sendMessage(ChatColor.RED + "You do not enough money for this purchase (" + fort.getSendsignCost() + ")");
+										player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
+										player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
+										return;
+									}
 								}
-							else{
-								player.sendMessage(ChatColor.RED + "You do not enough money for this purchase (" + fort.getSendsignCost() + ")");
-								player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
-								player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
-								return;
-							}
-							}
 							}
 						}
 					}
 			//Turrets
-				if(e.getLine(1).equalsIgnoreCase("[Turret]")){
+				if(e.getLine(1).equalsIgnoreCase("[Turret]"))
+				{
 					if(fort.isPermissionsEnabled())
 					{
 						if(!player.hasPermission("fortification.turret.flame") && !player.hasPermission("fortification.*") && !player.hasPermission("fortification.turret.*") && !player.hasPermission("fortification.turret.web") && !player.hasPermission("fortification.turret.arrow"))
 						{
 							player.sendMessage(ChatColor.RED + "You do not have permission to build turrets.");
-							player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+							player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
 							player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 							return;
 						}
-					else{
-					//if flame turret check permissions
-					if(e.getLine(0).equalsIgnoreCase("flame")){
-						if(!player.hasPermission("fortification.turret.flame") && !player.hasPermission("fortification.*") && !player.hasPermission("fortification.turret.*")){
-							player.sendMessage(ChatColor.RED + "You do not have permission to build flame turrets.");
-							player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
-							player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
-							return;
-						}
-						if(fort.isEcon()){
-							if(e.getPlayer() != null){
-							if(fort.getFlameturretCost() > 0){
-								if(fort.getEconomy().getBalance(e.getPlayer().getName()) >= fort.getFlameturretCost()){
-									fort.getEconomy().withdrawPlayer(e.getPlayer().getName(),fort.getFlameturretCost());
-									return;
-								}
-							else{
-								player.sendMessage(ChatColor.RED + "You do not have enough money for this purchase (" + fort.getFlameturretCost() + ")");
-								player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+					else
+					{
+						//if flame turret check permissions
+						if(e.getLine(0).equalsIgnoreCase("flame"))
+						{
+							if(!player.hasPermission("fortification.turret.flame") && !player.hasPermission("fortification.*") && !player.hasPermission("fortification.turret.*")){
+								player.sendMessage(ChatColor.RED + "You do not have permission to build flame turrets.");
+								player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
 								player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 								return;
 							}
-							}
+							if(fort.isEcon())
+							{
+								if(e.getPlayer() != null)
+								{
+									if(fort.getFlameturretCost() > 0)
+									{
+										if(fort.getEconomy().getBalance(e.getPlayer().getName()) >= fort.getFlameturretCost())
+										{
+											fort.getEconomy().withdrawPlayer(e.getPlayer().getName(),fort.getFlameturretCost());
+											return;
+										}
+										else
+										{
+											player.sendMessage(ChatColor.RED + "You do not have enough money for this purchase (" + fort.getFlameturretCost() + ")");
+											player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
+											player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
+											return;
+										}
+									}
+								}
 							}
 						}
-					}
 					//web turret
-					else if(e.getLine(0).equalsIgnoreCase("web")){
-						if(!player.hasPermission("fortification.turret.web") && !player.hasPermission("fortification.*") && !player.hasPermission("fortification.turret.*")){
+					else if(e.getLine(0).equalsIgnoreCase("web"))
+					{
+						if(!player.hasPermission("fortification.turret.web") && !player.hasPermission("fortification.*") && !player.hasPermission("fortification.turret.*"))
+						{
 							player.sendMessage(ChatColor.RED + "You do not have permission to build web turrets.");
-							player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+							player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
 							player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 							return;
 						}
-						if(fort.isEcon()){
-							if(e.getPlayer() != null){
-							if(fort.getWebturretCost() > 0){
-								if(fort.getEconomy().getBalance(e.getPlayer().getName()) >= fort.getWebturretCost()){
-									fort.getEconomy().withdrawPlayer(e.getPlayer().getName(),fort.getWebturretCost());
-									return;
+						if(fort.isEcon())
+						{
+							if(e.getPlayer() != null)
+							{
+								if(fort.getWebturretCost() > 0)
+								{
+									if(fort.getEconomy().getBalance(e.getPlayer().getName()) >= fort.getWebturretCost())
+									{
+										fort.getEconomy().withdrawPlayer(e.getPlayer().getName(),fort.getWebturretCost());
+										return;
+									}
+									else
+									{
+										player.sendMessage(ChatColor.RED + "You do not have enough money for this purchase (" + fort.getWebturretCost() + ")");
+										player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
+										player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
+										return;
+									}
 								}
-							else{
-								player.sendMessage(ChatColor.RED + "You do not have enough money for this purchase (" + fort.getWebturretCost() + ")");
-								player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
-								player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
-								return;
 							}
-							}
-						}
 						}
 					}
 					//arrow turret
-					else if(e.getLine(0).equalsIgnoreCase("arrow") || e.getLine(0).equalsIgnoreCase("default") || e.getLine(0).equalsIgnoreCase("") || e.getLine(0) == null){
-						if(!player.hasPermission("fortification.turret.arrow") && !player.hasPermission("fortification.*") && !player.hasPermission("fortification.turret.*")){
+					else if(e.getLine(0).equalsIgnoreCase("arrow") || e.getLine(0).equalsIgnoreCase("default") || e.getLine(0).equalsIgnoreCase("") || e.getLine(0) == null)
+					{
+						if(!player.hasPermission("fortification.turret.arrow") && !player.hasPermission("fortification.*") && !player.hasPermission("fortification.turret.*"))
+						{
 							player.sendMessage(ChatColor.RED + "You do not have permission to build arrow turrets.");
-							player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+							player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
 							player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 							return;
 						}
-						if(fort.isEcon()){
+						if(fort.isEcon())
+						{
 							if(e.getPlayer() != null)
 							{
-							if(fort.getArrowturretCost() > 0)
-							{
-								if(fort.getEconomy().getBalance(e.getPlayer().getName()) >= fort.getArrowturretCost())
+								if(fort.getArrowturretCost() > 0)
 								{
-									fort.getEconomy().withdrawPlayer(e.getPlayer().getName(),fort.getArrowturretCost());
-									return;
-								}
-								else
-								{
-									player.sendMessage(ChatColor.RED + "You do not have enough money for this purchase (" + fort.getArrowturretCost() + ")");
-									player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
-									player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
-									return;
+									if(fort.getEconomy().getBalance(e.getPlayer().getName()) >= fort.getArrowturretCost())
+									{
+										fort.getEconomy().withdrawPlayer(e.getPlayer().getName(),fort.getArrowturretCost());
+										return;
+									}
+									else
+									{
+										player.sendMessage(ChatColor.RED + "You do not have enough money for this purchase (" + fort.getArrowturretCost() + ")");
+										player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
+										player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
+										return;
+									}
 								}
 							}
 						}
-						}
 					}
-					else {
+					else 
+					{
 						//turret type is invalid, tell user
 						player.sendMessage(ChatColor.RED + "Invalid turret type, type /fort turret for a list of turret types.");
-						player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+						player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
 						player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 						return;
 					}
@@ -4001,7 +4667,7 @@ public class FortificationListener implements Listener {
 					{
 						e1.printStackTrace();
 						player.sendMessage(ChatColor.RED + "Sensor range must be an integer");
-						player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+						player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
 						player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 						return;
 					}
@@ -4012,7 +4678,7 @@ public class FortificationListener implements Listener {
 						if(!player.hasPermission("fortification.sensor") && !player.hasPermission("fortification.*") && fort.isPermissionsEnabled())
 						{
 							player.sendMessage(ChatColor.RED + "You do not have permission to build a sensor");
-							player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+							player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
 							player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 							return;
 						}
@@ -4032,7 +4698,7 @@ public class FortificationListener implements Listener {
 							{
 								//invalid sensor type
 								player.sendMessage(ChatColor.RED + "Invalid sensor type, type /fort sensor for a list of sensor types.");
-								player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+								player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
 								player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 								return;
 							}
@@ -4052,7 +4718,7 @@ public class FortificationListener implements Listener {
 											else
 											{
 												player.sendMessage(ChatColor.RED + "You do not have enough money for this purchase (" + fort.getSensorCost() + ")");
-												player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+												player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
 												player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 												return;
 											}
@@ -4061,7 +4727,8 @@ public class FortificationListener implements Listener {
 								}
 								if(e.getLine(0).equalsIgnoreCase("factionalert"))
 								{
-									if(fort.isMsgOnlyBuilder()){
+									if(fort.isMsgOnlyBuilder())
+									{
 										/*if(fort.isFactionsEnabled()){
 											FPlayer p = FPlayers.i.get(player);
 											Faction f = p.getFaction();
@@ -4145,7 +4812,7 @@ public class FortificationListener implements Listener {
 															}
 															if(!temp){
 																player.sendMessage(ChatColor.RED + "One of the nations you listed is either neutral or an enemy to your own.");
-																player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+																player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
 																player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 																return;
 															}
@@ -4155,17 +4822,22 @@ public class FortificationListener implements Listener {
 												e1.printStackTrace();
 											}
 										}
-										if(e.getLine(3).equalsIgnoreCase("") || e.getLine(3) == null){
+										if(e.getLine(3).equalsIgnoreCase("") || e.getLine(3) == null)
+										{
 										
 										}
-										else{
-											try {
+										else
+										{
+											try 
+											{
 												if(TownyUniverse.getDataSource().getTown(e.getLine(3)) != null)
 												{
-													if(t.equals(TownyUniverse.getDataSource().getTown(e.getLine(3)))){
+													if(t.equals(TownyUniverse.getDataSource().getTown(e.getLine(3))))
+													{
 														//same nation, this is fine
 													}
-													else{
+													else
+													{
 															boolean temp2 = false;
 															for(int i = 0; i < TownyUniverse.getDataSource().getTown(e.getLine(3)).getNation().getAllies().size(); i++)
 															{
@@ -4176,9 +4848,10 @@ public class FortificationListener implements Listener {
 																	break;
 																}
 															}
-															if(!temp2){
+															if(!temp2)
+															{
 																player.sendMessage(ChatColor.RED + "One of the nations you listed is either neutral or an enemy to your own.");
-																player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+																player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
 																player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 																return;
 															}
@@ -4193,31 +4866,39 @@ public class FortificationListener implements Listener {
 								}
 								if(e.getLine(0).equalsIgnoreCase("townalert"))
 								{
-									if(fort.isMsgOnlyBuilder()){
-									if(fort.isTownyEnabled()){
+									if(fort.isMsgOnlyBuilder())
+									{
+									if(fort.isTownyEnabled())
+									{
 										Towny town = (Towny)towny;
 										if(town == null)
 										{
 											return;
 										}
 										Town t = null;
-										try {
+										try 
+										{
 											t = TownyUniverse.getDataSource().getResident(e.getPlayer().getName()).getTown();
 										} catch (Exception e2) {
 											e2.printStackTrace();
 										}
-										if(e.getLine(2).equalsIgnoreCase("") || e.getLine(2) == null){
+										if(e.getLine(2).equalsIgnoreCase("") || e.getLine(2) == null)
+										{
 											
 										}
-										else{
-											try {
+										else
+										{
+											try 
+											{
 												if(TownyUniverse.getDataSource().getTown(e.getLine(2)) != null)
 												{
-													if(t.equals(TownyUniverse.getDataSource().getTown(e.getLine(2)))){
+													if(t.equals(TownyUniverse.getDataSource().getTown(e.getLine(2))))
+													{
 														//then this is fine
 													}
 													else{
-														if(TownyUniverse.getDataSource().getTown(e.getLine(2)).getNation().equals(t.getNation())){
+														if(TownyUniverse.getDataSource().getTown(e.getLine(2)).getNation().equals(t.getNation()))
+														{
 															//town is in the same nation, this is fine
 														}
 														else
@@ -4232,9 +4913,10 @@ public class FortificationListener implements Listener {
 																	break;
 																}
 															}
-															if(!temp){
+															if(!temp)
+															{
 																player.sendMessage(ChatColor.RED + "One of the towns you listed is not within the same nation as you or a nation allied to yours.");
-																player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+																player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
 																player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 																return;
 															}
@@ -4245,18 +4927,24 @@ public class FortificationListener implements Listener {
 												e1.printStackTrace();
 											}
 										}
-										if(e.getLine(3).equalsIgnoreCase("") || e.getLine(3) == null){
+										if(e.getLine(3).equalsIgnoreCase("") || e.getLine(3) == null)
+										{
 										
 										}
-										else{
-											try {
+										else
+										{
+											try 
+											{
 												if(TownyUniverse.getDataSource().getTown(e.getLine(3)) != null)
 												{
-													if(t.equals(TownyUniverse.getDataSource().getTown(e.getLine(3)))){
+													if(t.equals(TownyUniverse.getDataSource().getTown(e.getLine(3))))
+													{
 														//then this is fine
 													}
-													else{
-														if(TownyUniverse.getDataSource().getTown(e.getLine(3)).getNation().equals(t.getNation())){
+													else
+													{
+														if(TownyUniverse.getDataSource().getTown(e.getLine(3)).getNation().equals(t.getNation()))
+														{
 															//town is in the same nation, this is fine
 														}
 														else
@@ -4271,9 +4959,10 @@ public class FortificationListener implements Listener {
 																	break;
 																}
 															}
-															if(!temp2){
+															if(!temp2)
+															{
 																player.sendMessage(ChatColor.RED + "One of the towns you listed is not within the same nation as you or a nation allied to yours.");
-																player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+																player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
 																player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 																return;
 															}
@@ -4289,19 +4978,20 @@ public class FortificationListener implements Listener {
 								}
 								if(e.getLine(0).equalsIgnoreCase("itemdetect") || e.getLine(0).equalsIgnoreCase("itemignore"))
 								{
-									try{
+									try
+									{
 										if(e.getLine(2) != null && e.getLine(2) != "")
 										{
-										Integer.parseInt(e.getLine(2));
+											Integer.parseInt(e.getLine(2));
 										}
 										if(e.getLine(3) != null && e.getLine(3) != "")
 										{
-										Integer.parseInt(e.getLine(3));
+											Integer.parseInt(e.getLine(3));
 										}
 									}
 									catch(Exception ex){
-										player.sendMessage(ChatColor.RED + "The 3rd and 4th lines must contain the integer id of an item.");
-										player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+										player.sendMessage(ChatColor.RED + "The 3rd and 4th lines must contain the material id of an item.");
+										player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
 										player.getWorld().dropItem(new Location(player.getWorld(), e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 										return;
 									}
@@ -4311,183 +5001,232 @@ public class FortificationListener implements Listener {
 					}
 			//Trap door
 				int temp;
-					if(e.getLine(1).equalsIgnoreCase("[TrapDoor]") || e.getLine(1).equalsIgnoreCase("[UpTrapdoor]") || e.getLine(1).equalsIgnoreCase("[DownTrapdoor]")){
-						if(!player.hasPermission("fortification.trapdoor") && !player.hasPermission("fortification.*") && fort.isPermissionsEnabled()){
+					if(e.getLine(1).equalsIgnoreCase("[TrapDoor]") || e.getLine(1).equalsIgnoreCase("[UpTrapdoor]") || e.getLine(1).equalsIgnoreCase("[DownTrapdoor]"))
+					{
+						if(!player.hasPermission("fortification.trapdoor") && !player.hasPermission("fortification.*") && fort.isPermissionsEnabled())
+						{
 							player.sendMessage(ChatColor.RED + "You do not have permission to build a trap door");
-							player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+							player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
 							player.getWorld().dropItem(new Location(player.getWorld(), e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 							return;
 						}
-						else{
-							try{
+						else
+						{
+							try
+							{
 								temp = Integer.parseInt(e.getLine(0));
 							}
-							catch(Exception ex){
+							catch(Exception ex)
+							{
 								player.sendMessage(ChatColor.RED + "The first line must contain an integer value.");
-								player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+								player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
 								player.getWorld().dropItem(new Location(player.getWorld(), e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 								return;
 							}
-								if(temp > maxtraplength){
+								if(temp > maxtraplength)
+								{
 									player.sendMessage(ChatColor.RED + "The length of the trap door can not exceed " + Integer.toString(maxtraplength));
-									player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+									player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
 									player.getWorld().dropItem(new Location(player.getWorld(), e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 									return;
 								}
-								if(temp <= 0){
+								if(temp <= 0)
+								{
 									player.sendMessage(ChatColor.RED + "Trap doors must have a length greater than 0.");
-									player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+									player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
 									player.getWorld().dropItem(new Location(player.getWorld(), e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 									return;
 								}
 						}
 						//east
-						if(player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).getData() == 0x2){
+						if(player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).getData() == 0x2)
+						{
 							boolean validblock = false;
-							for(int i = 0; i < trapblocks.length; i++){
-								if(player.getWorld().getBlockTypeIdAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()+1) == trapblocks[i]){
+							for(int i = 0; i < trapblocks.length; i++)
+							{
+								if(player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()+1).getType().toString().equalsIgnoreCase(trapblocks[i]))
+								{
 									validblock = true;
 									break;
 								}
 							}
-							if(!validblock){
+							if(!validblock)
+							{
 								player.sendMessage(ChatColor.RED + "The block type you are trying to use is not supported, type /fort trapdoor for a list of valid block types.");
-								player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+								player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
 								player.getWorld().dropItem(new Location(player.getWorld(), e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 								return;
 							}
 						}
 						//west
-						if(player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).getData() == 0x3){
+						if(player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).getData() == 0x3)
+						{
 							boolean validblock = false;
-							for(int i = 0; i < trapblocks.length; i++){
-								if(player.getWorld().getBlockTypeIdAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()-1) == trapblocks[i]){
+							for(int i = 0; i < trapblocks.length; i++)
+							{
+								if(player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()-1).getType().toString().equalsIgnoreCase(trapblocks[i]))
+								{
 									validblock = true;
 									break;
 								}
 							}
-							if(!validblock){
+							if(!validblock)
+							{
 								player.sendMessage(ChatColor.RED + "The block type you are trying to use is not supported, type /fort trapdoor for a list of valid block types.");
-								player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+								player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
 								player.getWorld().dropItem(new Location(player.getWorld(), e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 								return;
 							}
 						}
 						//north
-						if(player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).getData() == 0x4){
+						if(player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).getData() == 0x4)
+						{
 							boolean validblock = false;
-							for(int i = 0; i < trapblocks.length; i++){
-								if(player.getWorld().getBlockTypeIdAt(e.getBlock().getX()+1, e.getBlock().getY(), e.getBlock().getZ()) == trapblocks[i]){
+							for(int i = 0; i < trapblocks.length; i++)
+							{
+								if(player.getWorld().getBlockAt(e.getBlock().getX()+1, e.getBlock().getY(), e.getBlock().getZ()).getType().toString().equalsIgnoreCase(trapblocks[i]))
+								{
 									validblock = true;
 									break;
 								}
 							}
-							if(!validblock){
+							if(!validblock)
+							{
 								player.sendMessage("&c" + "The block type you are trying to use is not supported, type /fort trapdoor for a list of valid block types.");
-								player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+								player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
 								player.getWorld().dropItem(new Location(player.getWorld(), e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 								return;
 							}
 						}
 						//south
-						if(player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).getData() == 0x5){
+						if(player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).getData() == 0x5)
+						{
 							boolean validblock = false;
-							for(int i = 0; i < trapblocks.length; i++){
-								if(player.getWorld().getBlockTypeIdAt(e.getBlock().getX()-1, e.getBlock().getY(), e.getBlock().getZ()) == trapblocks[i]){
+							for(int i = 0; i < trapblocks.length; i++)
+							{
+								if(player.getWorld().getBlockAt(e.getBlock().getX()-1, e.getBlock().getY(), e.getBlock().getZ()).getType().toString().equalsIgnoreCase(trapblocks[i]))
+								{
 									validblock = true;
 									break;
 								}
 							}
-							if(!validblock){
+							if(!validblock)
+							{
 								player.sendMessage(ChatColor.RED + "The block type you are trying to use is not supported, type /fort trapdoor for a list of valid block types.");
-								player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+								player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
 								player.getWorld().dropItem(new Location(player.getWorld(), e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 								return;
 							}
-							if(fort.isEcon()){
-								if(e.getPlayer() != null){
-								if(fort.getTrapdoorCost() > 0){
-									if(fort.getEconomy().getBalance(e.getPlayer().getName()) >= fort.getTrapdoorCost()){
-										fort.getEconomy().withdrawPlayer(e.getPlayer().getName(),fort.getTrapdoorCost());
-										return;
+							if(fort.isEcon())
+							{
+								if(e.getPlayer() != null)
+								{
+									if(fort.getTrapdoorCost() > 0)
+									{
+										if(fort.getEconomy().getBalance(e.getPlayer().getName()) >= fort.getTrapdoorCost())
+										{
+											fort.getEconomy().withdrawPlayer(e.getPlayer().getName(),fort.getTrapdoorCost());
+											return;
+										}
+										else
+										{
+											player.sendMessage(ChatColor.RED + "You do not have enough money for this purchase (" + fort.getTrapdoorCost() + ")");
+											player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
+											player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
+											return;
+										}
 									}
-								else{
-									player.sendMessage(ChatColor.RED + "You do not have enough money for this purchase (" + fort.getTrapdoorCost() + ")");
-									player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
-									player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
-									return;
-								}
-								}
 								}
 							}
 						}
 					}
-			if(player.getWorld().getBlockTypeIdAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()) == 68){
-				if(e.getLine(1).equalsIgnoreCase("[Equals]")){
-					if(!player.hasPermission("fortification.equalsign") && !player.hasPermission("fortification.*") && fort.isPermissionsEnabled()){
+			if(player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).getType().equals(Material.WALL_SIGN))
+			{
+				if(e.getLine(1).equalsIgnoreCase("[Equals]"))
+				{
+					if(!player.hasPermission("fortification.equalsign") && !player.hasPermission("fortification.*") && fort.isPermissionsEnabled())
+					{
 						player.sendMessage(ChatColor.RED + "You do not have permission to build equals signs.");
-						player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+						player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
 						player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 						return;
 					}
-					if(fort.isEcon()){
-						if(e.getPlayer() != null){
-						if(fort.getEqualsignCost() > 0){
-							if(fort.getEconomy().getBalance(e.getPlayer().getName()) >= fort.getEqualsignCost()){
-								fort.getEconomy().withdrawPlayer(e.getPlayer().getName(),fort.getEqualsignCost());
-								return;
+					if(fort.isEcon())
+					{
+						if(e.getPlayer() != null)
+						{
+							if(fort.getEqualsignCost() > 0)
+							{
+								if(fort.getEconomy().getBalance(e.getPlayer().getName()) >= fort.getEqualsignCost())
+								{
+									fort.getEconomy().withdrawPlayer(e.getPlayer().getName(),fort.getEqualsignCost());
+									return;
+								}
+								else
+								{
+									player.sendMessage(ChatColor.RED + "You do not have enough money for this purchase (" + fort.getEqualsignCost() + ")");
+									player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
+									player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
+									return;
+								}
 							}
-						else{
-							player.sendMessage(ChatColor.RED + "You do not have enough money for this purchase (" + fort.getEqualsignCost() + ")");
-							player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
-							player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
-							return;
 						}
-					}
-					}
 					}
 			return;
 		}
 				//player is potentially null here..
 				//equals sign
-					if(e.getLine(1).equalsIgnoreCase("[Equals]")){
+					if(e.getLine(1).equalsIgnoreCase("[Equals]"))
+					{
 							//if equal turn on redstone
 							if(e.getLine(0).equalsIgnoreCase(e.getLine(2))){
-								if(e.getBlock().getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).getData() == 0x2){
-									if(e.getBlock().getWorld().getBlockTypeIdAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()+2) == 69){
+								if(e.getBlock().getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).getData() == 0x2)
+								{
+									if(e.getBlock().getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()+2).getType().equals(Material.LEVER))
+									{
 										int d = e.getBlock().getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()+2).getData();
 										int nd = d | 0x8;
-										if(nd != d){
+										if(nd != d)
+										{
 											player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()+2).setData((byte) nd);
 											//May have to update block physics here somehow?
 										}
 									}
 								}
-								else if(e.getBlock().getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(),e.getBlock().getZ()).getData() == 0x3){
-									if(e.getBlock().getWorld().getBlockTypeIdAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()-2) == 69){
+								else if(e.getBlock().getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(),e.getBlock().getZ()).getData() == 0x3)
+								{
+									if(e.getBlock().getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()-2).getType().equals(Material.LEVER))
+									{
 										int d = player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()-2).getData();
 										int nd = d | 0x8;
-										if(nd != d){
+										if(nd != d)
+										{
 											e.getBlock().getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()-2).setData((byte)nd);
 										//	etc.getServer().updateBlockPhysics(sign.getX(), sign.getY(), sign.getZ()-2, nd);
 										}
 									}
 								}
-								else if(e.getBlock().getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(),e.getBlock().getZ()).getData() == 0x4){
-									if(e.getBlock().getWorld().getBlockTypeIdAt(e.getBlock().getX()+2, e.getBlock().getY(), e.getBlock().getZ()) == 69){
+								else if(e.getBlock().getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(),e.getBlock().getZ()).getData() == 0x4)
+								{
+									if(e.getBlock().getWorld().getBlockAt(e.getBlock().getX()+2, e.getBlock().getY(), e.getBlock().getZ()).getType().equals(Material.LEVER))
+									{
 										int d = e.getBlock().getWorld().getBlockAt(e.getBlock().getX()+2, e.getBlock().getY(), e.getBlock().getZ()).getData();
 										int nd = d | 0x8;
-										if(nd != d){
+										if(nd != d)
+										{
 											e.getBlock().getWorld().getBlockAt(e.getBlock().getX()+2, e.getBlock().getY(), e.getBlock().getZ()).setData((byte)nd);
 										//	etc.getServer().updateBlockPhysics(sign.getX()+2, sign.getY(), sign.getZ(), nd);
 										}
 									}
 								}
-								else if(e.getBlock().getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(),e.getBlock().getZ()).getData() == 0x5){
-									if(e.getBlock().getWorld().getBlockTypeIdAt(e.getBlock().getX()-2, e.getBlock().getY(),e.getBlock().getZ()) == 69){
+								else if(e.getBlock().getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(),e.getBlock().getZ()).getData() == 0x5)
+								{
+									if(e.getBlock().getWorld().getBlockAt(e.getBlock().getX()-2, e.getBlock().getY(),e.getBlock().getZ()).getType().equals(Material.LEVER))
+									{
 										int d = e.getBlock().getWorld().getBlockAt(e.getBlock().getX()-2, e.getBlock().getY(),e.getBlock().getZ()).getData();
 										int nd = d | 0x8;
-										if(nd != d){
+										if(nd != d)
+										{
 											e.getBlock().getWorld().getBlockAt(e.getBlock().getX()-2, e.getBlock().getY(),e.getBlock().getZ()).setData((byte)nd);
 										//	etc.getServer().updateBlockPhysics(sign.getX()-2, sign.getY(), sign.getZ(), nd);
 										}
@@ -4496,41 +5235,53 @@ public class FortificationListener implements Listener {
 							}
 							//if not equal turn off redstone
 							else{
-								if(player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(),e.getBlock().getZ()).getData() == 0x2){
-									if(player.getWorld().getBlockTypeIdAt(e.getBlock().getX(), e.getBlock().getY(),e.getBlock().getZ()+2) == 69){
+								if(player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(),e.getBlock().getZ()).getData() == 0x2)
+								{
+									if(player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(),e.getBlock().getZ()+2).getType().equals(Material.LEVER))
+									{
 										int d = player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(),e.getBlock().getZ()+2).getData();
 										int nd = d & 0x7;
-										if(nd != d){
+										if(nd != d)
+										{
 											player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(),e.getBlock().getZ()+2).setData((byte)nd);
 									//		etc.getServer().updateBlockPhysics(sign.getX(), sign.getY(), sign.getZ()+2, nd);
 										}
 									}
 								}
-								else if(player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(),e.getBlock().getZ()).getData() == 0x3){
-									if(player.getWorld().getBlockTypeIdAt(e.getBlock().getX(), e.getBlock().getY(),e.getBlock().getZ()-2) == 69){
+								else if(player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(),e.getBlock().getZ()).getData() == 0x3)
+								{
+									if(player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(),e.getBlock().getZ()-2).getType().equals(Material.LEVER))
+									{
 										int d = player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(),e.getBlock().getZ()-2).getData();
 										int nd = d & 0x7;
-										if(nd != d){
+										if(nd != d)
+										{
 											player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(),e.getBlock().getZ()-2).setData((byte)nd);
 									//		etc.getServer().updateBlockPhysics(sign.getX(), sign.getY(), sign.getZ()-2, nd);
 										}
 									}
 								}
-								else if(player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(),e.getBlock().getZ()).getData() == 0x4){
-									if(player.getWorld().getBlockTypeIdAt(e.getBlock().getX()+2, e.getBlock().getY(),e.getBlock().getZ()) == 69){
+								else if(player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(),e.getBlock().getZ()).getData() == 0x4)
+								{
+									if(player.getWorld().getBlockAt(e.getBlock().getX()+2, e.getBlock().getY(),e.getBlock().getZ()).getType().equals(Material.LEVER))
+									{
 										int d = player.getWorld().getBlockAt(e.getBlock().getX()+2, e.getBlock().getY(),e.getBlock().getZ()).getData();
 										int nd = d & 0x7;
-										if(nd != d){
+										if(nd != d)
+										{
 											player.getWorld().getBlockAt(e.getBlock().getX()+2, e.getBlock().getY(),e.getBlock().getZ()).setData((byte)nd);
 									//		etc.getServer().updateBlockPhysics(sign.getX()+2, sign.getY(), sign.getZ(), nd);
 										}
 									}
 								}
-								else if(player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(),e.getBlock().getZ()).getData() == 0x5){
-									if(player.getWorld().getBlockTypeIdAt(e.getBlock().getX()-2, e.getBlock().getY(),e.getBlock().getZ()) == 69){
+								else if(player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(),e.getBlock().getZ()).getData() == 0x5)
+								{
+									if(player.getWorld().getBlockAt(e.getBlock().getX()-2, e.getBlock().getY(),e.getBlock().getZ()).getType().equals(Material.LEVER))
+									{
 										int d = player.getWorld().getBlockAt(e.getBlock().getX()-2, e.getBlock().getY(),e.getBlock().getZ()).getData();
 										int nd = d & 0x7;
-										if(nd != d){
+										if(nd != d)
+										{
 											player.getWorld().getBlockAt(e.getBlock().getX()-2, e.getBlock().getY(),e.getBlock().getZ()).setData((byte)nd);
 									//		etc.getServer().updateBlockPhysics(sign.getX()-2, sign.getY(), sign.getZ(), nd);
 										}

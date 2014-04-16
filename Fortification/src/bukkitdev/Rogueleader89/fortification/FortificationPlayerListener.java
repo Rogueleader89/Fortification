@@ -2,12 +2,9 @@ package bukkitdev.Rogueleader89.fortification;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
-
-import net.minecraft.server.v1_7_R3.PlayerSelector;
-
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.Sign;
@@ -22,7 +19,6 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.plugin.Plugin;
 
-import com.massivecraft.factions.Factions;
 import com.massivecraft.factions.Rel;
 import com.massivecraft.factions.entity.Faction;
 import com.massivecraft.factions.entity.FactionColls;
@@ -38,9 +34,9 @@ public class FortificationPlayerListener implements Listener
 	private int sensorlength = 8;
 	private int teleblockrange;
 	private String teleblockstring;
-	private int teleblockId;
+	private String teleblockId;
 	private int chestrange = 5;
-	private int chestshieldId = 0;
+	private String chestshieldId = "0";
 	private int sensorBroadcastDist = 0;
 	private ArrayList<FortPlayer> fpList = new ArrayList<FortPlayer>();
 	Plugin towny;
@@ -52,6 +48,7 @@ public class FortificationPlayerListener implements Listener
 		teleblockrange = fort.getTeleblockrange();
 		teleblockstring = fort.getTeleblockstring();
 		teleblockId = fort.getTeleblockId();
+		chestshieldId = fort.getChestshieldId();
 		sensorBroadcastDist = fort.getSensorBroadcastDist();
 		if(fort.isTownyEnabled())
 		{
@@ -109,7 +106,7 @@ public class FortificationPlayerListener implements Listener
 		//Note, these don't work in any direction they are facing at all....
 		if(((e.getAction() == Action.RIGHT_CLICK_BLOCK) || e.getAction() == Action.LEFT_CLICK_BLOCK))
 		{
-			if(e.getClickedBlock().getTypeId() == 54)
+			if(e.getClickedBlock().getType().equals(Material.CHEST))
 			{
 				ArrayList<Sign> signlist = searchradius(e.getClickedBlock().getLocation().getBlockX(), e.getClickedBlock().getLocation().getBlockY(), e.getClickedBlock().getLocation().getBlockZ(), chestrange, e.getClickedBlock().getWorld());
 				for(int i = 0; i < signlist.size(); i++)
@@ -120,9 +117,10 @@ public class FortificationPlayerListener implements Listener
 						{
 							if(e.getPlayer().getWorld().getBlockAt(signlist.get(i).getX(), signlist.get(i).getY(), signlist.get(i).getZ()).getData() == 0x2)
 							{
-								if(e.getPlayer().getWorld().getBlockTypeIdAt(signlist.get(i).getX(), signlist.get(i).getY(), signlist.get(i).getZ()+1) == chestshieldId || chestshieldId == 0)
+								if(e.getPlayer().getWorld().getBlockAt(signlist.get(i).getX(), signlist.get(i).getY(), signlist.get(i).getZ()+1).getType().toString().equalsIgnoreCase(chestshieldId) ||
+										chestshieldId.equalsIgnoreCase(Material.AIR.toString()))
 								{
-									if(e.getPlayer().getWorld().getBlockTypeIdAt(signlist.get(i).getX(), signlist.get(i).getY(), signlist.get(i).getZ()+2) == 69)
+									if(e.getPlayer().getWorld().getBlockAt(signlist.get(i).getX(), signlist.get(i).getY(), signlist.get(i).getZ()+2).getType().equals(Material.LEVER))
 									{
 										int d = e.getPlayer().getWorld().getBlockAt(signlist.get(i).getX(), signlist.get(i).getY(), signlist.get(i).getZ()+2).getData();
 										int nd = d | 0x8;
@@ -136,9 +134,10 @@ public class FortificationPlayerListener implements Listener
 							}
 							else if(e.getPlayer().getWorld().getBlockAt(signlist.get(i).getX(), signlist.get(i).getY(), signlist.get(i).getZ()).getData() == 0x3)
 							{
-								if(e.getPlayer().getWorld().getBlockTypeIdAt(signlist.get(i).getX(), signlist.get(i).getY(), signlist.get(i).getZ()-1) == chestshieldId || chestshieldId == 0)
+								if(e.getPlayer().getWorld().getBlockAt(signlist.get(i).getX(), signlist.get(i).getY(), signlist.get(i).getZ()-1).getType().toString().equalsIgnoreCase(chestshieldId) ||
+										chestshieldId.equalsIgnoreCase(Material.AIR.toString()))
 								{
-									if(e.getPlayer().getWorld().getBlockTypeIdAt(signlist.get(i).getX(), signlist.get(i).getY(), signlist.get(i).getZ()-2) == 69)
+									if(e.getPlayer().getWorld().getBlockAt(signlist.get(i).getX(), signlist.get(i).getY(), signlist.get(i).getZ()-2).getType().equals(Material.LEVER))
 									{
 										int d = e.getPlayer().getWorld().getBlockAt(signlist.get(i).getX(), signlist.get(i).getY(), signlist.get(i).getZ()-2).getData();
 										int nd = d | 0x8;
@@ -152,9 +151,10 @@ public class FortificationPlayerListener implements Listener
 							}
 							else if(e.getPlayer().getWorld().getBlockAt(signlist.get(i).getX(), signlist.get(i).getY(), signlist.get(i).getZ()).getData() == 0x4)
 							{
-								if(e.getPlayer().getWorld().getBlockTypeIdAt(signlist.get(i).getX()+1, signlist.get(i).getY(), signlist.get(i).getZ()) == chestshieldId || chestshieldId == 0)
+								if(e.getPlayer().getWorld().getBlockAt(signlist.get(i).getX()+1, signlist.get(i).getY(), signlist.get(i).getZ()).getType().toString().equalsIgnoreCase(chestshieldId) ||
+										chestshieldId.equalsIgnoreCase(Material.AIR.toString()))
 								{
-									if(e.getPlayer().getWorld().getBlockTypeIdAt(signlist.get(i).getX()+2, signlist.get(i).getY(), signlist.get(i).getZ()) == 69)
+									if(e.getPlayer().getWorld().getBlockAt(signlist.get(i).getX()+2, signlist.get(i).getY(), signlist.get(i).getZ()).getType().equals(Material.LEVER))
 									{
 										int d = e.getPlayer().getWorld().getBlockAt(signlist.get(i).getX()+2, signlist.get(i).getY(), signlist.get(i).getZ()).getData();
 										int nd = d | 0x8;
@@ -168,9 +168,10 @@ public class FortificationPlayerListener implements Listener
 							}
 							else if(e.getPlayer().getWorld().getBlockAt(signlist.get(i).getX(), signlist.get(i).getY(), signlist.get(i).getZ()).getData() == 0x5)
 							{
-								if(e.getPlayer().getWorld().getBlockTypeIdAt(signlist.get(i).getX()-1, signlist.get(i).getY(), signlist.get(i).getZ()) == chestshieldId || chestshieldId == 0)
+								if(e.getPlayer().getWorld().getBlockAt(signlist.get(i).getX()-1, signlist.get(i).getY(), signlist.get(i).getZ()).getType().toString().equalsIgnoreCase(chestshieldId) ||
+										chestshieldId.equalsIgnoreCase(Material.AIR.toString()))
 								{
-									if(e.getPlayer().getWorld().getBlockTypeIdAt(signlist.get(i).getX()-2, signlist.get(i).getY(), signlist.get(i).getZ()) == 69)
+									if(e.getPlayer().getWorld().getBlockAt(signlist.get(i).getX()-2, signlist.get(i).getY(), signlist.get(i).getZ()).getType().equals(Material.LEVER))
 									{
 										int d = e.getPlayer().getWorld().getBlockAt(signlist.get(i).getX()-2, signlist.get(i).getY(), signlist.get(i).getZ()).getData();
 										int nd = d | 0x8;
@@ -190,9 +191,10 @@ public class FortificationPlayerListener implements Listener
 							{
 								if(e.getPlayer().getWorld().getBlockAt(signlist.get(i).getX(), signlist.get(i).getY(), signlist.get(i).getZ()).getData() == 0x2)
 								{
-									if(e.getPlayer().getWorld().getBlockTypeIdAt(signlist.get(i).getX(), signlist.get(i).getY(), signlist.get(i).getZ()+1) == chestshieldId || chestshieldId == 0)
+									if(e.getPlayer().getWorld().getBlockAt(signlist.get(i).getX(), signlist.get(i).getY(), signlist.get(i).getZ()+1).getType().toString().equalsIgnoreCase(chestshieldId) ||
+											chestshieldId.equalsIgnoreCase(Material.AIR.toString()))
 									{
-										if(e.getPlayer().getWorld().getBlockTypeIdAt(signlist.get(i).getX(), signlist.get(i).getY(), signlist.get(i).getZ()+2) == 69)
+										if(e.getPlayer().getWorld().getBlockAt(signlist.get(i).getX(), signlist.get(i).getY(), signlist.get(i).getZ()+2).getType().equals(Material.LEVER))
 										{
 											int d = e.getPlayer().getWorld().getBlockAt(signlist.get(i).getX(), signlist.get(i).getY(), signlist.get(i).getZ()+2).getData();
 											int nd = d | 0x8;
@@ -206,9 +208,10 @@ public class FortificationPlayerListener implements Listener
 								}
 								else if(e.getPlayer().getWorld().getBlockAt(signlist.get(i).getX(), signlist.get(i).getY(), signlist.get(i).getZ()).getData() == 0x3)
 								{
-									if(e.getPlayer().getWorld().getBlockTypeIdAt(signlist.get(i).getX(), signlist.get(i).getY(), signlist.get(i).getZ()-1) == chestshieldId || chestshieldId == 0)
+									if(e.getPlayer().getWorld().getBlockAt(signlist.get(i).getX(), signlist.get(i).getY(), signlist.get(i).getZ()-1).getType().toString().equalsIgnoreCase(chestshieldId) ||
+											chestshieldId.equalsIgnoreCase(Material.AIR.toString()))
 									{
-										if(e.getPlayer().getWorld().getBlockTypeIdAt(signlist.get(i).getX(), signlist.get(i).getY(), signlist.get(i).getZ()-2) == 69)
+										if(e.getPlayer().getWorld().getBlockAt(signlist.get(i).getX(), signlist.get(i).getY(), signlist.get(i).getZ()-2).getType().equals(Material.LEVER))
 										{
 											int d = e.getPlayer().getWorld().getBlockAt(signlist.get(i).getX(), signlist.get(i).getY(), signlist.get(i).getZ()-2).getData();
 											int nd = d | 0x8;
@@ -222,9 +225,10 @@ public class FortificationPlayerListener implements Listener
 								}
 								else if(e.getPlayer().getWorld().getBlockAt(signlist.get(i).getX(), signlist.get(i).getY(), signlist.get(i).getZ()).getData() == 0x4)
 								{
-									if(e.getPlayer().getWorld().getBlockTypeIdAt(signlist.get(i).getX()+1, signlist.get(i).getY(), signlist.get(i).getZ()) == chestshieldId || chestshieldId == 0)
+									if(e.getPlayer().getWorld().getBlockAt(signlist.get(i).getX()+1, signlist.get(i).getY(), signlist.get(i).getZ()).getType().toString().equalsIgnoreCase(chestshieldId) ||
+											chestshieldId.equalsIgnoreCase(Material.AIR.toString()))
 									{
-										if(e.getPlayer().getWorld().getBlockTypeIdAt(signlist.get(i).getX()+2, signlist.get(i).getY(), signlist.get(i).getZ()) == 69)
+										if(e.getPlayer().getWorld().getBlockAt(signlist.get(i).getX()+2, signlist.get(i).getY(), signlist.get(i).getZ()).getType().equals(Material.LEVER))
 										{
 											int d = e.getPlayer().getWorld().getBlockAt(signlist.get(i).getX()+2, signlist.get(i).getY(), signlist.get(i).getZ()).getData();
 											int nd = d | 0x8;
@@ -238,9 +242,10 @@ public class FortificationPlayerListener implements Listener
 								}
 								else if(e.getPlayer().getWorld().getBlockAt(signlist.get(i).getX(), signlist.get(i).getY(), signlist.get(i).getZ()).getData() == 0x5)
 								{
-									if(e.getPlayer().getWorld().getBlockTypeIdAt(signlist.get(i).getX()-1, signlist.get(i).getY(), signlist.get(i).getZ()) == chestshieldId || chestshieldId == 0)
+									if(e.getPlayer().getWorld().getBlockAt(signlist.get(i).getX()-1, signlist.get(i).getY(), signlist.get(i).getZ()).getType().toString().equalsIgnoreCase(chestshieldId) ||
+											chestshieldId.equalsIgnoreCase(Material.AIR.toString()))
 									{
-										if(e.getPlayer().getWorld().getBlockTypeIdAt(signlist.get(i).getX()-2, signlist.get(i).getY(), signlist.get(i).getZ()) == 69)
+										if(e.getPlayer().getWorld().getBlockAt(signlist.get(i).getX()-2, signlist.get(i).getY(), signlist.get(i).getZ()).getType().equals(Material.LEVER))
 										{
 											int d = e.getPlayer().getWorld().getBlockAt(signlist.get(i).getX()-2, signlist.get(i).getY(), signlist.get(i).getZ()).getData();
 											int nd = d | 0x8;
@@ -264,9 +269,10 @@ public class FortificationPlayerListener implements Listener
 								{
 									if(e.getPlayer().getWorld().getBlockAt(signlist.get(i).getX(), signlist.get(i).getY(), signlist.get(i).getZ()).getData() == 0x2)
 									{
-										if(e.getPlayer().getWorld().getBlockTypeIdAt(signlist.get(i).getX(), signlist.get(i).getY(), signlist.get(i).getZ()+1) == chestshieldId || chestshieldId == 0)
+										if(e.getPlayer().getWorld().getBlockAt(signlist.get(i).getX(), signlist.get(i).getY(), signlist.get(i).getZ()+1).getType().toString().equalsIgnoreCase(chestshieldId) ||
+												chestshieldId.equalsIgnoreCase(Material.AIR.toString()))
 										{
-											if(e.getPlayer().getWorld().getBlockTypeIdAt(signlist.get(i).getX(), signlist.get(i).getY(), signlist.get(i).getZ()+2) == 69)
+											if(e.getPlayer().getWorld().getBlockAt(signlist.get(i).getX(), signlist.get(i).getY(), signlist.get(i).getZ()+2).getType().equals(Material.LEVER))
 											{
 												int d = e.getPlayer().getWorld().getBlockAt(signlist.get(i).getX(), signlist.get(i).getY(), signlist.get(i).getZ()+2).getData();
 												int nd = d | 0x8;
@@ -280,9 +286,10 @@ public class FortificationPlayerListener implements Listener
 									}
 									else if(e.getPlayer().getWorld().getBlockAt(signlist.get(i).getX(), signlist.get(i).getY(), signlist.get(i).getZ()).getData() == 0x3)
 									{
-										if(e.getPlayer().getWorld().getBlockTypeIdAt(signlist.get(i).getX(), signlist.get(i).getY(), signlist.get(i).getZ()-1) == chestshieldId || chestshieldId == 0)
+										if(e.getPlayer().getWorld().getBlockAt(signlist.get(i).getX(), signlist.get(i).getY(), signlist.get(i).getZ()-1).getType().toString().equalsIgnoreCase(chestshieldId) ||
+												chestshieldId.equalsIgnoreCase(Material.AIR.toString()))
 										{
-											if(e.getPlayer().getWorld().getBlockTypeIdAt(signlist.get(i).getX(), signlist.get(i).getY(), signlist.get(i).getZ()-2) == 69)
+											if(e.getPlayer().getWorld().getBlockAt(signlist.get(i).getX(), signlist.get(i).getY(), signlist.get(i).getZ()-2).getType().equals(Material.LEVER))
 											{
 												int d = e.getPlayer().getWorld().getBlockAt(signlist.get(i).getX(), signlist.get(i).getY(), signlist.get(i).getZ()-2).getData();
 												int nd = d | 0x8;
@@ -296,9 +303,10 @@ public class FortificationPlayerListener implements Listener
 									}
 									else if(e.getPlayer().getWorld().getBlockAt(signlist.get(i).getX(), signlist.get(i).getY(), signlist.get(i).getZ()).getData() == 0x4)
 									{
-										if(e.getPlayer().getWorld().getBlockTypeIdAt(signlist.get(i).getX()+1, signlist.get(i).getY(), signlist.get(i).getZ()) == chestshieldId || chestshieldId == 0)
+										if(e.getPlayer().getWorld().getBlockAt(signlist.get(i).getX()+1, signlist.get(i).getY(), signlist.get(i).getZ()).getType().toString().equalsIgnoreCase(chestshieldId) ||
+												chestshieldId.equalsIgnoreCase(Material.AIR.toString()))
 										{
-											if(e.getPlayer().getWorld().getBlockTypeIdAt(signlist.get(i).getX()+2, signlist.get(i).getY(), signlist.get(i).getZ()) == 69)
+											if(e.getPlayer().getWorld().getBlockAt(signlist.get(i).getX()+2, signlist.get(i).getY(), signlist.get(i).getZ()).getType().equals(Material.LEVER))
 											{
 												int d = e.getPlayer().getWorld().getBlockAt(signlist.get(i).getX()+2, signlist.get(i).getY(), signlist.get(i).getZ()).getData();
 												int nd = d | 0x8;
@@ -312,9 +320,10 @@ public class FortificationPlayerListener implements Listener
 									}
 									else if(e.getPlayer().getWorld().getBlockAt(signlist.get(i).getX(), signlist.get(i).getY(), signlist.get(i).getZ()).getData() == 0x5)
 									{
-										if(e.getPlayer().getWorld().getBlockTypeIdAt(signlist.get(i).getX()-1, signlist.get(i).getY(), signlist.get(i).getZ()) == chestshieldId || chestshieldId == 0)
+										if(e.getPlayer().getWorld().getBlockAt(signlist.get(i).getX()-1, signlist.get(i).getY(), signlist.get(i).getZ()).getType().toString().equalsIgnoreCase(chestshieldId) ||
+												chestshieldId.equalsIgnoreCase(Material.AIR.toString()))
 										{
-											if(e.getPlayer().getWorld().getBlockTypeIdAt(signlist.get(i).getX()-2, signlist.get(i).getY(), signlist.get(i).getZ()) == 69)
+											if(e.getPlayer().getWorld().getBlockAt(signlist.get(i).getX()-2, signlist.get(i).getY(), signlist.get(i).getZ()).getType().equals(Material.LEVER))
 											{
 												int d = e.getPlayer().getWorld().getBlockAt(signlist.get(i).getX()-2, signlist.get(i).getY(), signlist.get(i).getZ()).getData();
 												int nd = d | 0x8;
@@ -345,25 +354,28 @@ public class FortificationPlayerListener implements Listener
 	//takes triggering player, xyz coords of sign, and all 4 lines of the sign.
 	public boolean foundplayer(Player p, int x, int y, int z, String l1, String l2, String l3, String l4)
 	{
-		
+		/*
+		 * Sensor Filters
+		 * 
+		 */
 		if(l1.equalsIgnoreCase("armorDetect"))
 		{
-			if(p.getInventory().contains(298) || p.getInventory().contains(299) || p.getInventory().contains(300) || p.getInventory().contains(301)
-					|| p.getInventory().contains(302) || p.getInventory().contains(303) || p.getInventory().contains(304) || p.getInventory().contains(305)
-					|| p.getInventory().contains(306) || p.getInventory().contains(307) || p.getInventory().contains(308) || p.getInventory().contains(309)
-					|| p.getInventory().contains(310) || p.getInventory().contains(311) || p.getInventory().contains(312) || p.getInventory().contains(313)
-					|| p.getInventory().contains(314) || p.getInventory().contains(315) || p.getInventory().contains(316) || p.getInventory().contains(317))
+			if(p.getInventory().contains(Material.LEATHER_HELMET) || p.getInventory().contains(Material.LEATHER_CHESTPLATE) || p.getInventory().contains(Material.LEATHER_LEGGINGS) || p.getInventory().contains(Material.LEATHER_BOOTS)
+					|| p.getInventory().contains(Material.CHAINMAIL_HELMET) || p.getInventory().contains(Material.CHAINMAIL_CHESTPLATE) || p.getInventory().contains(Material.CHAINMAIL_LEGGINGS) || p.getInventory().contains(Material.CHAINMAIL_BOOTS)
+					|| p.getInventory().contains(Material.IRON_HELMET) || p.getInventory().contains(Material.IRON_CHESTPLATE) || p.getInventory().contains(Material.IRON_LEGGINGS) || p.getInventory().contains(Material.IRON_BOOTS)
+					|| p.getInventory().contains(Material.DIAMOND_HELMET) || p.getInventory().contains(Material.DIAMOND_CHESTPLATE) || p.getInventory().contains(Material.DIAMOND_LEGGINGS) || p.getInventory().contains(Material.DIAMOND_LEGGINGS)
+					|| p.getInventory().contains(Material.GOLD_HELMET) || p.getInventory().contains(Material.GOLD_CHESTPLATE) || p.getInventory().contains(Material.GOLD_LEGGINGS) || p.getInventory().contains(Material.GOLD_BOOTS))
 			{
 				return true;
 			}
 		}
 		else if(l1.equalsIgnoreCase("armorIgnore"))
 		{
-			if(!p.getInventory().contains(298) || !p.getInventory().contains(299) || !p.getInventory().contains(300) || !p.getInventory().contains(301)
-					|| !p.getInventory().contains(302) || !p.getInventory().contains(303) || !p.getInventory().contains(304) || !p.getInventory().contains(305)
-					|| !p.getInventory().contains(306) || !p.getInventory().contains(307) || !p.getInventory().contains(308) || !p.getInventory().contains(309)
-					|| !p.getInventory().contains(310) || !p.getInventory().contains(311) || !p.getInventory().contains(312) || !p.getInventory().contains(313)
-					|| !p.getInventory().contains(314) || !p.getInventory().contains(315) || !p.getInventory().contains(316) || !p.getInventory().contains(317))
+			if(!p.getInventory().contains(Material.LEATHER_HELMET) || p.getInventory().contains(Material.LEATHER_CHESTPLATE) || p.getInventory().contains(Material.LEATHER_LEGGINGS) || p.getInventory().contains(Material.LEATHER_BOOTS)
+					|| p.getInventory().contains(Material.CHAINMAIL_HELMET) || p.getInventory().contains(Material.CHAINMAIL_CHESTPLATE) || p.getInventory().contains(Material.CHAINMAIL_LEGGINGS) || p.getInventory().contains(Material.CHAINMAIL_BOOTS)
+					|| p.getInventory().contains(Material.IRON_HELMET) || p.getInventory().contains(Material.IRON_CHESTPLATE) || p.getInventory().contains(Material.IRON_LEGGINGS) || p.getInventory().contains(Material.IRON_BOOTS)
+					|| p.getInventory().contains(Material.DIAMOND_HELMET) || p.getInventory().contains(Material.DIAMOND_CHESTPLATE) || p.getInventory().contains(Material.DIAMOND_LEGGINGS) || p.getInventory().contains(Material.DIAMOND_LEGGINGS)
+					|| p.getInventory().contains(Material.GOLD_HELMET) || p.getInventory().contains(Material.GOLD_CHESTPLATE) || p.getInventory().contains(Material.GOLD_LEGGINGS) || p.getInventory().contains(Material.GOLD_BOOTS))
 			{
 				return true;
 			}
@@ -721,11 +733,11 @@ public class FortificationPlayerListener implements Listener
 		//detects if the player found is carrying tools, picks, shovels, axes, or shears.
 		else if(l1.equalsIgnoreCase("tooldetect"))
 		{
-			if(p.getInventory().contains(269) || p.getInventory().contains(270) || p.getInventory().contains(271)
-					|| p.getInventory().contains(256) || p.getInventory().contains(257) || p.getInventory().contains(258)
-					 || p.getInventory().contains(273) || p.getInventory().contains(274) || p.getInventory().contains(275)
-					 || p.getInventory().contains(277) || p.getInventory().contains(278) || p.getInventory().contains(279)
-					 || p.getInventory().contains(359))
+			if(p.getInventory().contains(Material.WOOD_SPADE) || p.getInventory().contains(Material.WOOD_PICKAXE) || p.getInventory().contains(Material.WOOD_AXE)
+					|| p.getInventory().contains(Material.IRON_SPADE) || p.getInventory().contains(Material.IRON_PICKAXE) || p.getInventory().contains(Material.IRON_AXE)
+					 || p.getInventory().contains(Material.STONE_SPADE) || p.getInventory().contains(Material.STONE_PICKAXE) || p.getInventory().contains(Material.STONE_AXE)
+					 || p.getInventory().contains(Material.DIAMOND_SPADE) || p.getInventory().contains(Material.DIAMOND_PICKAXE) || p.getInventory().contains(Material.DIAMOND_AXE)
+					 || p.getInventory().contains(Material.SHEARS))
 			{
 				return true;
 			}
@@ -733,11 +745,11 @@ public class FortificationPlayerListener implements Listener
 		//detects if the player found is not carrying tools, picks, shovels, axes, or shears.
 		else if(l1.equalsIgnoreCase("toolignore"))
 		{
-			if(!p.getInventory().contains(269) && !p.getInventory().contains(270) && !p.getInventory().contains(271)
-					&& !p.getInventory().contains(256) && !p.getInventory().contains(257) && !p.getInventory().contains(258)
-					 && !p.getInventory().contains(273) && !p.getInventory().contains(274) && !p.getInventory().contains(275)
-					 && !p.getInventory().contains(277) && !p.getInventory().contains(278) && !p.getInventory().contains(279)
-					 && !p.getInventory().contains(359))
+			if(!p.getInventory().contains(Material.WOOD_SPADE) || p.getInventory().contains(Material.WOOD_PICKAXE) || p.getInventory().contains(Material.WOOD_AXE)
+					|| p.getInventory().contains(Material.IRON_SPADE) || p.getInventory().contains(Material.IRON_PICKAXE) || p.getInventory().contains(Material.IRON_AXE)
+					 || p.getInventory().contains(Material.STONE_SPADE) || p.getInventory().contains(Material.STONE_PICKAXE) || p.getInventory().contains(Material.STONE_AXE)
+					 || p.getInventory().contains(Material.DIAMOND_SPADE) || p.getInventory().contains(Material.DIAMOND_PICKAXE) || p.getInventory().contains(Material.DIAMOND_AXE)
+					 || p.getInventory().contains(Material.SHEARS))
 			{
 				return true;
 			}
@@ -745,8 +757,8 @@ public class FortificationPlayerListener implements Listener
 		//detects if the player found is carrying weapons, swords or bow.
 		else if(l1.equalsIgnoreCase("weapondetect"))
 		{
-			if(p.getInventory().contains(261) || p.getInventory().contains(268) || p.getInventory().contains(267)
-					|| p.getInventory().contains(272) || p.getInventory().contains(276) || p.getInventory().contains(283))
+			if(p.getInventory().contains(Material.BOW) || p.getInventory().contains(Material.WOOD_SWORD) || p.getInventory().contains(Material.IRON_SWORD)
+					|| p.getInventory().contains(Material.STONE_SWORD) || p.getInventory().contains(Material.DIAMOND_SWORD) || p.getInventory().contains(Material.GOLD_SWORD))
 			{
 				return true;
 			}
@@ -754,8 +766,8 @@ public class FortificationPlayerListener implements Listener
 		//detects if the player found is not carrying weapons, swords or bow.
 		else if(l1.equalsIgnoreCase("weaponignore"))
 		{
-			if(!p.getInventory().contains(261) && !p.getInventory().contains(268) && !p.getInventory().contains(267)
-					&& !p.getInventory().contains(272) && !p.getInventory().contains(276) && !p.getInventory().contains(283))
+			if(!p.getInventory().contains(Material.BOW) || p.getInventory().contains(Material.WOOD_SWORD) || p.getInventory().contains(Material.IRON_SWORD)
+					|| p.getInventory().contains(Material.STONE_SWORD) || p.getInventory().contains(Material.DIAMOND_SWORD) || p.getInventory().contains(Material.GOLD_SWORD))
 			{
 				return true;
 			}
@@ -765,14 +777,14 @@ public class FortificationPlayerListener implements Listener
 		{
 			if(l3 != null && l3 != "")
 			{
-				if(p.getInventory().contains(Integer.parseInt(l3)))
+				if(p.getInventory().contains(Material.getMaterial(l3)))
 				{
 				return true;
 				}
 			}
 			if(l4 != null && l4 != "")
 			{
-				if(p.getInventory().contains(Integer.parseInt(l4)))
+				if(p.getInventory().contains(Material.getMaterial(l4)))
 				{
 				return true;
 				}
@@ -787,14 +799,14 @@ public class FortificationPlayerListener implements Listener
 		{
 			if(l3 != null && l3 != "")
 			{
-				if(p.getInventory().contains(Integer.parseInt(l3)))
+				if(p.getInventory().contains(Material.getMaterial(l3)))
 				{
 				return false;
 				}
 			}
 			if(l4 != null && l4 != "")
 			{
-				if(p.getInventory().contains(Integer.parseInt(l4)))
+				if(p.getInventory().contains(Material.getMaterial(l4)))
 				{
 				return false;
 				}
@@ -1099,28 +1111,28 @@ public class FortificationPlayerListener implements Listener
 		{
 			for(int k = 0; k < radius; k++)
 			{
-				if(w.getBlockAt(x-i, y, z-k).getTypeId() == 68)
+				if(w.getBlockAt(x-i, y, z-k).getType().equals(Material.WALL_SIGN))
 				{
 					if(w.getBlockAt(x-i, y, z-k).getState() instanceof Sign)
 					{
 						signlist.add((Sign)w.getBlockAt(x-i, y, z-k).getState());
 					}
 				}
-				if(w.getBlockTypeIdAt(x-i, y, z+k) == 68)
+				if(w.getBlockAt(x-i, y, z+k).getType().equals(Material.WALL_SIGN))
 				{
 					if(w.getBlockAt(x-i, y, z+k).getState() instanceof Sign)
 					{
 						signlist.add((Sign)w.getBlockAt(x-i, y, z+k).getState());
 					}
 				}
-				if(w.getBlockTypeIdAt(x+i, y, z-k) == 68)
+				if(w.getBlockAt(x+i, y, z-k).getType().equals(Material.WALL_SIGN))
 				{
 					if(w.getBlockAt(x+i, y, z-k).getState() instanceof Sign)
 					{
 						signlist.add((Sign)w.getBlockAt(x+i, y, z-k).getState());
 					}
 				}
-				if(w.getBlockTypeIdAt(x+i, y, z+k) == 68)
+				if(w.getBlockAt(x+i, y, z+k).getType().equals(Material.WALL_SIGN))
 				{
 					if(w.getBlockAt(x+i, y, z+k).getState() instanceof Sign)
 					{
@@ -1133,28 +1145,28 @@ public class FortificationPlayerListener implements Listener
 			{
 				for(int k = 0; k < radius; k++)
 				{
-					if(w.getBlockAt(x-i, y+1, z-k).getTypeId() == 68)
+					if(w.getBlockAt(x-i, y+1, z-k).getType().equals(Material.WALL_SIGN))
 					{
 						if(w.getBlockAt(x-i, y+1, z-k).getState() instanceof Sign)
 						{
 							signlist.add((Sign)w.getBlockAt(x-i, y+1, z-k).getState());
 						}
 					}
-					if(w.getBlockTypeIdAt(x-i, y+1, z+k) == 68)
+					if(w.getBlockAt(x-i, y+1, z+k).getType().equals(Material.WALL_SIGN))
 					{
 						if(w.getBlockAt(x-i, y+1, z+k).getState() instanceof Sign)
 						{
 							signlist.add((Sign)w.getBlockAt(x-i, y+1, z+k).getState());
 						}
 					}
-					if(w.getBlockTypeIdAt(x+i, y+1, z-k) == 68)
+					if(w.getBlockAt(x+i, y+1, z-k).getType().equals(Material.WALL_SIGN))
 					{
 						if(w.getBlockAt(x+i, y+1, z-k).getState() instanceof Sign)
 						{
 							signlist.add((Sign)w.getBlockAt(x+i, y+1, z-k).getState());
 						}
 					}
-					if(w.getBlockTypeIdAt(x+i, y+1, z+k) == 68)
+					if(w.getBlockAt(x+i, y+1, z+k).getType().equals(Material.WALL_SIGN))
 					{
 						if(w.getBlockAt(x+i, y+1, z+k).getState() instanceof Sign)
 						{
@@ -1167,28 +1179,28 @@ public class FortificationPlayerListener implements Listener
 				{
 					for(int k = 0; k < radius; k++)
 					{
-						if(w.getBlockAt(x-i1, y-1, z-k).getTypeId() == 68)
+						if(w.getBlockAt(x-i1, y-1, z-k).getType().equals(Material.WALL_SIGN))
 						{
 							if(w.getBlockAt(x-i1, y-1, z-k).getState() instanceof Sign)
 							{
 								signlist.add((Sign)w.getBlockAt(x-i1, y-1, z-k).getState());
 							}
 						}
-						if(w.getBlockTypeIdAt(x-i1, y-1, z+k) == 68)
+						if(w.getBlockAt(x-i1, y-1, z+k).getType().equals(Material.WALL_SIGN))
 						{
 							if(w.getBlockAt(x-i1, y-1, z+k).getState() instanceof Sign)
 							{
 								signlist.add((Sign)w.getBlockAt(x-i1, y-1, z+k).getState());
 							}
 						}
-						if(w.getBlockTypeIdAt(x+i1, y-1, z-k) == 68)
+						if(w.getBlockAt(x+i1, y-1, z-k).getType().equals(Material.WALL_SIGN))
 						{
 							if(w.getBlockAt(x+i1, y-1, z-k).getState() instanceof Sign)
 							{
 								signlist.add((Sign)w.getBlockAt(x+i1, y-1, z-k).getState());
 							}
 						}
-						if(w.getBlockTypeIdAt(x+i1, y-1, z+k) == 68)
+						if(w.getBlockAt(x+i1, y-1, z+k).getType().equals(Material.WALL_SIGN))
 						{
 							if(w.getBlockAt(x+i1, y-1, z+k).getState() instanceof Sign)
 							{
@@ -1222,7 +1234,8 @@ public class FortificationPlayerListener implements Listener
 				{
 					if(from.getWorld().getBlockAt(fsignlist.get(i).getX(), fsignlist.get(i).getY(), fsignlist.get(i).getZ()).getData() == 0x2)
 					{
-						if(from.getWorld().getBlockTypeIdAt(fsignlist.get(i).getX(), fsignlist.get(i).getY(), fsignlist.get(i).getZ()+1) == teleblockId || teleblockId == 0)
+						if(from.getWorld().getBlockAt(fsignlist.get(i).getX(), fsignlist.get(i).getY(), fsignlist.get(i).getZ()+1).getType().toString().equalsIgnoreCase(teleblockId) ||
+								teleblockId.equalsIgnoreCase(Material.AIR.toString()))
 						{
 							if(from.getWorld().getBlockAt(fsignlist.get(i).getX(), fsignlist.get(i).getY(), fsignlist.get(i).getZ()).isBlockIndirectlyPowered())
 							return true;
@@ -1230,7 +1243,8 @@ public class FortificationPlayerListener implements Listener
 					}
 					else if(from.getWorld().getBlockAt(fsignlist.get(i).getX(), fsignlist.get(i).getY(), fsignlist.get(i).getZ()).getData() == 0x3)
 					{
-						if(from.getWorld().getBlockTypeIdAt(fsignlist.get(i).getX(), fsignlist.get(i).getY(), fsignlist.get(i).getZ()-1) == teleblockId || teleblockId == 0)
+						if(from.getWorld().getBlockAt(fsignlist.get(i).getX(), fsignlist.get(i).getY(), fsignlist.get(i).getZ()-1).toString().equalsIgnoreCase(teleblockId) ||
+								teleblockId.equalsIgnoreCase(Material.AIR.toString()))
 						{
 							if(from.getWorld().getBlockAt(fsignlist.get(i).getX(), fsignlist.get(i).getY(), fsignlist.get(i).getZ()).isBlockIndirectlyPowered())
 							return true;
@@ -1238,7 +1252,8 @@ public class FortificationPlayerListener implements Listener
 					}
 					else if(from.getWorld().getBlockAt(fsignlist.get(i).getX(), fsignlist.get(i).getY(), fsignlist.get(i).getZ()).getData() == 0x4)
 					{
-						if(from.getWorld().getBlockTypeIdAt(fsignlist.get(i).getX()+1, fsignlist.get(i).getY(), fsignlist.get(i).getZ()) == teleblockId || teleblockId == 0)
+						if(from.getWorld().getBlockAt(fsignlist.get(i).getX()+1, fsignlist.get(i).getY(), fsignlist.get(i).getZ()).toString().equalsIgnoreCase(teleblockId) ||
+								teleblockId.equalsIgnoreCase(Material.AIR.toString()))
 						{
 							if(from.getWorld().getBlockAt(fsignlist.get(i).getX(), fsignlist.get(i).getY(), fsignlist.get(i).getZ()).isBlockIndirectlyPowered())
 							{
@@ -1248,7 +1263,8 @@ public class FortificationPlayerListener implements Listener
 					}
 					else if(from.getWorld().getBlockAt(fsignlist.get(i).getX(), fsignlist.get(i).getY(), fsignlist.get(i).getZ()).getData() == 0x5)
 					{
-						if(from.getWorld().getBlockTypeIdAt(fsignlist.get(i).getX()-1, fsignlist.get(i).getY(), fsignlist.get(i).getZ()) == teleblockId || teleblockId == 0)
+						if(from.getWorld().getBlockAt(fsignlist.get(i).getX()-1, fsignlist.get(i).getY(), fsignlist.get(i).getZ()).toString().equalsIgnoreCase(teleblockId) ||
+								teleblockId.equalsIgnoreCase(Material.AIR.toString()))
 						{
 							if(from.getWorld().getBlockAt(fsignlist.get(i).getX(), fsignlist.get(i).getY(), fsignlist.get(i).getZ()).isBlockIndirectlyPowered())
 							{
@@ -1267,7 +1283,8 @@ public class FortificationPlayerListener implements Listener
 				{
 					if(to.getWorld().getBlockAt(tsignlist.get(i).getX(), tsignlist.get(i).getY(), tsignlist.get(i).getZ()).getData() == 0x2)
 					{
-						if(to.getWorld().getBlockTypeIdAt(tsignlist.get(i).getX(), tsignlist.get(i).getY(), tsignlist.get(i).getZ()+1) == teleblockId || teleblockId == 0)
+						if(to.getWorld().getBlockAt(tsignlist.get(i).getX(), tsignlist.get(i).getY(), tsignlist.get(i).getZ()+1).toString().equalsIgnoreCase(teleblockId) ||
+								teleblockId.equalsIgnoreCase(Material.AIR.toString()))
 						{
 							if(to.getWorld().getBlockAt(tsignlist.get(i).getX(), tsignlist.get(i).getY(), tsignlist.get(i).getZ()).isBlockIndirectlyPowered())
 							{
@@ -1277,7 +1294,8 @@ public class FortificationPlayerListener implements Listener
 					}
 					if(to.getWorld().getBlockAt(tsignlist.get(i).getX(), tsignlist.get(i).getY(), tsignlist.get(i).getZ()).getData() == 0x3)
 					{
-						if(to.getWorld().getBlockTypeIdAt(tsignlist.get(i).getX(), tsignlist.get(i).getY(), tsignlist.get(i).getZ()-1) == teleblockId || teleblockId == 0)
+						if(to.getWorld().getBlockAt(tsignlist.get(i).getX(), tsignlist.get(i).getY(), tsignlist.get(i).getZ()-1).toString().equalsIgnoreCase(teleblockId) ||
+								teleblockId.equalsIgnoreCase(Material.AIR.toString()))
 						{
 							if(to.getWorld().getBlockAt(tsignlist.get(i).getX(), tsignlist.get(i).getY(), tsignlist.get(i).getZ()).isBlockIndirectlyPowered())
 							{
@@ -1287,7 +1305,8 @@ public class FortificationPlayerListener implements Listener
 					}
 					else if(to.getWorld().getBlockAt(tsignlist.get(i).getX(), tsignlist.get(i).getY(), tsignlist.get(i).getZ()).getData() == 0x4)
 					{
-						if(to.getWorld().getBlockTypeIdAt(tsignlist.get(i).getX()+1, tsignlist.get(i).getY(), tsignlist.get(i).getZ()) == teleblockId || teleblockId == 0)
+						if(to.getWorld().getBlockAt(tsignlist.get(i).getX()+1, tsignlist.get(i).getY(), tsignlist.get(i).getZ()).toString().equalsIgnoreCase(teleblockId) ||
+								teleblockId.equalsIgnoreCase(Material.AIR.toString()))
 						{
 							if(to.getWorld().getBlockAt(tsignlist.get(i).getX(), tsignlist.get(i).getY(), tsignlist.get(i).getZ()).isBlockIndirectlyPowered())
 							{
@@ -1297,7 +1316,8 @@ public class FortificationPlayerListener implements Listener
 					}
 					else if(to.getWorld().getBlockAt(tsignlist.get(i).getX(), tsignlist.get(i).getY(), tsignlist.get(i).getZ()).getData() == 0x5)
 					{
-						if(to.getWorld().getBlockTypeIdAt(tsignlist.get(i).getX()-1, tsignlist.get(i).getY(), tsignlist.get(i).getZ()) == teleblockId || teleblockId == 0)
+						if(to.getWorld().getBlockAt(tsignlist.get(i).getX()-1, tsignlist.get(i).getY(), tsignlist.get(i).getZ()).toString().equalsIgnoreCase(teleblockId) ||
+								teleblockId.equalsIgnoreCase(Material.AIR.toString()))
 						{
 							if(to.getWorld().getBlockAt(tsignlist.get(i).getX(), tsignlist.get(i).getY(), tsignlist.get(i).getZ()).isBlockIndirectlyPowered())
 							{	
@@ -1359,7 +1379,7 @@ public class FortificationPlayerListener implements Listener
 		for(int k = 0; k < sensorlength; k++)
 		{
 			for(int g = -1; g <= 1; g++){
-			if(player.getWorld().getBlockTypeIdAt(tx-2-k, ty, tz+g) == 68)
+			if(player.getWorld().getBlockAt(tx-2-k, ty, tz+g).getType().equals(Material.WALL_SIGN))
 			{
 				if(player.getWorld().getBlockAt(tx-2-k, ty, tz+g).getData() == 0x4)
 				{
@@ -1369,7 +1389,7 @@ public class FortificationPlayerListener implements Listener
 					{
 						if(foundplayer(player, tx-2-k, ty, tz+g, s.getLine(0), s.getLine(1), s.getLine(2), s.getLine(3)))
 						{
-							if(player.getWorld().getBlockTypeIdAt(tx-k, ty, tz+g)==69)
+							if(player.getWorld().getBlockAt(tx-k, ty, tz+g).getType().equals(Material.LEVER))
 							{
 								//Triggering levers this way would also trigger onredstone change, but it bypasses the bukkit api..
 								//net.minecraft.server.Block.byId[player.getWorld().getBlockTypeIdAt(tx-k, ty, tz+g)].interact(((CraftWorld)player.getWorld()).getHandle(), tx-k, ty, tz+g, null);
@@ -1414,7 +1434,7 @@ public class FortificationPlayerListener implements Listener
 										{
 											if(foundplayer(player, tx-2-k, ty, tz+g, s.getLine(0), s.getLine(1), s.getLine(2), s.getLine(3)))
 											{
-												if(player.getWorld().getBlockTypeIdAt(tx-k, ty, tz+g)==69)
+												if(player.getWorld().getBlockAt(tx-k, ty, tz+g).getType().equals(Material.LEVER))
 												{
 													//Triggering levers this way would also trigger onredstone change, but it bypasses the bukkit api..
 													//net.minecraft.server.Block.byId[player.getWorld().getBlockTypeIdAt(tx-k, ty, tz+g)].interact(((CraftWorld)player.getWorld()).getHandle(), tx-k, ty, tz+g, null);
@@ -1443,7 +1463,7 @@ public class FortificationPlayerListener implements Listener
 					}
 				}
 			}
-			if(player.getWorld().getBlockTypeIdAt(tx+2+k, ty, tz+g) == 68)
+			if(player.getWorld().getBlockAt(tx+2+k, ty, tz+g).getType().equals(Material.WALL_SIGN))
 			{
 				if(player.getWorld().getBlockAt(tx+2+k, ty, tz+g).getData() == 0x5)
 				{
@@ -1453,7 +1473,7 @@ public class FortificationPlayerListener implements Listener
 					{
 						if(foundplayer(player, tx+2+k, ty, tz+g, s.getLine(0), s.getLine(1), s.getLine(2), s.getLine(3)))
 						{
-							if(player.getWorld().getBlockTypeIdAt(tx+k, ty, tz+g)==69)
+							if(player.getWorld().getBlockAt(tx+k, ty, tz+g).getType().equals(Material.LEVER))
 							{
 								//end = true;
 								int d = player.getWorld().getBlockAt(tx+k, ty, tz+g).getData();
@@ -1496,7 +1516,7 @@ public class FortificationPlayerListener implements Listener
 										{
 											if(foundplayer(player, tx+2+k, ty, tz+g, s.getLine(0), s.getLine(1), s.getLine(2), s.getLine(3)))
 											{
-												if(player.getWorld().getBlockTypeIdAt(tx+k, ty, tz+g)==69)
+												if(player.getWorld().getBlockAt(tx+k, ty, tz+g).getType().equals(Material.LEVER))
 												{
 													//end = true;
 													int d = player.getWorld().getBlockAt(tx+k, ty, tz+g).getData();
@@ -1523,7 +1543,7 @@ public class FortificationPlayerListener implements Listener
 					}
 				}
 			}
-			if(player.getWorld().getBlockTypeIdAt(tx+g, ty, tz-2-k) == 68)
+			if(player.getWorld().getBlockAt(tx+g, ty, tz-2-k).getType().equals(Material.WALL_SIGN))
 			{
 				if(player.getWorld().getBlockAt(tx+g, ty, tz-2-k).getData() == 0x2)
 				{
@@ -1533,7 +1553,7 @@ public class FortificationPlayerListener implements Listener
 					{
 						if(foundplayer(player, tx+g, ty, tz-2-k, s.getLine(0), s.getLine(1), s.getLine(2), s.getLine(3)))
 						{
-							if(player.getWorld().getBlockTypeIdAt(tx+g, ty, tz-k)==69)
+							if(player.getWorld().getBlockAt(tx+g, ty, tz-k).getType().equals(Material.LEVER))
 							{
 								//end = true;
 							int d = player.getWorld().getBlockAt(tx+g, ty, tz-k).getData();
@@ -1576,7 +1596,7 @@ public class FortificationPlayerListener implements Listener
 										{
 											if(foundplayer(player, tx+g, ty, tz-2-k, s.getLine(0), s.getLine(1), s.getLine(2), s.getLine(3)))
 											{
-												if(player.getWorld().getBlockTypeIdAt(tx+g, ty, tz-k)==69)
+												if(player.getWorld().getBlockAt(tx+g, ty, tz-k).getType().equals(Material.LEVER))
 												{
 													//end = true;
 												int d = player.getWorld().getBlockAt(tx+g, ty, tz-k).getData();
@@ -1603,7 +1623,7 @@ public class FortificationPlayerListener implements Listener
 					}
 				}
 			}
-			if(player.getWorld().getBlockTypeIdAt(tx+g, ty, tz+2+k) == 68)
+			if(player.getWorld().getBlockAt(tx+g, ty, tz+2+k).getType().equals(Material.WALL_SIGN))
 			{
 				if(player.getWorld().getBlockAt(tx+g, ty, tz+2+k).getData() == 0x3)
 				{
@@ -1613,7 +1633,7 @@ public class FortificationPlayerListener implements Listener
 					{
 						if(foundplayer(player, tx+g, ty, tz+2+k, s.getLine(0), s.getLine(1), s.getLine(2), s.getLine(3)))
 						{
-							if(player.getWorld().getBlockTypeIdAt(tx+g, ty, tz+k)==69)
+							if(player.getWorld().getBlockAt(tx+g, ty, tz+k).getType().equals(Material.LEVER))
 							{
 								//end = true;
 								int d = player.getWorld().getBlockAt(tx+g, ty, tz+k).getData();
@@ -1657,7 +1677,7 @@ public class FortificationPlayerListener implements Listener
 										{
 											if(foundplayer(player, tx+g, ty, tz+2+k, s.getLine(0), s.getLine(1), s.getLine(2), s.getLine(3)))
 											{
-												if(player.getWorld().getBlockTypeIdAt(tx+g, ty, tz+k)==69)
+												if(player.getWorld().getBlockAt(tx+g, ty, tz+k).getType().equals(Material.LEVER))
 												{
 													//end = true;
 													int d = player.getWorld().getBlockAt(tx+g, ty, tz+k).getData();
@@ -1686,7 +1706,7 @@ public class FortificationPlayerListener implements Listener
 				}
 			}
 			//Test everything again +1y....
-			if(player.getWorld().getBlockTypeIdAt(tx-2-k, ty+1, tz+g) == 68)
+			if(player.getWorld().getBlockAt(tx-2-k, ty+1, tz+g).getType().equals(Material.WALL_SIGN))
 			{
 				if(player.getWorld().getBlockAt(tx-2-k, ty+1, tz+g).getData() == 0x4)
 				{
@@ -1696,7 +1716,7 @@ public class FortificationPlayerListener implements Listener
 					{
 						if(foundplayer(player, tx-2-k, ty+1, tz+g, s.getLine(0), s.getLine(1), s.getLine(2), s.getLine(3)))
 						{
-							if(player.getWorld().getBlockTypeIdAt(tx-k, ty+1, tz+g)==69)
+							if(player.getWorld().getBlockAt(tx-k, ty+1, tz+g).getType().equals(Material.LEVER))
 							{
 								//end = true;
 								int d = player.getWorld().getBlockAt(tx-k, ty+1, tz+g).getData();
@@ -1738,7 +1758,7 @@ public class FortificationPlayerListener implements Listener
 										{
 											if(foundplayer(player, tx-2-k, ty+1, tz+g, s.getLine(0), s.getLine(1), s.getLine(2), s.getLine(3)))
 											{
-												if(player.getWorld().getBlockTypeIdAt(tx-k, ty+1, tz+g)==69)
+												if(player.getWorld().getBlockAt(tx-k, ty+1, tz+g).getType().equals(Material.LEVER))
 												{
 													//end = true;
 													int d = player.getWorld().getBlockAt(tx-k, ty+1, tz+g).getData();
@@ -1764,7 +1784,7 @@ public class FortificationPlayerListener implements Listener
 					}
 				}
 			}
-			if(player.getWorld().getBlockTypeIdAt(tx+2+k, ty+1, tz+g) == 68)
+			if(player.getWorld().getBlockAt(tx+2+k, ty+1, tz+g).getType().equals(Material.WALL_SIGN))
 			{
 				if(player.getWorld().getBlockAt(tx+2+k, ty+1, tz+g).getData() == 0x5)
 				{
@@ -1774,7 +1794,7 @@ public class FortificationPlayerListener implements Listener
 					{
 						if(foundplayer(player, tx+2+k, ty+1, tz+g, s.getLine(0), s.getLine(1), s.getLine(2), s.getLine(3)))
 						{
-							if(player.getWorld().getBlockTypeIdAt(tx+k, ty+1, tz+g)==69)
+							if(player.getWorld().getBlockAt(tx+k, ty+1, tz+g).getType().equals(Material.LEVER))
 							{
 								//end = true;
 								int d = player.getWorld().getBlockAt(tx+k, ty+1, tz+g).getData();
@@ -1817,7 +1837,7 @@ public class FortificationPlayerListener implements Listener
 										{
 											if(foundplayer(player, tx+2+k, ty+1, tz+g, s.getLine(0), s.getLine(1), s.getLine(2), s.getLine(3)))
 											{
-												if(player.getWorld().getBlockTypeIdAt(tx+k, ty+1, tz+g)==69)
+												if(player.getWorld().getBlockAt(tx+k, ty+1, tz+g).getType().equals(Material.LEVER))
 												{
 													//end = true;
 													int d = player.getWorld().getBlockAt(tx+k, ty+1, tz+g).getData();
@@ -1844,7 +1864,7 @@ public class FortificationPlayerListener implements Listener
 					}
 				}
 			}
-			if(player.getWorld().getBlockTypeIdAt(tx+g, ty+1, tz-2-k) == 68)
+			if(player.getWorld().getBlockAt(tx+g, ty+1, tz-2-k).getType().equals(Material.WALL_SIGN))
 			{
 				if(player.getWorld().getBlockAt(tx+g, ty+1, tz-2-k).getData() == 0x2)
 				{
@@ -1854,7 +1874,7 @@ public class FortificationPlayerListener implements Listener
 					{
 						if(foundplayer(player, tx+g, ty+1, tz-2-k, s.getLine(0), s.getLine(1), s.getLine(2), s.getLine(3)))
 						{
-							if(player.getWorld().getBlockTypeIdAt(tx+g, ty+1, tz-k)==69)
+							if(player.getWorld().getBlockAt(tx+g, ty+1, tz-k).getType().equals(Material.LEVER))
 							{
 								//end = true;
 								int d = player.getWorld().getBlockAt(tx+g, ty+1, tz-k).getData();
@@ -1896,7 +1916,7 @@ public class FortificationPlayerListener implements Listener
 										{
 											if(foundplayer(player, tx+g, ty+1, tz-2-k, s.getLine(0), s.getLine(1), s.getLine(2), s.getLine(3)))
 											{
-												if(player.getWorld().getBlockTypeIdAt(tx+g, ty+1, tz-k)==69)
+												if(player.getWorld().getBlockAt(tx+g, ty+1, tz-k).getType().equals(Material.LEVER))
 												{
 													//end = true;
 													int d = player.getWorld().getBlockAt(tx+g, ty+1, tz-k).getData();
@@ -1922,7 +1942,7 @@ public class FortificationPlayerListener implements Listener
 					}
 				}
 			}
-			if(player.getWorld().getBlockTypeIdAt(tx+g, ty+1, tz+2+k) == 68)
+			if(player.getWorld().getBlockAt(tx+g, ty+1, tz+2+k).getType().equals(Material.WALL_SIGN))
 			{
 				if(player.getWorld().getBlockAt(tx+g, ty+1, tz+2+k).getData() == 0x3)
 				{
@@ -1932,7 +1952,7 @@ public class FortificationPlayerListener implements Listener
 					{
 						if(foundplayer(player, tx+g, ty+1, tz+2+k, s.getLine(0), s.getLine(1), s.getLine(2), s.getLine(3)))
 						{
-							if(player.getWorld().getBlockTypeIdAt(tx+g, ty+1, tz+k)==69)
+							if(player.getWorld().getBlockAt(tx+g, ty+1, tz+k).getType().equals(Material.LEVER))
 							{
 								//end = true;
 								int d = player.getWorld().getBlockAt(tx+g, ty+1, tz+k).getData();
@@ -1976,7 +1996,7 @@ public class FortificationPlayerListener implements Listener
 										{
 											if(foundplayer(player, tx+g, ty+1, tz+2+k, s.getLine(0), s.getLine(1), s.getLine(2), s.getLine(3)))
 											{
-												if(player.getWorld().getBlockTypeIdAt(tx+g, ty+1, tz+k)==69)
+												if(player.getWorld().getBlockAt(tx+g, ty+1, tz+k).getType().equals(Material.LEVER))
 												{
 													//end = true;
 													int d = player.getWorld().getBlockAt(tx+g, ty+1, tz+k).getData();
@@ -2005,7 +2025,7 @@ public class FortificationPlayerListener implements Listener
 				}
 			}
 			//test again with -1y
-			if(player.getWorld().getBlockTypeIdAt(tx-2-k, ty-1, tz+g) == 68)
+			if(player.getWorld().getBlockAt(tx-2-k, ty-1, tz+g).getType().equals(Material.WALL_SIGN))
 			{
 				if(player.getWorld().getBlockAt(tx-2-k, ty-1, tz+g).getData() == 0x4)
 				{
@@ -2015,7 +2035,7 @@ public class FortificationPlayerListener implements Listener
 					{
 						if(foundplayer(player, tx-2-k, ty-1, tz+g, s.getLine(0), s.getLine(1), s.getLine(2), s.getLine(3)))
 						{
-							if(player.getWorld().getBlockTypeIdAt(tx-k, ty-1, tz+g)==69)
+							if(player.getWorld().getBlockAt(tx-k, ty-1, tz+g).getType().equals(Material.LEVER))
 							{
 								//end = true;
 								int d = player.getWorld().getBlockAt(tx-k, ty-1, tz+g).getData();
@@ -2057,7 +2077,7 @@ public class FortificationPlayerListener implements Listener
 										{
 											if(foundplayer(player, tx-2-k, ty-1, tz+g, s.getLine(0), s.getLine(1), s.getLine(2), s.getLine(3)))
 											{
-												if(player.getWorld().getBlockTypeIdAt(tx-k, ty-1, tz+g)==69)
+												if(player.getWorld().getBlockAt(tx-k, ty-1, tz+g).getType().equals(Material.LEVER))
 												{
 													//end = true;
 													int d = player.getWorld().getBlockAt(tx-k, ty-1, tz+g).getData();
@@ -2083,7 +2103,7 @@ public class FortificationPlayerListener implements Listener
 					}
 				}
 			}
-			if(player.getWorld().getBlockTypeIdAt(tx+2+k, ty-1, tz+g) == 68)
+			if(player.getWorld().getBlockAt(tx+2+k, ty-1, tz+g).getType().equals(Material.WALL_SIGN))
 			{
 				if(player.getWorld().getBlockAt(tx+2+k, ty-1, tz+g).getData() == 0x5)
 				{
@@ -2093,7 +2113,7 @@ public class FortificationPlayerListener implements Listener
 					{
 						if(foundplayer(player, tx+2+k, ty-1, tz+g, s.getLine(0), s.getLine(1), s.getLine(2), s.getLine(3)))
 						{
-							if(player.getWorld().getBlockTypeIdAt(tx+k, ty-1, tz+g)==69)
+							if(player.getWorld().getBlockAt(tx+k, ty-1, tz+g).getType().equals(Material.LEVER))
 							{
 								//end = true;
 								int d = player.getWorld().getBlockAt(tx+k, ty-1, tz+g).getData();
@@ -2136,7 +2156,7 @@ public class FortificationPlayerListener implements Listener
 										{
 											if(foundplayer(player, tx+2+k, ty-1, tz+g, s.getLine(0), s.getLine(1), s.getLine(2), s.getLine(3)))
 											{
-												if(player.getWorld().getBlockTypeIdAt(tx+k, ty-1, tz+g)==69)
+												if(player.getWorld().getBlockAt(tx+k, ty-1, tz+g).getType().equals(Material.LEVER))
 												{
 													//end = true;
 													int d = player.getWorld().getBlockAt(tx+k, ty-1, tz+g).getData();
@@ -2163,7 +2183,7 @@ public class FortificationPlayerListener implements Listener
 					}
 				}
 			}
-			if(player.getWorld().getBlockTypeIdAt(tx+g, ty-1, tz-2-k) == 68)
+			if(player.getWorld().getBlockAt(tx+g, ty-1, tz-2-k).getType().equals(Material.WALL_SIGN))
 			{
 				if(player.getWorld().getBlockAt(tx+g, ty-1, tz-2-k).getData() == 0x2)
 				{
@@ -2173,7 +2193,7 @@ public class FortificationPlayerListener implements Listener
 					{
 						if(foundplayer(player, tx+g, ty-1, tz-2-k, s.getLine(0), s.getLine(1), s.getLine(2), s.getLine(3)))
 						{
-							if(player.getWorld().getBlockTypeIdAt(tx+g, ty-1, tz-k)==69)
+							if(player.getWorld().getBlockAt(tx+g, ty-1, tz-k).getType().equals(Material.LEVER))
 							{
 								//end = true;
 							int d = player.getWorld().getBlockAt(tx+g, ty-1, tz-k).getData();
@@ -2215,7 +2235,7 @@ public class FortificationPlayerListener implements Listener
 										{
 											if(foundplayer(player, tx+g, ty-1, tz-2-k, s.getLine(0), s.getLine(1), s.getLine(2), s.getLine(3)))
 											{
-												if(player.getWorld().getBlockTypeIdAt(tx+g, ty-1, tz-k)==69)
+												if(player.getWorld().getBlockAt(tx+g, ty-1, tz-k).getType().equals(Material.LEVER))
 												{
 													//end = true;
 												int d = player.getWorld().getBlockAt(tx+g, ty-1, tz-k).getData();
@@ -2241,7 +2261,7 @@ public class FortificationPlayerListener implements Listener
 					}
 				}
 			}
-			if(player.getWorld().getBlockTypeIdAt(tx+g, ty-1, tz+2+k) == 68)
+			if(player.getWorld().getBlockAt(tx+g, ty-1, tz+2+k).getType().equals(Material.WALL_SIGN))
 			{
 				if(player.getWorld().getBlockAt(tx+g, ty-1, tz+2+k).getData() == 0x3)
 				{
@@ -2251,7 +2271,7 @@ public class FortificationPlayerListener implements Listener
 					{
 						if(foundplayer(player, tx+g, ty-1, tz+2+k, s.getLine(0), s.getLine(1), s.getLine(2), s.getLine(3)))
 						{
-							if(player.getWorld().getBlockTypeIdAt(tx+g, ty-1, tz+k)==69)
+							if(player.getWorld().getBlockAt(tx+g, ty-1, tz+k).getType().equals(Material.LEVER))
 							{
 								//end = true;
 								int d = player.getWorld().getBlockAt(tx+g, ty-1, tz+k).getData();
@@ -2295,7 +2315,7 @@ public class FortificationPlayerListener implements Listener
 										{
 											if(foundplayer(player, tx+g, ty-1, tz+2+k, s.getLine(0), s.getLine(1), s.getLine(2), s.getLine(3)))
 											{
-												if(player.getWorld().getBlockTypeIdAt(tx+g, ty-1, tz+k)==69)
+												if(player.getWorld().getBlockAt(tx+g, ty-1, tz+k).getType().equals(Material.LEVER))
 												{
 													//end = true;
 													int d = player.getWorld().getBlockAt(tx+g, ty-1, tz+k).getData();
@@ -2337,7 +2357,7 @@ public class FortificationPlayerListener implements Listener
 			{
 				for(int h = -1; h <= 1; h++)
 				{
-					if(player.getWorld().getBlockTypeIdAt(tx+h, ty-1-k, tz+g) == 68)
+					if(player.getWorld().getBlockAt(tx+h, ty-1-k, tz+g).getType().equals(Material.WALL_SIGN))
 					{
 						if(player.getWorld().getBlockAt(tx+h, ty-1-k, tz+g).getData() == 0x4)
 						{
@@ -2347,7 +2367,7 @@ public class FortificationPlayerListener implements Listener
 							{
 								if(foundplayer(player, tx+h, ty-1-k, tz+g, s.getLine(0), s.getLine(1), s.getLine(2), s.getLine(3)))
 								{
-									if(player.getWorld().getBlockTypeIdAt(tx+h+2, ty-1-k, tz+g)==69)
+									if(player.getWorld().getBlockAt(tx+h+2, ty-1-k, tz+g).getType().equals(Material.LEVER))
 									{
 										int d = player.getWorld().getBlockAt(tx+h+2, ty-1-k, tz+g).getData();
 										int nd = d | 0x8;
@@ -2388,7 +2408,7 @@ public class FortificationPlayerListener implements Listener
 												{
 													if(foundplayer(player, tx+h, ty-1-k, tz+g, s.getLine(0), s.getLine(1), s.getLine(2), s.getLine(3)))
 													{
-														if(player.getWorld().getBlockTypeIdAt(tx+h+2, ty-1-k, tz+g)==69)
+														if(player.getWorld().getBlockAt(tx+h+2, ty-1-k, tz+g).getType().equals(Material.LEVER))
 														{
 															int d = player.getWorld().getBlockAt(tx+h+2, ty-1-k, tz+g).getData();
 															int nd = d | 0x8;
@@ -2420,7 +2440,7 @@ public class FortificationPlayerListener implements Listener
 							{
 								if(foundplayer(player, tx+h, ty-1-k, tz+g, s.getLine(0), s.getLine(1), s.getLine(2), s.getLine(3)))
 								{
-									if(player.getWorld().getBlockTypeIdAt(tx+h, ty-1-k, tz+g+2)==69)
+									if(player.getWorld().getBlockAt(tx+h, ty-1-k, tz+g+2).getType().equals(Material.LEVER))
 									{
 										int d = player.getWorld().getBlockAt(tx+h, ty-1-k, tz+g+2).getData();
 										int nd = d | 0x8;
@@ -2461,7 +2481,7 @@ public class FortificationPlayerListener implements Listener
 												{
 													if(foundplayer(player, tx+h, ty-1-k, tz+g, s.getLine(0), s.getLine(1), s.getLine(2), s.getLine(3)))
 													{
-														if(player.getWorld().getBlockTypeIdAt(tx+h, ty-1-k, tz+g+2)==69)
+														if(player.getWorld().getBlockAt(tx+h, ty-1-k, tz+g+2).getType().equals(Material.LEVER))
 														{
 															int d = player.getWorld().getBlockAt(tx+h, ty-1-k, tz+g+2).getData();
 															int nd = d | 0x8;
@@ -2493,7 +2513,7 @@ public class FortificationPlayerListener implements Listener
 							{
 								if(foundplayer(player, tx+h, ty-1-k, tz+g, s.getLine(0), s.getLine(1), s.getLine(2), s.getLine(3)))
 								{
-									if(player.getWorld().getBlockTypeIdAt(tx+h, ty-1-k, tz+g-2)==69)
+									if(player.getWorld().getBlockAt(tx+h, ty-1-k, tz+g-2).getType().equals(Material.LEVER))
 									{
 										int d = player.getWorld().getBlockAt(tx+h, ty-1-k, tz+g-2).getData();
 										int nd = d | 0x8;
@@ -2534,7 +2554,7 @@ public class FortificationPlayerListener implements Listener
 												{
 													if(foundplayer(player, tx+h, ty-1-k, tz+g, s.getLine(0), s.getLine(1), s.getLine(2), s.getLine(3)))
 													{
-														if(player.getWorld().getBlockTypeIdAt(tx+h, ty-1-k, tz+g-2)==69)
+														if(player.getWorld().getBlockAt(tx+h, ty-1-k, tz+g-2).getType().equals(Material.LEVER))
 														{
 															int d = player.getWorld().getBlockAt(tx+h, ty-1-k, tz+g-2).getData();
 															int nd = d | 0x8;
@@ -2566,7 +2586,7 @@ public class FortificationPlayerListener implements Listener
 							{
 								if(foundplayer(player, tx+h, ty-1-k, tz+g, s.getLine(0), s.getLine(1), s.getLine(2), s.getLine(3)))
 								{
-									if(player.getWorld().getBlockTypeIdAt(tx+h-2, ty-1-k, tz+g)==69)
+									if(player.getWorld().getBlockAt(tx+h-2, ty-1-k, tz+g).getType().equals(Material.LEVER))
 									{
 										int d = player.getWorld().getBlockAt(tx+h-2, ty-1-k, tz+g).getData();
 										int nd = d | 0x8;
@@ -2607,7 +2627,7 @@ public class FortificationPlayerListener implements Listener
 												{
 													if(foundplayer(player, tx+h, ty-1-k, tz+g, s.getLine(0), s.getLine(1), s.getLine(2), s.getLine(3)))
 													{
-														if(player.getWorld().getBlockTypeIdAt(tx+h-2, ty-1-k, tz+g)==69)
+														if(player.getWorld().getBlockAt(tx+h-2, ty-1-k, tz+g).getType().equals(Material.LEVER))
 														{
 															int d = player.getWorld().getBlockAt(tx+h-2, ty-1-k, tz+g).getData();
 															int nd = d | 0x8;
@@ -2635,7 +2655,7 @@ public class FortificationPlayerListener implements Listener
 					/*
 					 * [DownSensor]
 					 */
-					if(player.getWorld().getBlockTypeIdAt(tx+h, ty+1+k, tz+g) == 68)
+					if(player.getWorld().getBlockAt(tx+h, ty+1+k, tz+g).getType().equals(Material.WALL_SIGN))
 					{
 						if(player.getWorld().getBlockAt(tx+h, ty+1+k, tz+g).getData() == 0x4)
 						{
@@ -2644,7 +2664,7 @@ public class FortificationPlayerListener implements Listener
 							if(s.getLine(1).equalsIgnoreCase("[DownSensor]") || s.getLine(1).equalsIgnoreCase("[dSensor]"))
 							{
 								if(foundplayer(player, tx+h, ty+1+k, tz+g, s.getLine(0), s.getLine(1), s.getLine(2), s.getLine(3))){
-									if(player.getWorld().getBlockTypeIdAt(tx+h+2, ty+1+k, tz+g)==69)
+									if(player.getWorld().getBlockAt(tx+h+2, ty+1+k, tz+g).getType().equals(Material.LEVER))
 									{
 										int d = player.getWorld().getBlockAt(tx+h+2, ty+1+k, tz+g).getData();
 										int nd = d | 0x8;
@@ -2684,7 +2704,7 @@ public class FortificationPlayerListener implements Listener
 												if(st[0].equalsIgnoreCase("[dSensor") && k < detectRange)
 												{
 													if(foundplayer(player, tx+h, ty+1+k, tz+g, s.getLine(0), s.getLine(1), s.getLine(2), s.getLine(3))){
-														if(player.getWorld().getBlockTypeIdAt(tx+h+2, ty+1+k, tz+g)==69)
+														if(player.getWorld().getBlockAt(tx+h+2, ty+1+k, tz+g).getType().equals(Material.LEVER))
 														{
 															int d = player.getWorld().getBlockAt(tx+h+2, ty+1+k, tz+g).getData();
 															int nd = d | 0x8;
@@ -2716,7 +2736,7 @@ public class FortificationPlayerListener implements Listener
 							{
 								if(foundplayer(player, tx+h, ty+1+k, tz+g, s.getLine(0), s.getLine(1), s.getLine(2), s.getLine(3)))
 								{
-									if(player.getWorld().getBlockTypeIdAt(tx+h, ty+1+k, tz+g+2)==69)
+									if(player.getWorld().getBlockAt(tx+h, ty+1+k, tz+g+2).getType().equals(Material.LEVER))
 									{
 										int d = player.getWorld().getBlockAt(tx+h, ty+1+k, tz+g+2).getData();
 										int nd = d | 0x8;
@@ -2757,7 +2777,7 @@ public class FortificationPlayerListener implements Listener
 												{
 													if(foundplayer(player, tx+h, ty+1+k, tz+g, s.getLine(0), s.getLine(1), s.getLine(2), s.getLine(3)))
 													{
-														if(player.getWorld().getBlockTypeIdAt(tx+h, ty+1+k, tz+g+2)==69)
+														if(player.getWorld().getBlockAt(tx+h, ty+1+k, tz+g+2).getType().equals(Material.LEVER))
 														{
 															int d = player.getWorld().getBlockAt(tx+h, ty+1+k, tz+g+2).getData();
 															int nd = d | 0x8;
@@ -2789,7 +2809,7 @@ public class FortificationPlayerListener implements Listener
 							{
 								if(foundplayer(player, tx+h, ty+1+k, tz+g, s.getLine(0), s.getLine(1), s.getLine(2), s.getLine(3)))
 								{
-									if(player.getWorld().getBlockTypeIdAt(tx+h, ty+1+k, tz+g-2)==69)
+									if(player.getWorld().getBlockAt(tx+h, ty+1+k, tz+g-2).getType().equals(Material.LEVER))
 									{
 										int d = player.getWorld().getBlockAt(tx+h, ty+1+k, tz+g-2).getData();
 										int nd = d | 0x8;
@@ -2830,7 +2850,7 @@ public class FortificationPlayerListener implements Listener
 												{
 													if(foundplayer(player, tx+h, ty+1+k, tz+g, s.getLine(0), s.getLine(1), s.getLine(2), s.getLine(3)))
 													{
-														if(player.getWorld().getBlockTypeIdAt(tx+h, ty+1+k, tz+g-2)==69)
+														if(player.getWorld().getBlockAt(tx+h, ty+1+k, tz+g-2).getType().equals(Material.LEVER))
 														{
 															int d = player.getWorld().getBlockAt(tx+h, ty+1+k, tz+g-2).getData();
 															int nd = d | 0x8;
@@ -2862,7 +2882,7 @@ public class FortificationPlayerListener implements Listener
 							{
 								if(foundplayer(player, tx+h, ty+1+k, tz+g, s.getLine(0), s.getLine(1), s.getLine(2), s.getLine(3)))
 								{
-									if(player.getWorld().getBlockTypeIdAt(tx+h-2, ty+1+k, tz+g)==69)
+									if(player.getWorld().getBlockAt(tx+h-2, ty+1+k, tz+g).getType().equals(Material.LEVER))
 									{
 										int d = player.getWorld().getBlockAt(tx+h-2, ty+1+k, tz+g).getData();
 										int nd = d | 0x8;
@@ -2903,7 +2923,7 @@ public class FortificationPlayerListener implements Listener
 												{
 													if(foundplayer(player, tx+h, ty+1+k, tz+g, s.getLine(0), s.getLine(1), s.getLine(2), s.getLine(3)))
 													{
-														if(player.getWorld().getBlockTypeIdAt(tx+h-2, ty+1+k, tz+g)==69)
+														if(player.getWorld().getBlockAt(tx+h-2, ty+1+k, tz+g).getType().equals(Material.LEVER))
 														{
 															int d = player.getWorld().getBlockAt(tx+h-2, ty+1+k, tz+g).getData();
 															int nd = d | 0x8;

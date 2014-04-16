@@ -10,6 +10,7 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
+
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -30,25 +31,26 @@ import net.milkbowl.vault.economy.Economy;
 *
 * @author Rogueleader89
 */
-public class Fortification extends JavaPlugin  {
+public class Fortification extends JavaPlugin  
+{
 	protected static final Logger log = Logger.getLogger("Minecraft");
 	private String name = "fortification";
 	private String version = "0.9";
 	private int flamelength = 5;
-	private int flameturretblockId = 87;
+	private String flameturretblockId = "NETHERRACK";
 	private int weblength;
-	private int webturretblockId;
+	private String webturretblockId = "GLOWSTONE";
 	private int webtime;
 	private int sensorlength = 8;
 	private int maxtraplength = 5;
 	private int sendlength = 5;
 	private int teleblockrange = 10;
-	private int teleblockId = 49;
-	private int arrowturretId = 0;
+	private String teleblockId = "OBSIDIAN";
+	private String arrowturretId = "BRICK";
 	private int chestrange = 5;
-	private int chestshieldId = 0;
+	private String chestshieldId = "0";
 	private int sensorBroadcastDist = 75;
-	private int[] trapblocks;
+	private String[] trapblocks;
 	private boolean replacetrap = true;
 	private boolean sendremovetext = false;
 	private boolean commandsend = false;
@@ -79,10 +81,10 @@ public class Fortification extends JavaPlugin  {
 	private double transmitterCost;
 	private double receiverCost;
 	private int radioRange;
-	private int telepadBlockId;
-	private int telepadTowerId;
-	private int telepadTowerTopId;
-	private int telepadSupportId;
+	private String telepadBlockId;
+	private String telepadTowerId;
+	private String telepadTowerTopId;
+	private String telepadSupportId;
 	private int telepadMaxLength;
 	private int telepadMaxHeight;
 	private boolean radioCrossWorld;
@@ -153,7 +155,7 @@ public class Fortification extends JavaPlugin  {
 		//Split allowedTrapBlocks string into usable item id integers.
 		String tdb = "";
 		for (int i=0; i < getTrapblocks().length; i++ ) {
-		tdb.concat("," + Integer.toString(getTrapblocks()[i]));
+		tdb.concat("," + getTrapblocks()[i]);
 		}
 		getConfig().set("allowed-trapdoor-blocks", tdb);
 		this.saveConfig();
@@ -163,17 +165,17 @@ public class Fortification extends JavaPlugin  {
 	public void loadproperties()
 	{
 		config = this.getConfig();
-		setTelepadBlockId(config.getInt("telepad-block-id", 42));
-		setTelepadTowerId(config.getInt("telepad-tower-id", 42));
-		setTelepadTowerTopId(config.getInt("telepad-tower-top-id", 57));
-		setTelepadSupportId(config.getInt("telepad-support-id", 22));
+		setTelepadBlockId(config.getString("telepad-block-id", "IRON_BLOCK"));
+		setTelepadTowerId(config.getString("telepad-tower-id", "IRON_BLOCK"));
+		setTelepadTowerTopId(config.getString("telepad-tower-top-id", "DIAMOND_BLOCK"));
+		setTelepadSupportId(config.getString("telepad-support-id", "LAPIS_BLOCK"));
 		setTelepadMaxHeight(config.getInt("telepad-max-height", 32));
 		setTelepadMaxLength(config.getInt("telepad-max-length", 32));
-		setArrowturretId(config.getInt("arrowturret-block-id", 0));
+		setArrowturretId(config.getString("arrowturret-block-id", "BRICK"));
 		setFlamelength(config.getInt("flameturret-range", 5));
 		setSensorlength(config.getInt("sensor-range", 8));
-		setFlameturretblockId(config.getInt("flameturret-block-id", 87));
-		setWebturretblockId(config.getInt("webturret-block-id", 89));
+		setFlameturretblockId(config.getString("flameturret-block-id", "NETHERRACK"));
+		setWebturretblockId(config.getString("webturret-block-id", "GLOWSTONE"));
 		setWeblength(config.getInt("webturret-range", 5));
 		setWebtime(config.getInt("web-dissipation-time", 10));
 		setMaxtraplength(config.getInt("trap-door-range", 6));
@@ -186,9 +188,9 @@ public class Fortification extends JavaPlugin  {
 		setSendoverwritescommands(config.getBoolean("send-overwrites-commands", true));
 		setTeleblockrange(config.getInt("teleblock-shield-range", 10));
 		setTeleblockstring(config.getString("teleblock-string", "A mysterious force blocks your teleportation!"));
-		setTeleblockId(config.getInt("teleblock-shield-block-Id", 49));
+		setTeleblockId(config.getString("teleblock-shield-block-Id", "OBSIDIAN"));
 		setChestrange(config.getInt("chest-shield-range", 5));
-		setChestshieldId(config.getInt("chest-shield-id", 0));
+		setChestshieldId(config.getString("chest-shield-id", "0"));
 		setSensorBroadcastDist(config.getInt("sensor-broadcast-dist", 75));
 		setMsgOnlyBuilder(config.getBoolean("msg-builder-only", true));
 		setRadioRange(config.getInt("radio-range", 0));
@@ -215,13 +217,16 @@ public class Fortification extends JavaPlugin  {
 		
 		
 		//Split allowedTrapBlocks string into usable item id integers.
-		setTrapblocks(new int[allowedTrapBlocks.length]);
-		for (int i=0; i < getTrapblocks().length; i++ ) {
-		try {
-		getTrapblocks()[i] = Integer.parseInt(allowedTrapBlocks[i].trim());
+		setTrapblocks(new String[allowedTrapBlocks.length]);
+		for (int i=0; i < getTrapblocks().length; i++ ) 
+		{
+		try 
+		{
+			getTrapblocks()[i] = allowedTrapBlocks[i].trim();
 		}
-		catch (NumberFormatException nfe) {
-		getTrapblocks()[i] = 0;
+		catch (NumberFormatException nfe) 
+		{
+		getTrapblocks()[i] = "0";
 		}
 		}
 		this.saveConfig();
@@ -466,14 +471,14 @@ public class Fortification extends JavaPlugin  {
 	            				if(getReceiverList().get(i).getBand().equals(args[1]))
 	            				{
 	            					Location l = getReceiverList().get(i).getLocation();
-	        						if(l.getBlock().getTypeId() == 68)
+	        						if(l.getBlock().getType().equals(Material.WALL_SIGN))
 	        						{
 	        							switch(l.getBlock().getData())
 	        							{
 	        							case 0x2:
 	        								if(args.length > 2)
 	    									{
-		        								if(l.getWorld().getBlockTypeIdAt(l.getBlockX(), l.getBlockY(), l.getBlockZ() + 2) == 69)
+		        								if(l.getWorld().getBlockAt(l.getBlockX(), l.getBlockY(), l.getBlockZ() + 2).getType().equals(Material.LEVER))
 		        								{
 		        									if(args[2] == null || args[2].equals("") || args[2].equalsIgnoreCase("on") || args[2].equalsIgnoreCase("true"))
 		        									{
@@ -511,7 +516,7 @@ public class Fortification extends JavaPlugin  {
 	        							case 0x3:
 	        								if(args.length > 2)
 	    									{
-		        								if(l.getWorld().getBlockTypeIdAt(l.getBlockX(), l.getBlockY(), l.getBlockZ() - 2) == 69)
+		        								if(l.getWorld().getBlockAt(l.getBlockX(), l.getBlockY(), l.getBlockZ() - 2).getType().equals(Material.LEVER))
 		        								{
 		        									if(args[2] == null || args[2].equals("") || args[2].equalsIgnoreCase("on") || args[2].equalsIgnoreCase("true"))
 		        									{
@@ -549,7 +554,7 @@ public class Fortification extends JavaPlugin  {
 	        							case 0x4:
 	        								if(args.length > 2)
 	    									{
-		        								if(l.getWorld().getBlockTypeIdAt(l.getBlockX() + 2, l.getBlockY(), l.getBlockZ()) == 69)
+		        								if(l.getWorld().getBlockAt(l.getBlockX() + 2, l.getBlockY(), l.getBlockZ()).getType().equals(Material.LEVER))
 		        								{
 		        									if(args[2] == null || args[2].equals("") || args[2].equalsIgnoreCase("on") || args[2].equalsIgnoreCase("true"))
 		        									{
@@ -587,7 +592,7 @@ public class Fortification extends JavaPlugin  {
 	        							case 0x5:
 	        								if(args.length > 2)
 	    									{
-		        								if(l.getWorld().getBlockTypeIdAt(l.getBlockX() - 2, l.getBlockY(), l.getBlockZ()) == 69)
+		        								if(l.getWorld().getBlockAt(l.getBlockX() - 2, l.getBlockY(), l.getBlockZ()).getType().equals(Material.LEVER))
 		        								{
 		        									if(args[2] == null || args[2].equals("") || args[2].equalsIgnoreCase("on") || args[2].equalsIgnoreCase("true"))
 		        									{
@@ -883,12 +888,12 @@ public class Fortification extends JavaPlugin  {
             					}
             					else
             					{
-	        						if(l.getBlock().getTypeId() == 68)
+	        						if(l.getBlock().getType().equals(Material.WALL_SIGN))
 	        						{
 	        							switch(l.getBlock().getData())
 	        							{
 	        							case 0x2:
-	        								if(l.getWorld().getBlockTypeIdAt(l.getBlockX(), l.getBlockY(), l.getBlockZ() + 2) == 69)
+	        								if(l.getWorld().getBlockAt(l.getBlockX(), l.getBlockY(), l.getBlockZ() + 2).getType().equals(Material.LEVER))
 	        								{
 	        									if(args.length > 2)
 	        									{
@@ -928,7 +933,7 @@ public class Fortification extends JavaPlugin  {
 	        							case 0x3:
 	        								if(args.length > 2)
 	    									{
-		        								if(l.getWorld().getBlockTypeIdAt(l.getBlockX(), l.getBlockY(), l.getBlockZ() - 2) == 69)
+		        								if(l.getWorld().getBlockAt(l.getBlockX(), l.getBlockY(), l.getBlockZ() - 2).getType().equals(Material.LEVER))
 		        								{
 		        									if(args[2] == null || args[2].equals("") || args[2].equalsIgnoreCase("on") || args[2].equalsIgnoreCase("true"))
 		        									{
@@ -966,7 +971,7 @@ public class Fortification extends JavaPlugin  {
 	        							case 0x4:
 	        								if(args.length > 2)
 	    									{
-		        								if(l.getWorld().getBlockTypeIdAt(l.getBlockX() + 2, l.getBlockY(), l.getBlockZ()) == 69)
+		        								if(l.getWorld().getBlockAt(l.getBlockX() + 2, l.getBlockY(), l.getBlockZ()).getType().equals(Material.LEVER))
 		        								{
 		        									if(args[2] == null || args[2].equals("") || args[2].equalsIgnoreCase("on") || args[2].equalsIgnoreCase("true"))
 		        									{
@@ -1004,7 +1009,7 @@ public class Fortification extends JavaPlugin  {
 	        							case 0x5:
 	        								if(args.length > 2)
 	    									{
-		        								if(l.getWorld().getBlockTypeIdAt(l.getBlockX() - 2, l.getBlockY(), l.getBlockZ()) == 69)
+		        								if(l.getWorld().getBlockAt(l.getBlockX() - 2, l.getBlockY(), l.getBlockZ()).getType().equals(Material.LEVER))
 		        								{
 		        									if(args[2] == null || args[2].equals("") || args[2].equalsIgnoreCase("on") || args[2].equalsIgnoreCase("true"))
 		        									{
@@ -1056,10 +1061,10 @@ public class Fortification extends JavaPlugin  {
 	public int getFlamelength() {
 		return flamelength;
 	}
-	public void setFlameturretblockId(int flameturretblockId) {
+	public void setFlameturretblockId(String flameturretblockId) {
 		this.flameturretblockId = flameturretblockId;
 	}
-	public int getFlameturretblockId() {
+	public String getFlameturretblockId() {
 		return flameturretblockId;
 	}
 	public void setSensorlength(int sensorlength) {
@@ -1086,10 +1091,10 @@ public class Fortification extends JavaPlugin  {
 	public int getTeleblockrange() {
 		return teleblockrange;
 	}
-	public void setTeleblockId(int teleblockId) {
+	public void setTeleblockId(String teleblockId) {
 		this.teleblockId = teleblockId;
 	}
-	public int getTeleblockId() {
+	public String getTeleblockId() {
 		return teleblockId;
 	}
 /*	public void setFrostlength(int frostlength) {
@@ -1152,10 +1157,12 @@ public class Fortification extends JavaPlugin  {
 	public String getTeleblockstring() {
 		return teleblockstring;
 	}
-	public void setTrapblocks(int[] trapblocks) {
+	public void setTrapblocks(String[] trapblocks) 
+	{
 		this.trapblocks = trapblocks;
 	}
-	public int[] getTrapblocks() {
+	public String[] getTrapblocks() 
+	{
 		return trapblocks;
 	}
 	public void setFactionsEnabled(boolean factionsEnabled) {
@@ -1170,10 +1177,10 @@ public class Fortification extends JavaPlugin  {
 	public boolean isPermissionsEnabled() {
 		return permissionsEnabled;
 	}
-	public void setChestshieldId(int chestshieldId) {
+	public void setChestshieldId(String chestshieldId) {
 		this.chestshieldId = chestshieldId;
 	}
-	public int getChestshieldId() {
+	public String getChestshieldId() {
 		return chestshieldId;
 	}
 	public void setChestrange(int chestrange) {
@@ -1188,10 +1195,10 @@ public class Fortification extends JavaPlugin  {
 	public int getWeblength() {
 		return weblength;
 	}
-	public void setWebturretblockId(int webturretblockId) {
+	public void setWebturretblockId(String webturretblockId) {
 		this.webturretblockId = webturretblockId;
 	}
-	public int getWebturretblockId() {
+	public String getWebturretblockId() {
 		return webturretblockId;
 	}
 	public void setWebtime(int webtime) {
@@ -1260,10 +1267,10 @@ public class Fortification extends JavaPlugin  {
 	public boolean isEcon() {
 		return econ;
 	}
-	public void setArrowturretId(int arrowturretId) {
-		this.arrowturretId = arrowturretId;
+	public void setArrowturretId(String string) {
+		this.arrowturretId = string;
 	}
-	public int getArrowturretId() {
+	public String getArrowturretId() {
 		return arrowturretId;
 	}
 	public void setArrowturretCost(double arrowturretCost) {
@@ -1343,35 +1350,35 @@ public class Fortification extends JavaPlugin  {
 		return radioCrossWorld;
 	}
 
-	public void setTelepadBlockId(int telepadBlockId) {
-		this.telepadBlockId = telepadBlockId;
+	public void setTelepadBlockId(String string) {
+		this.telepadBlockId = string;
 	}
 
-	public int getTelepadBlockId() {
+	public String getTelepadBlockId() {
 		return telepadBlockId;
 	}
 
-	public void setTelepadTowerId(int telepadTowerId) {
-		this.telepadTowerId = telepadTowerId;
+	public void setTelepadTowerId(String string) {
+		this.telepadTowerId = string;
 	}
 
-	public int getTelepadTowerId() {
+	public String getTelepadTowerId() {
 		return telepadTowerId;
 	}
 
-	public void setTelepadTowerTopId(int telepadTowerTopId) {
-		this.telepadTowerTopId = telepadTowerTopId;
+	public void setTelepadTowerTopId(String string) {
+		this.telepadTowerTopId = string;
 	}
 
-	public int getTelepadTowerTopId() {
+	public String getTelepadTowerTopId() {
 		return telepadTowerTopId;
 	}
 
-	public void setTelepadSupportId(int telepadSupportId) {
+	public void setTelepadSupportId(String telepadSupportId) {
 		this.telepadSupportId = telepadSupportId;
 	}
 
-	public int getTelepadSupportId() {
+	public String getTelepadSupportId() {
 		return telepadSupportId;
 	}
 

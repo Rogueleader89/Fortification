@@ -25,16 +25,16 @@ public class TelepadTower
 		height = 0;
 		for(int i = 0; i < fort.getTelepadMaxHeight(); i++)
 		{
-			if(supportA.getWorld().getBlockTypeIdAt(supportA.getBlockX(), supportA.getBlockY()+i, supportA.getBlockZ()) == fort.getTelepadSupportId()
-					&& supportB.getWorld().getBlockTypeIdAt(supportB.getBlockX(), supportB.getBlockY()+i, supportB.getBlockZ()) == fort.getTelepadSupportId())
+			if(supportA.getWorld().getBlockAt(supportA.getBlockX(), supportA.getBlockY()+i, supportA.getBlockZ()).getType().toString().equalsIgnoreCase(fort.getTelepadSupportId())
+					&& supportB.getWorld().getBlockAt(supportB.getBlockX(), supportB.getBlockY()+i, supportB.getBlockZ()).getType().toString().equalsIgnoreCase(fort.getTelepadSupportId()))
 			{
 				supportHeight++;
 			}
-			if(twr.getWorld().getBlockTypeIdAt(twr.getBlockX(), twr.getBlockY()+i, twr.getBlockZ()) == fort.getTelepadTowerId())
+			if(twr.getWorld().getBlockAt(twr.getBlockX(), twr.getBlockY()+i, twr.getBlockZ()).getType().toString().equalsIgnoreCase(fort.getTelepadTowerId()))
 			{
 				height++;
 			}
-			else if(twr.getWorld().getBlockTypeIdAt(twr.getBlockX(), twr.getBlockY()+i, twr.getBlockZ()) == fort.getTelepadTowerTopId())
+			else if(twr.getWorld().getBlockAt(twr.getBlockX(), twr.getBlockY()+i, twr.getBlockZ()).getType().toString().equalsIgnoreCase(fort.getTelepadTowerTopId()))
 			{
 				height++;
 				if(supportHeight >= Math.floor((double)height/2.0))
