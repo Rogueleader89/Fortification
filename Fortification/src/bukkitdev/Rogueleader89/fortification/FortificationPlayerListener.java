@@ -2,6 +2,7 @@ package bukkitdev.Rogueleader89.fortification;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -19,7 +20,7 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.plugin.Plugin;
 
-import com.massivecraft.factions.Rel;
+//import com.massivecraft.factions.Rel;
 import com.massivecraft.factions.entity.Faction;
 import com.massivecraft.factions.entity.FactionColls;
 import com.massivecraft.factions.entity.UPlayer;
@@ -964,7 +965,7 @@ public class FortificationPlayerListener implements Listener
 		}
 		else if(l1.equalsIgnoreCase("EnemyDetect"))
 		{
-			if(fort.isFactionsEnabled())
+		/*	if(fort.isFactionsEnabled())
 			{
 				UPlayer me = UPlayer.get(p);
 				
@@ -986,7 +987,7 @@ public class FortificationPlayerListener implements Listener
 					}
 				}
 			}
-			else if(fort.isTownyEnabled())
+			else*/ if(fort.isTownyEnabled())
 			{
 					try 
 					{
@@ -1008,7 +1009,7 @@ public class FortificationPlayerListener implements Listener
 		//detect the factions listed on l3 and l4 and their allies
 		else if(l1.equalsIgnoreCase("AllyDetect"))
 		{
-			if(fort.isFactionsEnabled())
+			/*if(fort.isFactionsEnabled())
 			{
 				UPlayer me = UPlayer.get(p);
 				
@@ -1038,7 +1039,7 @@ public class FortificationPlayerListener implements Listener
 					}
 				}
 			}
-			else if(fort.isTownyEnabled())
+			else*/ if(fort.isTownyEnabled())
 			{
 					try 
 					{

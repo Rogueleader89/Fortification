@@ -35,7 +35,7 @@ public class Fortification extends JavaPlugin
 {
 	protected static final Logger log = Logger.getLogger("Minecraft");
 	private String name = "fortification";
-	private String version = "0.9";
+	private String version = "0.95";
 	private int flamelength = 5;
 	private String flameturretblockId = "NETHERRACK";
 	private int weblength;
@@ -158,8 +158,8 @@ public class Fortification extends JavaPlugin
 		tdb.concat("," + getTrapblocks()[i]);
 		}
 		getConfig().set("allowed-trapdoor-blocks", tdb);
+	//	getConfig().options().copyDefaults(true);
 		this.saveConfig();
-		//getConfig().options().copyDefaults(true);
 	}
     
 	public void loadproperties()
@@ -229,8 +229,8 @@ public class Fortification extends JavaPlugin
 		getTrapblocks()[i] = "0";
 		}
 		}
+		getConfig().options().copyDefaults(true);
 		this.saveConfig();
-		//getConfig().options().copyDefaults(true);
 	}
 /*	Old Permissions code
 	private void permissionSetup(){
@@ -374,14 +374,16 @@ public class Fortification extends JavaPlugin
 				}
 	}
 	
-	public void factionSetup(){
+	public void factionSetup()
+	{
 		Plugin test = getServer().getPluginManager().getPlugin("Factions");
 		if(test != null){
 			log.info("[Fortification]: Factions plugin detected: faction filters enabled.");
 			setFactionsEnabled(true);
 			factionsEnabled = true;
 		}
-		else{
+		else
+		{
 			log.info("[Fortification]: Factions plugin not detected, faction filters will be disabled.");
 			setFactionsEnabled(false);
 			factionsEnabled = false;
@@ -425,7 +427,8 @@ public class Fortification extends JavaPlugin
 	}
 
 	@Override
-	public void onEnable() {
+	public void onEnable() 
+	{
 		this.saveDefaultConfig();
 		getServer().getPluginManager();
 		loadproperties();
@@ -447,8 +450,10 @@ public class Fortification extends JavaPlugin
 		log.info(name + " " + version + " initialized");
 		
 		//Commands
-		getCommand("fort").setExecutor(new CommandExecutor() {
-            public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+		getCommand("fort").setExecutor(new CommandExecutor() 
+		{
+            public boolean onCommand(CommandSender sender, Command command, String label, String[] args) 
+            {
             	Player player = null;
             	if(sender instanceof Player){
             		player = (Player)sender;

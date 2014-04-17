@@ -32,8 +32,9 @@ import com.palmergames.bukkit.towny.object.TownyUniverse;
 
 
 /* 
- * 1.0 Changelog
+ * 0.95 Changelog
  * Changed plugin to rely on material values instead of block id numbers
+ * Fixed Config Generation again..
  * 
  * 
  * 0.9 Changelog
