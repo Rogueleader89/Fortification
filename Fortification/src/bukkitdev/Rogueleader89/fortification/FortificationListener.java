@@ -336,6 +336,7 @@ public class FortificationListener implements Listener {
 			//see if a sign was attached to whatever was broken
 			if(e.getBlock().getWorld().getBlockAt(e.getBlock().getLocation().getBlockX(), e.getBlock().getLocation().getBlockY(), e.getBlock().getLocation().getBlockZ()-1).getType().equals(Material.WALL_SIGN))
 			{
+				//Need to check if this block's material is an instance of wall sign before converting the block first.
 				Sign s = (Sign)e.getBlock().getWorld().getBlockAt(e.getBlock().getLocation().getBlockX(), e.getBlock().getLocation().getBlockY(), e.getBlock().getLocation().getBlockZ()-1);
 				if(((Block)s).getData() == 0x2)
 				{
@@ -2927,20 +2928,20 @@ public class FortificationListener implements Listener {
 								w.getBlockAt(x, y, z-2-i).setType(Material.AIR);
 							}
 						}
-						}
-						if(replacetrap && !powered)
+					}
+					if(replacetrap && !powered)
+					{
+						for(int k = 0; k < r; k++)
 						{
-							for(int k = 0; k < r; k++)
+							if(w.getBlockAt(x, y, z-2-k).getType().equals(Material.AIR) || w.getBlockAt(x, y, z-2-k).getType().equals(Material.WATER) ||
+									w.getBlockAt(x, y, z-2-k).getType().equals(Material.STATIONARY_WATER) ||
+									w.getBlockAt(x, y, z-2-k).getType().equals(Material.LAVA) ||
+									w.getBlockAt(x, y, z-2-k).getType().equals(Material.STATIONARY_LAVA))
 							{
-								if(w.getBlockAt(x, y, z-2-k).equals(Material.AIR) || w.getBlockAt(x, y, z-2-k).getType().equals(Material.WATER) ||
-										w.getBlockAt(x, y, z-2-k).getType().equals(Material.STATIONARY_WATER) ||
-										w.getBlockAt(x, y, z-2-k).getType().equals(Material.LAVA) ||
-										w.getBlockAt(x, y, z-2-k).getType().equals(Material.STATIONARY_LAVA))
-								{
-									w.getBlockAt(x, y, z-2-k).setType(id);
-								}
+								w.getBlockAt(x, y, z-2-k).setType(id);
 							}
 						}
+					}
 				}
 				//north
 				if(d.getData() == 0x4)
@@ -2957,19 +2958,19 @@ public class FortificationListener implements Listener {
 						}
 						
 					}
-						if(replacetrap && !powered)
+					if(replacetrap && !powered)
+					{
+						for(int k = 0; k < r; k++)
 						{
-							for(int k = 0; k < r; k++)
+							if(w.getBlockAt(x+2+k, y, z).getType().equals(Material.AIR) || w.getBlockAt(x+2+k, y, z).getType().equals(Material.WATER) ||
+									w.getBlockAt(x+2+k, y, z).getType().equals(Material.STATIONARY_WATER) ||
+									w.getBlockAt(x+2+k, y, z).getType().equals(Material.LAVA) ||
+									w.getBlockAt(x+2+k, y, z).getType().equals(Material.STATIONARY_LAVA))
 							{
-								if(w.getBlockAt(x+2+k, y, z).getType().equals(Material.AIR) || w.getBlockAt(x+2+k, y, z).getType().equals(Material.WATER) ||
-										w.getBlockAt(x+2+k, y, z).getType().equals(Material.STATIONARY_WATER) ||
-										w.getBlockAt(x+2+k, y, z).getType().equals(Material.LAVA) ||
-										w.getBlockAt(x+2+k, y, z).getType().equals(Material.STATIONARY_LAVA))
-								{
-									w.getBlockAt(x+2+k, y, z).setType(id);
-								}
+								w.getBlockAt(x+2+k, y, z).setType(id);
 							}
 						}
+					}
 				}
 				//south
 				if(d.getData() == 0x5)
