@@ -31,11 +31,16 @@ import com.palmergames.bukkit.towny.object.Town;
 import com.palmergames.bukkit.towny.object.TownyUniverse;
 
 
-/* 
+/* 1.0 Changelog
+ * Fixed itemdetect sensors not working properly with new material name system (was still checking for id numbers)
+ * Fixed sensors failing when placed behind other signs with []s on the second line
+ * 
+ * 0.96 Changelog
+ * Fixed trapdoors not working when facing a certain direction
+ * 
  * 0.95 Changelog
  * Changed plugin to rely on material values instead of block id numbers
  * Fixed Config Generation again..
- * 
  * 
  * 0.9 Changelog
  * Fixed Config Generation
@@ -4978,26 +4983,27 @@ public class FortificationListener implements Listener {
 									}
 									}
 								}
-								if(e.getLine(0).equalsIgnoreCase("itemdetect") || e.getLine(0).equalsIgnoreCase("itemignore"))
-								{
-									try
-									{
-										if(e.getLine(2) != null && e.getLine(2) != "")
-										{
-											Integer.parseInt(e.getLine(2));
-										}
-										if(e.getLine(3) != null && e.getLine(3) != "")
-										{
-											Integer.parseInt(e.getLine(3));
-										}
-									}
-									catch(Exception ex){
-										player.sendMessage(ChatColor.RED + "The 3rd and 4th lines must contain the material id of an item.");
-										player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
-										player.getWorld().dropItem(new Location(player.getWorld(), e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
-										return;
-									}
-								}
+					//			if(e.getLine(0).equalsIgnoreCase("itemdetect") || e.getLine(0).equalsIgnoreCase("itemignore"))
+					//			{
+					//				
+					//				try
+					//				{
+					//					if(e.getLine(2) != null && e.getLine(2) != "")
+					//					{
+					//						Integer.parseInt(e.getLine(2));
+					//					}
+					//					if(e.getLine(3) != null && e.getLine(3) != "")
+					//					{
+					//						Integer.parseInt(e.getLine(3));
+					//					}
+					//				}
+					//				catch(Exception ex){
+					//					player.sendMessage(ChatColor.RED + "The 3rd and 4th lines must contain the material name of an item.");
+					//					player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
+					//					player.getWorld().dropItem(new Location(player.getWorld(), e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
+					//					return;
+					//				}
+					//			}
 							}
 						}
 					}

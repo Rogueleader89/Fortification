@@ -1379,7 +1379,8 @@ public class FortificationPlayerListener implements Listener
 		//end = false;
 		for(int k = 0; k < sensorlength; k++)
 		{
-			for(int g = -1; g <= 1; g++){
+			for(int g = -1; g <= 1; g++)
+			{
 			if(player.getWorld().getBlockAt(tx-2-k, ty, tz+g).getType().equals(Material.WALL_SIGN))
 			{
 				if(player.getWorld().getBlockAt(tx-2-k, ty, tz+g).getData() == 0x4)
@@ -1459,7 +1460,7 @@ public class FortificationPlayerListener implements Listener
 						catch(Exception e1)
 						{
 							//Range isn't an int, no good way to resolve this outside of just making the sensor not work
-							return;
+							//return;
 						}
 					}
 				}
@@ -1539,7 +1540,7 @@ public class FortificationPlayerListener implements Listener
 						catch(Exception e1)
 						{
 							//Range isn't an int, no good way to resolve this outside of just making the sensor not work
-							return;
+							//return;
 						}
 					}
 				}
@@ -1619,7 +1620,7 @@ public class FortificationPlayerListener implements Listener
 						catch(Exception e1)
 						{
 							//Range isn't an int, no good way to resolve this outside of just making the sensor not work
-							return;
+							//return;
 						}
 					}
 				}
@@ -1701,7 +1702,7 @@ public class FortificationPlayerListener implements Listener
 						catch(Exception e1)
 						{
 							//Range isn't an int, no good way to resolve this outside of just making the sensor not work
-							return;
+							//return;
 						}
 					}
 				}
@@ -1780,7 +1781,7 @@ public class FortificationPlayerListener implements Listener
 						catch(Exception e1)
 						{
 							//Range isn't an int, no good way to resolve this outside of just making the sensor not work
-							return;
+							//return;
 						}
 					}
 				}
@@ -1860,7 +1861,7 @@ public class FortificationPlayerListener implements Listener
 						catch(Exception e1)
 						{
 							//Range isn't an int, no good way to resolve this outside of just making the sensor not work
-							return;
+							//return;
 						}
 					}
 				}
@@ -1938,7 +1939,7 @@ public class FortificationPlayerListener implements Listener
 						catch(Exception e1)
 						{
 							//Range isn't an int, no good way to resolve this outside of just making the sensor not work
-							return;
+							//return;
 						}
 					}
 				}
@@ -2020,7 +2021,7 @@ public class FortificationPlayerListener implements Listener
 						catch(Exception e1)
 						{
 							//Range isn't an int, no good way to resolve this outside of just making the sensor not work
-							return;
+							//return;
 						}
 					}
 				}
@@ -2099,7 +2100,7 @@ public class FortificationPlayerListener implements Listener
 						catch(Exception e1)
 						{
 							//Range isn't an int, no good way to resolve this outside of just making the sensor not work
-							return;
+							//return;
 						}
 					}
 				}
@@ -2179,7 +2180,7 @@ public class FortificationPlayerListener implements Listener
 						catch(Exception e1)
 						{
 							//Range isn't an int, no good way to resolve this outside of just making the sensor not work
-							return;
+							//return;
 						}
 					}
 				}
@@ -2257,7 +2258,7 @@ public class FortificationPlayerListener implements Listener
 						catch(Exception e1)
 						{
 							//Range isn't an int, no good way to resolve this outside of just making the sensor not work
-							return;
+							//return;
 						}
 					}
 				}
@@ -2339,7 +2340,7 @@ public class FortificationPlayerListener implements Listener
 						catch(Exception e1)
 						{
 							//Range isn't an int, no good way to resolve this outside of just making the sensor not work
-							return;
+							//return;
 						}
 					}
 				}
@@ -2429,7 +2430,7 @@ public class FortificationPlayerListener implements Listener
 								catch(Exception e1)
 								{
 									//Range isn't an int, no good way to resolve this outside of just making the sensor not work
-									return;
+									//return;
 								}
 							}
 						}//end detect sign direction
@@ -2502,7 +2503,7 @@ public class FortificationPlayerListener implements Listener
 								catch(Exception e1)
 								{
 									//Range isn't an int, no good way to resolve this outside of just making the sensor not work
-									return;
+									//return;
 								}
 							}
 						}
@@ -2575,7 +2576,7 @@ public class FortificationPlayerListener implements Listener
 								catch(Exception e1)
 								{
 									//Range isn't an int, no good way to resolve this outside of just making the sensor not work
-									return;
+									//return;
 								}
 							}
 						}
@@ -2648,7 +2649,7 @@ public class FortificationPlayerListener implements Listener
 								catch(Exception e1)
 								{
 									//Range isn't an int, no good way to resolve this outside of just making the sensor not work
-									return;
+									//return;
 								}
 							}
 						}
@@ -2725,7 +2726,7 @@ public class FortificationPlayerListener implements Listener
 								catch(Exception e1)
 								{
 									//Range isn't an int, no good way to resolve this outside of just making the sensor not work
-									return;
+									//return;
 								}
 							}
 						}//end detect sign direction
@@ -2798,7 +2799,7 @@ public class FortificationPlayerListener implements Listener
 								catch(Exception e1)
 								{
 									//Range isn't an int, no good way to resolve this outside of just making the sensor not work
-									return;
+									//return;
 								}
 							}
 						}
@@ -2871,7 +2872,7 @@ public class FortificationPlayerListener implements Listener
 								catch(Exception e1)
 								{
 									//Range isn't an int, no good way to resolve this outside of just making the sensor not work
-									return;
+									//return;
 								}
 							}
 						}
@@ -2944,7 +2945,7 @@ public class FortificationPlayerListener implements Listener
 								catch(Exception e1)
 								{
 									//Range isn't an int, no good way to resolve this outside of just making the sensor not work
-									return;
+									//return;
 								}
 							}
 						}

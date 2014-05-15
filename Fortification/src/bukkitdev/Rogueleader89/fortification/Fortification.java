@@ -786,34 +786,41 @@ public class Fortification extends JavaPlugin
 					}
 					}
 				}
-				if(args[0].equalsIgnoreCase("trapdoor")){
-					if(!player.hasPermission( "fortification.trapdoor") || !player.hasPermission( "fortification.*")){
+				if(args[0].equalsIgnoreCase("trapdoor"))
+				{
+					if(!player.hasPermission( "fortification.trapdoor") || !player.hasPermission( "fortification.*"))
+					{
 						player.sendMessage(ChatColor.RED + "You do not have permission to build trap doors.");
 					}
-					else{
-					player.sendMessage(ChatColor.GOLD + "Trap doors remove blocks of the type they are made of up to " + maxtraplength + " blocks infront of them when they recieve redstone power.");
-					if(replacetrap){
-						player.sendMessage(ChatColor.GOLD + "When powered off, all air blocks within the trap door's range are replaced by blocks of the type they are made of.");
-					}
-					player.sendMessage(ChatColor.GOLD + "They may be made out of materials with the following Ids:");
-					for(int i = 0; i < trapblocks.length; i++){
+					else
+					{
+						player.sendMessage(ChatColor.GOLD + "Trap doors remove blocks of the type they are made of up to " + maxtraplength + " blocks infront of them when they recieve redstone power.");
+						if(replacetrap)
+						{
+							player.sendMessage(ChatColor.GOLD + "When powered off, all air blocks within the trap door's range are replaced by blocks of the type they are made of.");
+						}
+						player.sendMessage(ChatColor.GOLD + "They may be made out of materials with the following Ids:");
 						player.sendMessage(ChatColor.GOLD + config.getString("allowed-trapdoor-blocks"));
 					}
-					}
 				}
-				if(args[0].equalsIgnoreCase("flameturret")) {
-					if(player.hasPermission( "fortification.turret.flame") || player.hasPermission( "fortification.*") || player.hasPermission( "fortification.turret.*")){
+				if(args[0].equalsIgnoreCase("flameturret")) 
+				{
+					if(player.hasPermission( "fortification.turret.flame") || player.hasPermission( "fortification.*") || player.hasPermission( "fortification.turret.*"))
+					{
 				        		player.sendMessage(ChatColor.GOLD + "Lights the first " + flamelength + " blocks infront of the turret on fire. Flame turrets must be made out of block id " + flameturretblockId + ". Flames only appear on smooth, level ground.");
 				    }
-					else{
+					else
+					{
 						player.sendMessage(ChatColor.RED + "you do not have permission to build flame turrets.");
 					}
 				}
 				if(args[0].equalsIgnoreCase("webturret")){
-					if(player.hasPermission( "fortification.turret.web") || player.hasPermission( "fortification.*") || player.hasPermission( "fortification.turret.*")){
+					if(player.hasPermission( "fortification.turret.web") || player.hasPermission( "fortification.*") || player.hasPermission( "fortification.turret.*"))
+					{
 				        		player.sendMessage(ChatColor.GOLD + "Fires web out " + weblength + " blocks infront of the turret. Web turrets must be made out of block id " + webturretblockId + ". The web lasts " + Integer.toString(webtime) + " seconds.");
 					}
-				else{
+				else
+				{
 					player.sendMessage(ChatColor.RED + "you do not have permission to build web turrets.");
 				}
 				}
