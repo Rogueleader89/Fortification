@@ -34,6 +34,7 @@ import com.palmergames.bukkit.towny.object.TownyUniverse;
 /* 1.0 Changelog
  * Fixed itemdetect sensors not working properly with new material name system (was still checking for id numbers)
  * Fixed sensors failing when placed behind other signs with []s on the second line
+ * fixed /fort trapdoor giving its message multiple times
  * 
  * 0.96 Changelog
  * Fixed trapdoors not working when facing a certain direction
