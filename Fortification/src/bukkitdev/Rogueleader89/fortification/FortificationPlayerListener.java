@@ -359,7 +359,7 @@ public class FortificationPlayerListener implements Listener
 		 * Sensor Filters
 		 * 
 		 */
-		if(l1.equalsIgnoreCase("armorDetect"))
+		if(l1.equalsIgnoreCase("armorDetect") || l1.equalsIgnoreCase("armor"))
 		{
 			if(p.getInventory().contains(Material.LEATHER_HELMET) || p.getInventory().contains(Material.LEATHER_CHESTPLATE) || p.getInventory().contains(Material.LEATHER_LEGGINGS) || p.getInventory().contains(Material.LEATHER_BOOTS)
 					|| p.getInventory().contains(Material.CHAINMAIL_HELMET) || p.getInventory().contains(Material.CHAINMAIL_CHESTPLATE) || p.getInventory().contains(Material.CHAINMAIL_LEGGINGS) || p.getInventory().contains(Material.CHAINMAIL_BOOTS)
@@ -377,6 +377,80 @@ public class FortificationPlayerListener implements Listener
 					|| p.getInventory().contains(Material.IRON_HELMET) || p.getInventory().contains(Material.IRON_CHESTPLATE) || p.getInventory().contains(Material.IRON_LEGGINGS) || p.getInventory().contains(Material.IRON_BOOTS)
 					|| p.getInventory().contains(Material.DIAMOND_HELMET) || p.getInventory().contains(Material.DIAMOND_CHESTPLATE) || p.getInventory().contains(Material.DIAMOND_LEGGINGS) || p.getInventory().contains(Material.DIAMOND_LEGGINGS)
 					|| p.getInventory().contains(Material.GOLD_HELMET) || p.getInventory().contains(Material.GOLD_CHESTPLATE) || p.getInventory().contains(Material.GOLD_LEGGINGS) || p.getInventory().contains(Material.GOLD_BOOTS))
+			{
+				return true;
+			}
+		}
+		else if(l1.equalsIgnoreCase("sneak") || l1.equalsIgnoreCase("sneakDetect"))
+		{
+			if(p.isSneaking())
+			{
+				return true;
+			}
+		}
+		else if(l1.equalsIgnoreCase("sneakIgnore"))
+		{
+			if(!p.isSneaking())
+			{
+				return true;
+			}
+		}
+		else if(l1.equalsIgnoreCase("sprint") || l1.equalsIgnoreCase("sprintDetect"))
+		{
+			if(p.isSprinting())
+			{
+				return true;
+			}
+		}
+		else if(l1.equalsIgnoreCase("sprintIgnore"))
+		{
+			if(!p.isSprinting())
+			{
+				return true;
+			}
+		}
+		else if(l1.equalsIgnoreCase("permission") || l1.equalsIgnoreCase("permDetect"))
+		{
+			if(p.hasPermission(l3) || p.hasPermission(l4))
+			{
+				return true;
+			}
+		}
+		else if(l1.equalsIgnoreCase("permIgnore"))
+		{
+			if((!p.hasPermission(l3) && !p.hasPermission(l4)) || (!p.hasPermission(l3) && l4 == ""))
+			{
+				return true;
+			}
+		}
+		else if(l1.equalsIgnoreCase("fire") || l1.equalsIgnoreCase("fireDetect"))
+		{
+			if(p.getFireTicks() > 0)
+			{
+				return true;
+			}
+		}
+		else if(l1.equalsIgnoreCase("fireIgnore"))
+		{
+			if(p.getFireTicks() <= 0)
+			{
+				return true;
+			}
+		}
+		else if(l1.equalsIgnoreCase("foodRange"))
+		{
+			int min, max;
+			try
+			{
+				min = Integer.parseInt(l3);
+				max = Integer.parseInt(l4);
+			}
+			catch(Exception e)
+			{
+				return false;
+			}
+			int food = p.getFoodLevel();
+			if(food >= min && food <= max)
 			{
 				return true;
 			}
@@ -732,7 +806,7 @@ public class FortificationPlayerListener implements Listener
 				}
 		}
 		//detects if the player found is carrying tools, picks, shovels, axes, or shears.
-		else if(l1.equalsIgnoreCase("tooldetect"))
+		else if(l1.equalsIgnoreCase("tooldetect") || l1.equalsIgnoreCase("tool"))
 		{
 			if(p.getInventory().contains(Material.WOOD_SPADE) || p.getInventory().contains(Material.WOOD_PICKAXE) || p.getInventory().contains(Material.WOOD_AXE)
 					|| p.getInventory().contains(Material.IRON_SPADE) || p.getInventory().contains(Material.IRON_PICKAXE) || p.getInventory().contains(Material.IRON_AXE)
@@ -756,7 +830,7 @@ public class FortificationPlayerListener implements Listener
 			}
 		}
 		//detects if the player found is carrying weapons, swords or bow.
-		else if(l1.equalsIgnoreCase("weapondetect"))
+		else if(l1.equalsIgnoreCase("weapondetect") || l1.equalsIgnoreCase("weapon"))
 		{
 			if(p.getInventory().contains(Material.BOW) || p.getInventory().contains(Material.WOOD_SWORD) || p.getInventory().contains(Material.IRON_SWORD)
 					|| p.getInventory().contains(Material.STONE_SWORD) || p.getInventory().contains(Material.DIAMOND_SWORD) || p.getInventory().contains(Material.GOLD_SWORD))
@@ -774,7 +848,7 @@ public class FortificationPlayerListener implements Listener
 			}
 		}
 		//detects if the player found is carrying items of the specified ids.
-		else if(l1.equalsIgnoreCase("itemdetect"))
+		else if(l1.equalsIgnoreCase("itemdetect")  || l1.equalsIgnoreCase("item"))
 		{
 			if(l3 != null && l3 != "")
 			{
@@ -816,7 +890,7 @@ public class FortificationPlayerListener implements Listener
 		}
 		
 		//Only detect people on lines 3 and 4
-		else if(l1.equalsIgnoreCase("playerdetect"))
+		else if(l1.equalsIgnoreCase("playerdetect") || l1.equalsIgnoreCase("player"))
 		{
 			if(p.getName().equalsIgnoreCase(l3) || p.getName().equalsIgnoreCase(l4))
 			{
@@ -862,7 +936,7 @@ public class FortificationPlayerListener implements Listener
 			}
 		}
 		//detect people in towns listed on lines 3 and 4
-		else if(l1.equalsIgnoreCase("towndetect"))
+		else if(l1.equalsIgnoreCase("towndetect") || l1.equalsIgnoreCase("town"))
 		{
 			if(fort.isTownyEnabled())
 			{
@@ -898,7 +972,7 @@ public class FortificationPlayerListener implements Listener
 			}
 		}
 		//detect people in nations listed on lines 3 and 4
-		else if(l1.equalsIgnoreCase("nationdetect"))
+		else if(l1.equalsIgnoreCase("nationdetect") || l1.equalsIgnoreCase("nation"))
 		{
 			if(fort.isTownyEnabled())
 			{
@@ -934,7 +1008,7 @@ public class FortificationPlayerListener implements Listener
 			}
 		}
 		//detect people in the factions listed on lines 3 and 4
-		else if(l1.equalsIgnoreCase("factiondetect"))
+		else if(l1.equalsIgnoreCase("factiondetect") || l1.equalsIgnoreCase("faction"))
 		{
 			if(fort.isFactionsEnabled())
 			{
@@ -963,7 +1037,7 @@ public class FortificationPlayerListener implements Listener
 				return false;
 			}
 		}
-		else if(l1.equalsIgnoreCase("EnemyDetect"))
+		else if(l1.equalsIgnoreCase("EnemyDetect") || l1.equalsIgnoreCase("enemy"))
 		{
 		/*	if(fort.isFactionsEnabled())
 			{
@@ -1007,7 +1081,7 @@ public class FortificationPlayerListener implements Listener
 			}
 		}
 		//detect the factions listed on l3 and l4 and their allies
-		else if(l1.equalsIgnoreCase("AllyDetect"))
+		else if(l1.equalsIgnoreCase("AllyDetect") || l1.equalsIgnoreCase("ally"))
 		{
 			/*if(fort.isFactionsEnabled())
 			{

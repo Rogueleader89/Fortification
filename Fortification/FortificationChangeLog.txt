@@ -1,0 +1,157 @@
+1.0 Changelog
+Telepads
+ * Telepads can now teleport chests, furnaces, dispensers, droppers, hoppers, and brewing stands without losing the items in them.
+ * Telepads now rotate blocks correctly.
+ * Telepads now properly transport blocks that are not stationary on their own such as levers, buttons, sugarcane, flowers, tall grass, ladders, wall signs, etc.
+ * Telepads no longer break on server restart.
+ * Telepads now teleport players fairly accurately (there is a 1 block margin of error when the telepad is rotated at present)
+ * Telepad integrity/existance is now verified for each telepad on server startup.
+ 
+Config
+ * Fixed Typo in default config file, telepad-tower-id read IRON_BLCCK instead of IRON_BLOCK, thus breaking all telepads, be sure to fix this in your own config file.
+ 
+Commands
+ * Fixed /fort trapdoor giving its message multiple times
+ * Added /fort verifyData command, this is a temporary admin online command (requires op status or fortification.admin permission) that checks every telepad and receiver to see if they still exist and frees up the band names they were using if they do not.
+ * /fort reload command now checks for the fortification.admin permission as well as op status
+ 
+ Turrets
+ * Flame turrets can now have either flame or fire written on the first line of the sign.
+ * Origin point of arrows on arrow turrets now directly in front of the turret itself.
+ * Line 3 on arrow turrets now defines the arrow's speed (leaving this empty will give them a default speed)
+ * Line 4 on arrow turrets now defines the arrow's spread (leaving this empty will give them a default speed)
+ * Line 3 on web turrets now defines how far the web is shot from the turret, up to the maximum length (leaving  the line empty makes it the maximum length)
+
+Sensors
+ * Fixed itemdetect sensors not working properly with new material name system (was still checking for id numbers in the placing of the sign)
+ * Fixed sensors failing when placed behind other signs with []s on the second line
+ 
+ * Added new sensor filters:
+fire, fireDetect, fireIgnore -- detects whether or not a player is on fire
+foodRange -- works the same as the healthRange filter but with food
+sprint, sprintDetect, sprintIgnore -- detects whether or not a player is sprinting
+sneak, sneakDetect, sneakIgnore -- detects whether or not a player is sneaking
+permission, permDetect, permIgnore -- detects whether or not a player has one of the permissions listed on lines 3 or 4 of the sign.
+
+ * Changed existing sensor filters that have detect in their name to also accept the word before detect by itself, 
+so the filter armorDetect and the filter armor are now equivalent.
+These new shortened filters are:
+armor, tool, weapon, item, player, town, nation, faction, enemy, ally
+
+Receivers
+ * Receiver existance is now verified for each receiver on server startup
+ 
+ Caveats/Known Issues:
+ Telepads and Receivers don't perfectly detect all cases in which a sign may be removed, this leads to receiving bands for both telepads and receivers to remain reserved even after the receiver/telepad no longer exists. /fort verifydata command added to allow server admins to manually fix this if not having an exact name becomes a serious issue, plugin will also fix it each time it restarts.
+ Player teleportation between telepads that are not facing the same way has a 1 block margin of error, may lead to the player taking slight damage from spawning in a block
+ Players in vehicles and vehicles in general currently are not teleported by telepads.
+ *****************************************************************
+ * 0.96 Changelog
+ * Fixed trapdoors not working when facing a certain direction
+ 
+ * 0.95 Changelog
+ * Changed plugin to rely on material values instead of block id numbers
+ * Fixed Config Generation again..
+ 
+ * 0.9 Changelog
+ * Fixed Config Generation
+ * All sensors can now be set to go lengths shorter than the standard length using [Sensor:length] for instance, [sensor:5] would make the sensor go out 5 spaces, this also works with
+ uSensors and dSensors (but not their outdated counterparts upSensor and downSensor)
+ * UpSensors can now be made with [uSensor] and DownSensors can be made with [dSensor] (not case sensitive for either)
+ * Added healthRange filter to sensors, line 3 being the min health players will be detected and line 4 the max, note that counting is done by half hearts.
+ * Added armorDetect and armorIgnore filters to sensors (similar to weapondetect/ignore)
+ * Fixed telepads not teleporting people (and maybe the vehicles they are in) (still buggy)
+ * Fixed exploit involving send signs and trapdoors
+ * Added redstone transmitters and receivers [transmit] or [transmitter] and band [receiver] or band [reciever] Note that bands must be EXACT
+ * Added /fort radio [band] command and settings for the range of the radio (0 = unlimited) and whether it can cross worlds -- triggers receivers /fort radio <band> [on/off or true/false] blank = on/true 
+ * Added telepads [telepad] sendBand ReceiveBand, Note that the bands must be EXACT. Telepads consist of 4 towers of equal height. 
+ *  o   o
+ * o+   +o
+ *   
+ * o+ C +o
+ *  o   o
+ *  + = tower block (default iron), o = support block (default lapis), tower blocks should be up to the height of the area you want teleported, the top tower block differs in composition (defaultly diamond),
+ *  support towers should be half the height (rounded down) of the main tower height.
+ *  C = sign block, the sign must be placed on a specified block type (default iron), this block must be between two of the towers, ideally somewhere near the menu.
+ *  Sign format below:
+ *  filter (blank for now)
+ *  [telepad]
+ *  recBand
+ *  sendBand
+ *  Also note that to teleport between telepads, the telepads must have the same widths, lengths, and heights (though they can be facing different directions if need be).
+ *  
+ *  Updated towny support to not use deprecated methods
+ *  Changed teleblocks to require fortification.ignoreteleblock permission or op to bypass, fortification.* no longer automatically allows bypassing 
+ *  
+ * 
+ * 0.8.7 Changelog
+ * Updated for 1.2.4
+ * Teleblock shields now require redstone power in order to function (directed towards sign)
+ * 
+ * 0.8.6 Changelog
+ * Fixed ItemDetect/Ignore sensor filter check to allow for only a single item id to be used.
+ * Updated to support new build of factions
+ * 
+ * 0.8.5 Changelog
+ * Fixed error on startup for people using Factions plugin
+ * Removed Register support and added Vault support
+ * Added new config option for people who are not running a permissions plugin (setting permissions to false lets everyone use everything).
+ * Temporarily removed allydetect and enemydetect sensor filters for factions users (towny versions still work fine).
+ * 
+ * 0.8.4 Changelog
+ * Updated to support new Factions builds (Note that old factions builds will now cause errors)
+ * Fixed permission issues, support for the old permissions plugin dropped entirely (must have superperms now)
+ * Added EnemyDetect and AllyDetect which detect the enemies or allies of the factions listed on lines 3 and 4 of the sign.
+ * 
+ * 0.8.3 Changelog
+ * Fixed an issue that prevented the plugin from working with certain server configurations lacking Towny
+ * 
+ * 0.8.2 Changelog
+ * Added Towny support with townAlert, nationAlert, townDetect, townIgnore, nationDetect, and nationIgnore sensor filters.
+ * the msg-only-builder config option now requires towns listed within townAlerts to either be the builder's town, within the same nation,
+  or in an allied nation, and nations in nationAlert to either be the builder's nation or an allied nation.
+ *  Added upward and downward facing sensors [UpSensor] and [DownSensor], all normal sensor filters apply.
+ *  
+ * 0.8.1 Changelog
+ * Fixed north facing sensors not reseting
+ * Fixed south facing trapdoors checking the id of the wrong block
+ * Added 3 second delay between chat messages sent from factionalert and areaalert sensors.
+ * Added optional ability to toggle teleblocks on/off. Done by placing a redstone torch on the opposite side of block from sign.
+ if the torch is on the teleblock is on, if off then teleblock is off. **this works terribly, think of better solution :P
+ * Fixed more misguiding instructions pointing to old help commands that no longer exist.
+ * Removed check on sensors to see if someone was leaving a sensor area (since sensors are on a time delay to turn off now anyway),
+ may help improve performance.
+ * FactionAlert sensors no longer trigger redstone if the player detected is in one of the two factions listed on the sign.
+ * Added upward and downward facing sensors [UpSensor] and [DownSensor], all normal sensor filters apply. **these apparently are not working..
+ * 
+ * 
+ * 0.8 Changelog
+ * Increased radius of sensors to detect one above and one below the level of the sign.
+ * Added arrow turrets under permission fortification.turret.arrow
+ * Fixed a permissions for info commands related to flame and web turrets (fortification.turret.flame and fortification.turret.web)
+ * Replaced BOSEconomy Support with Register support (requires Register on server), providing compatibility with multiple economy plugins.
+ * Message signs now send their location along with messages.
+ * Trapdoors now go through water/lava.
+ * Added itemdetect and itemignore sensor filters that check if the player has (or does not have) an item of the id listed on line 3 or 4.
+ * Added weapondetect and weaponignore sensor filters that check if a player is or is not carrying a weapon (sword or bow).
+ * Added areaalert and factionalert sensor filters. Area alert broadcasts the detected player's name to everyone within sensor-broadcast-dist blocks distance.
+ factionalert broadcasts the detected player's name to everyone in the factions listed on lines 3 and 4 unless that player is in one of the factions listed. Both trigger redstone on detecting a player
+ * Added new config option, msg-only-builder. When set to true message signs always contain the name of their builder on the first line, and factionalert sensors require that
+ the factions listed either be the faction the builder of the sensor is in, or a faction allied to their faction.
+ * Added tooldetect and toolignore sensor filters that check if a player is or is not carrying a tool (pick, shovel, axe, shears).
+ * 
+ * 0.7 Changelog
+ * added new shield types: chest, playerchest, and factionchest, all must have a lever on the opposite side of the sign redstone is triggered 
+ * by chest use within 5 (eventually chestshieldrange..) blocks of the shield, playerchests ignore the people listed on lines 3 & 4, factionchest
+ * ignores people in the factions listed on lines 3 & 4. Permission fortification.shield.chest
+ * Web turrets added, permission fortification.turret.web
+ * Added BOSEconomy Support (optional cost per mechanism)
+ * 
+ * 0.6 Changelog
+ * Updated for Bukkit
+ * Frost Turrets removed
+ * factiondetect and factionignore sensors added - requires Factions plugin.
+ * doubledetect and singledetect sensor filters combined and changed to playerdetect
+ * doubleignore and singleignore sensor filters combined and changed to playerignore
+ * added multiworld support
+ * teleblock shields now detect 1 block above and 1 below the level they are on along their radius of effect.

@@ -2,6 +2,7 @@ package bukkitdev.Rogueleader89.fortification;
 import java.util.List;
 import java.util.logging.Logger;
 
+import org.bukkit.event.block.BlockPhysicsEvent;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.Sign;
@@ -31,194 +32,45 @@ import com.palmergames.bukkit.towny.object.Town;
 import com.palmergames.bukkit.towny.object.TownyUniverse;
 
 
-/* 1.0 Changelog
- * Fixed itemdetect sensors not working properly with new material name system (was still checking for id numbers)
- * Fixed sensors failing when placed behind other signs with []s on the second line
- * fixed /fort trapdoor giving its message multiple times
- * 
- * 0.96 Changelog
- * Fixed trapdoors not working when facing a certain direction
- * 
- * 0.95 Changelog
- * Changed plugin to rely on material values instead of block id numbers
- * Fixed Config Generation again..
- * 
- * 0.9 Changelog
- * Fixed Config Generation
- * All sensors can now be set to go lengths shorter than the standard length using [Sensor:length] for instance, [sensor:5] would make the sensor go out 5 spaces, this also works with
- uSensors and dSensors (but not their outdated counterparts upSensor and downSensor)
- ****************************************************************************************
- * UpSensors can now be made with [uSensor] and DownSensors can be made with [dSensor] (not case sensitive for either)
- * Added healthRange filter to sensors, line 3 being the min health players will be detected and line 4 the max, note that counting is done by half hearts.
- * Added armorDetect and armorIgnore filters to sensors (similar to weapondetect/ignore)
- * Fixed telepads not teleporting people (and maybe the vehicles they are in) (still buggy)
- * Fixed exploit involving send signs and trapdoors
- * Added redstone transmitters and receivers [transmit] or [transmitter] and band [receiver] or band [reciever] Note that bands must be EXACT
- * Added /fort radio [band] command and settings for the range of the radio (0 = unlimited) and whether it can cross worlds -- triggers receivers /fort radio <band> [on/off or true/false] blank = on/true 
- * Added telepads [telepad] sendBand ReceiveBand, Note that the bands must be EXACT. Telepads consist of 4 towers of equal height. 
- *  o   o
- * o+   +o
- *   
- * o+ C +o
- *  o   o
- *  + = tower block (default iron), o = support block (default lapis), tower blocks should be up to the height of the area you want teleported, the top tower block differs in composition (defaultly diamond),
- *  support towers should be half the height (rounded down) of the main tower height.
- *  C = sign block, the sign must be placed on a specified block type (default iron), this block must be between two of the towers, ideally somewhere near the menu.
- *  Sign format below:
- *  filter (blank for now)
- *  [telepad]
- *  recBand
- *  sendBand
- *  Also note that to teleport between telepads, the telepads must have the same widths, lengths, and heights (though they can be facing different directions if need be).
- *  
- *  Updated towny support to not use deprecated methods
- *  Changed teleblocks to require fortification.ignoreteleblock permission or op to bypass, fortification.* no longer automatically allows bypassing 
- *  
- * 
- * 0.8.7 Changelog
- * Updated for 1.2.4
- * Teleblock shields now require redstone power in order to function (directed towards sign)
- * 
- * 0.8.6 Changelog
- * Fixed ItemDetect/Ignore sensor filter check to allow for only a single item id to be used.
- * Updated to support new build of factions
- * 
- * 0.8.5 Changelog
- * Fixed error on startup for people using Factions plugin
- * Removed Register support and added Vault support
- * Added new config option for people who are not running a permissions plugin (setting permissions to false lets everyone use everything).
- * Temporarily removed allydetect and enemydetect sensor filters for factions users (towny versions still work fine).
- * 
- * 0.8.4 Changelog
- * Updated to support new Factions builds (Note that old factions builds will now cause errors)
- * Fixed permission issues, support for the old permissions plugin dropped entirely (must have superperms now)
- * Added EnemyDetect and AllyDetect which detect the enemies or allies of the factions listed on lines 3 and 4 of the sign.
- * 
- * 0.8.3 Changelog
- * Fixed an issue that prevented the plugin from working with certain server configurations lacking Towny
- * 
- * 0.8.2 Changelog
- * Added Towny support with townAlert, nationAlert, townDetect, townIgnore, nationDetect, and nationIgnore sensor filters.
- * the msg-only-builder config option now requires towns listed within townAlerts to either be the builder's town, within the same nation,
-  or in an allied nation, and nations in nationAlert to either be the builder's nation or an allied nation.
- *  Added upward and downward facing sensors [UpSensor] and [DownSensor], all normal sensor filters apply.
- *  
- * 0.8.1 Changelog
- * Fixed north facing sensors not reseting
- * Fixed south facing trapdoors checking the id of the wrong block
- * Added 3 second delay between chat messages sent from factionalert and areaalert sensors.
- * Added optional ability to toggle teleblocks on/off. Done by placing a redstone torch on the opposite side of block from sign.
- if the torch is on the teleblock is on, if off then teleblock is off. **this works terribly, think of better solution :P
- * Fixed more misguiding instructions pointing to old help commands that no longer exist.
- * Removed check on sensors to see if someone was leaving a sensor area (since sensors are on a time delay to turn off now anyway),
- may help improve performance.
- * FactionAlert sensors no longer trigger redstone if the player detected is in one of the two factions listed on the sign.
- * Added upward and downward facing sensors [UpSensor] and [DownSensor], all normal sensor filters apply. **these apparently are not working..
- * 
- * 
- * 0.8 Changelog
- * Increased radius of sensors to detect one above and one below the level of the sign.
- * Added arrow turrets under permission fortification.turret.arrow
- * Fixed a permissions for info commands related to flame and web turrets (fortification.turret.flame and fortification.turret.web)
- * Replaced BOSEconomy Support with Register support (requires Register on server), providing compatibility with multiple economy plugins.
- * Message signs now send their location along with messages.
- * Trapdoors now go through water/lava.
- * Added itemdetect and itemignore sensor filters that check if the player has (or does not have) an item of the id listed on line 3 or 4.
- * Added weapondetect and weaponignore sensor filters that check if a player is or is not carrying a weapon (sword or bow).
- * Added areaalert and factionalert sensor filters. Area alert broadcasts the detected player's name to everyone within sensor-broadcast-dist blocks distance.
- factionalert broadcasts the detected player's name to everyone in the factions listed on lines 3 and 4 unless that player is in one of the factions listed. Both trigger redstone on detecting a player
- * Added new config option, msg-only-builder. When set to true message signs always contain the name of their builder on the first line, and factionalert sensors require that
- the factions listed either be the faction the builder of the sensor is in, or a faction allied to their faction.
- * Added tooldetect and toolignore sensor filters that check if a player is or is not carrying a tool (pick, shovel, axe, shears).
- * 
- * 0.7 Changelog
- * added new shield types: chest, playerchest, and factionchest, all must have a lever on the opposite side of the sign redstone is triggered 
- * by chest use within 5 (eventually chestshieldrange..) blocks of the shield, playerchests ignore the people listed on lines 3 & 4, factionchest
- * ignores people in the factions listed on lines 3 & 4. Permission fortification.shield.chest
- * Web turrets added, permission fortification.turret.web
- * Added BOSEconomy Support (optional cost per mechanism)
- * 
- * 0.6 Changelog
- * Updated for Bukkit
- * Frost Turrets removed
- * factiondetect and factionignore sensors added - requires Factions plugin.
- * doubledetect and singledetect sensor filters combined and changed to playerdetect
- * doubleignore and singleignore sensor filters combined and changed to playerignore
- * added multiworld support
- * teleblock shields now detect 1 block above and 1 below the level they are on along their radius of effect.
- * 
- * BUG LIST
- * Class cast exception in playerteleport/teleblock search radius, specifically
- furnaces are getting past the check to ensure the block is a sign. **looks to be a craftbukkit issue**
- * Arrows fired from arrow turrets appear to fall to the ground immediately on the client
- but actually do move and do damage as intended (would need to send proper packet to client to fix).
- * 
- * 
- * ToDo:
- * New Sensor filter to detect armor (armordetect)
- * New Sensor filter to detect time since player was last in combat (combatdetect [sensor] 1d 5h 3m 2s)
- * New Sensor filter to detect players who have a certain custom defined permission (fort.group.whateverpermission) or actually let them define any permission at all so it can link to other plugins...
- * [Telepad]
- * 
- * Next Major Release (0.9):
- * -Update configuration to new style (current one is deprecated..)
- * -Add transmitters for sending redstone signal via commands/spout gui or in-world transmitters to recievers filter [transmitter] dest1 dest2.
- * -Fix Teleblock toggle, detect redstone power instead of using a torch.
- * Faction/Town Message Signs
- * Check and make sure trapdoor length can't be increased beyond limit with send signs
- * Allow the use of "fire" as a synonym for flame on flame turrets
- * Consider adding telepads or similar warp gate functionality with standard filter compatibility
- * 
+/*
  * 1.0 Release:
  * Emitters for various effects, blindness, slow digging, limited building/destruction, healing
- * Add SimpleClan support
  * Re-examine and possibly finish implementation of send signs.
  * Bug fix everything, optimize code where needed.
  * Add mob sensors + filters (hostile mob vs non-hostile, mobdetect/ignore).
  * Individual settings per mechanism - Range, direction, radius, filters (if applicable)
  * Send packet to client to show arrows when they are shot from arrow turrets
  * Add forcefield type shields and other such things (with necessary weaknesses, possibly only deflect certain amounts of stuff?)
- * Move from block ids to material types -- fix warnings..
+ * Support display names of items as well as material types???
  * 
  * Other:
- * 
  * Add lifts in some form (preferably elevators as a vehicle of sorts).
  * 
  * Prevent a single message sign from spamming a player constantly with text.
  * This also applies to factionalert signs, possibly delay between messages?
  * combine factionignore and factionalert signs?
- * make teleblocks toggleable
  * 
- * Tractorbeam - pulls blocks towards it on redstone change
- * Repulser - pushes blocks away from it on redstone change
+ * Tractorbeam - pulls blocks/players towards it on redstone change
+ * Repulser - pushes blocks/players away from it on redstone change
  * 
  * Add command that allows player to mute all messages from message signs.
- * 
- * Allow user to define plugin priority in config file -- not really necessary...
  * 
  * Create new type of send sign that exchanges/flips text between two signs (so s1 becomes s2 and s2 becomes s1)
  * 
  * Add ability to move strings from one line of a sign to a different line on another sign (s1l1 to s2l4 for instance [Send N3] would send
  * the string on the line the send sign is on to line 3 on a sign to the north.
  * 
- * Add device that can detect the destruction of nearby blocks and activate redstone when they are destroyed.
+ * Block Destruction Sensor, Block Placement Sensor
  * 
  * Add optional fuel costs to turrets
  * 
- * add area health regen signs w/filters like sensors, possibly a shield type?
- * 
- * add new sensor types (multi-directional, radius detect, more filter options (custom filters))
- * 
- * add sensor that can detect mobs
+ * [rSensor] detects in radius around it instead of in a straight line
  * 
  * shield signs to increase hardness/durability of blocks around it (not possible atm).
  * different types of shields are possible here. Bubbleshield could hold back water similar to the bubble spell.
  * Endurance shields could replace destroyed blocks around them with blocks from a chest located on the block the shield sign is on.
  * 
- * Large Area Teleporter - teleport a number of blocks/people from one point to another (for use with airships).
- * Essentially a warp gate.
- * 
- * advanced sensors that can send name of detected player to another sign (could have it be l1 = listname; l2 = [Sensor]; l3 = name of player)
+ * advanced sensors that can send name of detected player to another sign (could have it be l1 = name; l2 = [Sensor]; l3 = name of player detected)
  * 
  * Math signs, allow user to add/subtract/divide/multiply numbers on lines 1 and 3, return result on line 4.
  * 
@@ -239,15 +91,12 @@ import com.palmergames.bukkit.towny.object.TownyUniverse;
  * push - Pushes player back away from the turret
  * pull - pulls player towards the turret
  * freeze - freezes a player in place temporarily, freezes water below firing area? Creates snow as well? (make last 2 optional.)
- * item grabber - Take item player is holding and stores in chest above turret (or an item of id defined by user?)
- * item dispenser - shoot out an item from a chest near the turret. Notch did this, but implement anyway, works well with other chest-based
- * plugins. Chest should be ontop of block with turret sign, specify direction that chest dispenses items.
- * Water Release - redstone toggleable water
- * Lava Release - redstone toggleable lava
+ * item grabber - Take item player is holding and stores in chest attached to turret sign (or an item of id defined by user? Various filters)
  * 4 way turrets, place block ontop of turret block, fires out in all 4 directions (or even 8 if arrows are used).
  * Floor traps - turrets that come up from the floor and fire once when redstone triggered.
  */
-public class FortificationListener implements Listener {
+public class FortificationListener implements Listener 
+{
 		private Fortification fort;
 	//	private PropertiesFile properties = new PropertiesFile("fortification.properties");
 		private String arrowturretblockId;
@@ -329,6 +178,12 @@ public class FortificationListener implements Listener {
 			}
 		}
 		
+	//	@EventHandler
+	//	public void BlockPhysicsEvent(BlockPhysicsEvent e)
+	//	{
+	//		//Check if a sign was attached to a block that got destroyed here...
+	//	}
+		
 		@EventHandler
 		public void onBlockBreak(BlockBreakEvent e)
 		{
@@ -340,7 +195,7 @@ public class FortificationListener implements Listener {
 				removeTelepad((Sign)e.getBlock());
 			}
 			//see if a sign was attached to whatever was broken
-			if(e.getBlock().getWorld().getBlockAt(e.getBlock().getLocation().getBlockX(), e.getBlock().getLocation().getBlockY(), e.getBlock().getLocation().getBlockZ()-1).getType().equals(Material.WALL_SIGN))
+	/*		if(e.getBlock().getWorld().getBlockAt(e.getBlock().getLocation().getBlockX(), e.getBlock().getLocation().getBlockY(), e.getBlock().getLocation().getBlockZ()-1).getType().equals(Material.WALL_SIGN))
 			{
 				//Need to check if this block's material is an instance of wall sign before converting the block first.
 				Sign s = (Sign)e.getBlock().getWorld().getBlockAt(e.getBlock().getLocation().getBlockX(), e.getBlock().getLocation().getBlockY(), e.getBlock().getLocation().getBlockZ()-1);
@@ -377,7 +232,7 @@ public class FortificationListener implements Listener {
 					removeTelepad(s);
 				}
 			}
-			e.getBlock().getLocation();
+			e.getBlock().getLocation();*/
 		}
 		
 		
@@ -537,7 +392,84 @@ public class FortificationListener implements Listener {
 		}
 		*/
 		
-		public void handleinput(int x, int y, int z, boolean powered, World w){
+		public float getRelativeRotation(byte initDir, byte newDir, float yaw)
+		{	
+			switch(initDir)
+			{
+				case 0x2://North
+					switch(newDir)
+					{
+						case 0x2:
+							return yaw;
+						case 0x3:
+							return yaw + 180f;
+						case 0x4:
+							return yaw - 90f;
+						case 0x5:
+							return yaw + 90f;
+					}
+					break;
+				case 0x3://South
+					switch(newDir)
+					{
+						case 0x2:
+							return yaw + 180f;
+						case 0x3:
+							return yaw;
+						case 0x4:
+							return yaw + 90f;
+						case 0x5:
+							return yaw - 90f;
+					}
+					break;
+				case 0x4://West
+					switch(newDir)
+					{
+						case 0x2:
+							return yaw + 90;
+						case 0x3:
+							return yaw - 90;
+						case 0x4:
+							return yaw;
+						case 0x5:
+							return yaw + 180f;
+					}
+					break;
+				case 0x5://East
+					switch(newDir)
+					{
+						case 0x2:
+							return yaw - 90f;
+						case 0x3:
+							return yaw + 90f;
+						case 0x4:
+							return yaw + 180f;
+						case 0x5:
+							return yaw;
+					}
+					break;
+			}
+			return yaw;
+		}
+		
+		public Location getRelativeLocation(double back, double right, double up, byte dir, Location l)
+		{
+			switch(dir)
+			{
+				case 0x2://+z = back, left = +x -- North
+					return new Location(l.getWorld(), l.getX() - right, l.getY() + up, l.getZ() + back);
+				case 0x3://-z = back, left = -x -- South
+					return new Location(l.getWorld(), l.getX() + right, l.getY() + up, l.getZ() - back);
+				case 0x4://+x = back, left = -z -- West
+					return new Location(l.getWorld(), l.getX() + back, l.getY() + up, l.getZ() + right);
+				case 0x5://-x = back, left = +z -- East
+					return new Location(l.getWorld(), l.getX() - back, l.getY() + up, l.getZ() - right);
+			}
+			return l;//<-- should never be reached
+		}
+		
+		public void handleinput(int x, int y, int z, boolean powered, World w)
+		{
 			BlockState b = w.getBlockAt(x, y, z).getState();
 			if(!(b instanceof Sign)){
 				return;
@@ -555,22 +487,27 @@ public class FortificationListener implements Listener {
 			{
 				for(int i = 0; i < fort.getPadList().size(); i++)
 				{
-					if(fort.getPadList().get(i).getLocation().equals(b.getLocation()))
+		//			log.info("1");
+					if(fort.getPadList().get(i).getLocation().equals(b.getLocation()) && fort.getPadList().get(i).getSendBand().equals(l4) && fort.getPadList().get(i).getRecBand().equals(l3))
 					{
-						if(fort.getPadList().get(i).checkIntegrity())
+			//			log.info("2");
+						if(fort.getPadList().get(i).checkIntegrity() && fort.getPadList().get(i).validateSign())
 						{
+				//			log.info("3");
 							for(int k = 0; k < fort.getPadList().size(); k++)
 							{
 								if(fort.getPadList().get(k).getRecBand().equals(fort.getPadList().get(i).getSendBand()) && k != i)
 								{
-									if(fort.getPadList().get(k).checkIntegrity())
+					//				log.info("4");
+									if(fort.getPadList().get(k).checkIntegrity() && fort.getPadList().get(k).validateSign())
 									{
+						//				log.info("5");
 										if(fort.getPadList().get(k).getWidth() == fort.getPadList().get(i).getWidth() 
 												&& fort.getPadList().get(k).getLength() == fort.getPadList().get(i).getLength()
 												&& fort.getPadList().get(k).getHeight() == fort.getPadList().get(i).getHeight())
 										{
+						//					log.info("6");
 											//Telepads are compatible, transport matter.
-											//TODO: West facing telepads aren't working
 											/*Block[] b1;
 											Block[] b2;
 											b1 = new Block[fort.getPadList().get(i).getLength() * fort.getPadList().get(i).getWidth() * fort.getPadList().get(i).getHeight()];
@@ -586,91 +523,127 @@ public class FortificationListener implements Listener {
 											//TODO: Players need to be teleported relative to rotation as well as the current relative position, have not tested vehicles.
 											List<Player> p = fort.getPadList().get(k).getFLTower().getLocation().getWorld().getPlayers();
 											boolean tel = false;
+											double back = 0.0;
+											double right = 0.0;
+											double up = 0.0;
+											//telepad i = origin; telepad k = destination
 											for(int w1 = 0; w1 < p.size(); w1++)
 											{
 												switch(fort.getPadList().get(i).getDirection())
 												{
 												case 0x2://+z = back, left = +x
-													if(p.get(w1).getLocation().getBlockX() < fort.getPadList().get(k).getFLTower().getLocation().getBlockX() && p.get(w1).getLocation().getBlockX() > fort.getPadList().get(k).getFRTower().getLocation().getBlockX()
-															&& p.get(w1).getLocation().getBlockY() >= fort.getPadList().get(k).getFLTower().getLocation().getBlockY() && p.get(w1).getLocation().getBlockY() <= fort.getPadList().get(k).getLocation().getBlockY() + fort.getPadList().get(k).getHeight()
-															&& p.get(w1).getLocation().getZ() > fort.getPadList().get(k).getFLTower().getLocation().getBlockZ() && p.get(w1).getLocation().getZ() < fort.getPadList().get(k).getBLTower().getLocation().getBlockZ())
+													if(p.get(w1).getLocation().getBlockX() < fort.getPadList().get(i).getFLTower().getLocation().getBlockX() 
+															&& p.get(w1).getLocation().getBlockX() > fort.getPadList().get(i).getBRTower().getLocation().getBlockX()
+															&& p.get(w1).getLocation().getBlockY() >= fort.getPadList().get(i).getFLTower().getLocation().getBlockY() 
+															&& p.get(w1).getLocation().getBlockY() <= fort.getPadList().get(i).getLocation().getBlockY() + fort.getPadList().get(i).getHeight()
+															&& p.get(w1).getLocation().getZ() > fort.getPadList().get(i).getFLTower().getLocation().getBlockZ() 
+															&& p.get(w1).getLocation().getZ() < fort.getPadList().get(i).getBRTower().getLocation().getBlockZ())
 													{
 														//Player is in teleportation area, teleport them to equivalent spot on connected telepad.
 														tel = true;
-														log.info("Player teleported.");//DEBUG
-														p.get(w1).teleport(new Location(fort.getPadList().get(k).getLocation().getWorld(),
-																fort.getPadList().get(i).getFLTower().getLocation().getBlockX() + (fort.getPadList().get(k).getFLTower().getLocation().getBlockX() - p.get(w1).getLocation().getX()),
-																fort.getPadList().get(i).getFLTower().getLocation().getBlockY() + (fort.getPadList().get(k).getFLTower().getLocation().getBlockY() - p.get(w1).getLocation().getY()),
-																fort.getPadList().get(i).getFLTower().getLocation().getBlockZ() + (fort.getPadList().get(k).getFLTower().getLocation().getBlockZ() - p.get(w1).getLocation().getZ())));
+														//log.info("Player teleported.");//DEBUG
+														back = Math.abs(p.get(w1).getLocation().getZ() - fort.getPadList().get(i).getFLTower().getLocation().getBlockZ());
+														right = Math.abs(p.get(w1).getLocation().getX() - fort.getPadList().get(i).getFLTower().getLocation().getBlockX());
+														up = Math.abs(p.get(w1).getLocation().getY() - fort.getPadList().get(i).getFLTower().getLocation().getBlockY());
+														
+														p.get(w1).teleport(getRelativeLocation(back, right, up, fort.getPadList().get(k).getDirection(), fort.getPadList().get(k).getFLTower().getLocation()));
+														p.get(w1).getLocation().setYaw(getRelativeRotation(fort.getPadList().get(i).getDirection(), fort.getPadList().get(k).getDirection(), p.get(w1).getLocation().getYaw()));
+														
 														if(p.get(w1).getVehicle() != null)
 														{
-															p.get(w1).getVehicle().teleport(new Location(fort.getPadList().get(k).getLocation().getWorld(),
-																	fort.getPadList().get(i).getFLTower().getLocation().getBlockX() + (fort.getPadList().get(k).getFLTower().getLocation().getBlockX() - p.get(w1).getVehicle().getLocation().getX()),
-																	fort.getPadList().get(i).getFLTower().getLocation().getBlockY() + (fort.getPadList().get(k).getFLTower().getLocation().getBlockY() - p.get(w1).getVehicle().getLocation().getY()),
-																	fort.getPadList().get(i).getFLTower().getLocation().getBlockZ() + (fort.getPadList().get(k).getFLTower().getLocation().getBlockZ() - p.get(w1).getVehicle().getLocation().getZ())));
+															back = Math.abs(p.get(w1).getVehicle().getLocation().getZ() - fort.getPadList().get(i).getFLTower().getLocation().getBlockZ());
+															right = Math.abs(p.get(w1).getVehicle().getLocation().getX() - fort.getPadList().get(i).getFLTower().getLocation().getBlockX());
+															up = Math.abs(p.get(w1).getVehicle().getLocation().getY() - fort.getPadList().get(i).getFLTower().getLocation().getBlockY());
+															
+															p.get(w1).getVehicle().teleport(getRelativeLocation(back, right, up, fort.getPadList().get(k).getDirection(), fort.getPadList().get(k).getFLTower().getLocation()));
+															p.get(w1).getVehicle().getLocation().setYaw(getRelativeRotation(fort.getPadList().get(i).getDirection(), fort.getPadList().get(k).getDirection(), p.get(w1).getVehicle().getLocation().getYaw()));
 														}
 													}
 													break;
 												case 0x3://-z = back, left = -x
-													if(p.get(w1).getLocation().getBlockX() > fort.getPadList().get(k).getFLTower().getLocation().getBlockX() && p.get(w1).getLocation().getBlockX() < fort.getPadList().get(k).getFRTower().getLocation().getBlockX()
-															&& p.get(w1).getLocation().getBlockY() >= fort.getPadList().get(k).getFLTower().getLocation().getBlockY() && p.get(w1).getLocation().getBlockY() <= fort.getPadList().get(k).getLocation().getBlockY() + fort.getPadList().get(k).getHeight()
-															&& p.get(w1).getLocation().getZ() < fort.getPadList().get(k).getFLTower().getLocation().getBlockZ() && p.get(w1).getLocation().getZ() > fort.getPadList().get(k).getBLTower().getLocation().getBlockZ())
+													if(p.get(w1).getLocation().getBlockX() > fort.getPadList().get(i).getFLTower().getLocation().getBlockX() 
+															&& p.get(w1).getLocation().getBlockX() < fort.getPadList().get(i).getBRTower().getLocation().getBlockX()
+															&& p.get(w1).getLocation().getBlockY() >= fort.getPadList().get(i).getFLTower().getLocation().getBlockY() 
+															&& p.get(w1).getLocation().getBlockY() <= fort.getPadList().get(i).getLocation().getBlockY() + fort.getPadList().get(i).getHeight()
+															&& p.get(w1).getLocation().getZ() < fort.getPadList().get(i).getFLTower().getLocation().getBlockZ() 
+															&& p.get(w1).getLocation().getZ() > fort.getPadList().get(i).getBRTower().getLocation().getBlockZ())
 													{
 														//Player is in teleportation area
 														tel = true;
-														log.info("Player teleported.");//DEBUG
-														p.get(w1).teleport(new Location(fort.getPadList().get(k).getLocation().getWorld(),
-																fort.getPadList().get(i).getFLTower().getLocation().getBlockX() + (fort.getPadList().get(k).getFLTower().getLocation().getBlockX() - p.get(w1).getLocation().getX()),
-																fort.getPadList().get(i).getFLTower().getLocation().getBlockY() + (fort.getPadList().get(k).getFLTower().getLocation().getBlockY() - p.get(w1).getLocation().getY()),
-																fort.getPadList().get(i).getFLTower().getLocation().getBlockZ() + (fort.getPadList().get(k).getFLTower().getLocation().getBlockZ() - p.get(w1).getLocation().getZ())));
+													//	log.info("Player teleported.");//DEBUG
+														back = Math.abs(p.get(w1).getLocation().getZ() - fort.getPadList().get(i).getFLTower().getLocation().getBlockZ());
+														right = Math.abs(p.get(w1).getLocation().getX() - fort.getPadList().get(i).getFLTower().getLocation().getBlockX());
+														up = Math.abs(p.get(w1).getLocation().getY() - fort.getPadList().get(i).getFLTower().getLocation().getBlockY());
+														
+														p.get(w1).teleport(getRelativeLocation(back, right, up, fort.getPadList().get(k).getDirection(), fort.getPadList().get(k).getFLTower().getLocation()));
+														p.get(w1).getLocation().setYaw(getRelativeRotation(fort.getPadList().get(i).getDirection(), fort.getPadList().get(k).getDirection(), p.get(w1).getLocation().getYaw()));
+														
 														if(p.get(w1).getVehicle() != null)
 														{
-															p.get(w1).getVehicle().teleport(new Location(fort.getPadList().get(k).getLocation().getWorld(),
-																	fort.getPadList().get(i).getFLTower().getLocation().getBlockX() + (fort.getPadList().get(k).getFLTower().getLocation().getBlockX() - p.get(w1).getVehicle().getLocation().getX()),
-																	fort.getPadList().get(i).getFLTower().getLocation().getBlockY() + (fort.getPadList().get(k).getFLTower().getLocation().getBlockY() - p.get(w1).getVehicle().getLocation().getY()),
-																	fort.getPadList().get(i).getFLTower().getLocation().getBlockZ() + (fort.getPadList().get(k).getFLTower().getLocation().getBlockZ() - p.get(w1).getVehicle().getLocation().getZ())));
+															back = Math.abs(p.get(w1).getVehicle().getLocation().getZ() - fort.getPadList().get(i).getFLTower().getLocation().getBlockZ());
+															right = Math.abs(p.get(w1).getVehicle().getLocation().getX() - fort.getPadList().get(i).getFLTower().getLocation().getBlockX());
+															up = Math.abs(p.get(w1).getVehicle().getLocation().getY() - fort.getPadList().get(i).getFLTower().getLocation().getBlockY());
+															
+															p.get(w1).getVehicle().teleport(getRelativeLocation(back, right, up, fort.getPadList().get(k).getDirection(), fort.getPadList().get(k).getFLTower().getLocation()));
+															p.get(w1).getVehicle().getLocation().setYaw(getRelativeRotation(fort.getPadList().get(i).getDirection(), fort.getPadList().get(k).getDirection(), p.get(w1).getVehicle().getLocation().getYaw()));
 														}
 													}
 													break;
 												case 0x4://+x = back, left = -z
-													if(p.get(w1).getLocation().getBlockX() > fort.getPadList().get(k).getFLTower().getLocation().getBlockX() && p.get(w1).getLocation().getBlockX() < fort.getPadList().get(k).getFRTower().getLocation().getBlockX()
-															&& p.get(w1).getLocation().getBlockY() >= fort.getPadList().get(k).getFLTower().getLocation().getBlockY() && p.get(w1).getLocation().getBlockY() <= fort.getPadList().get(k).getLocation().getBlockY() + fort.getPadList().get(k).getHeight()
-															&& p.get(w1).getLocation().getZ() > fort.getPadList().get(k).getFLTower().getLocation().getBlockZ() && p.get(w1).getLocation().getZ() < fort.getPadList().get(k).getBLTower().getLocation().getBlockZ())
+													if(p.get(w1).getLocation().getBlockX() > fort.getPadList().get(i).getFLTower().getLocation().getBlockX() 
+															&& p.get(w1).getLocation().getBlockX() < fort.getPadList().get(i).getBRTower().getLocation().getBlockX()
+															&& p.get(w1).getLocation().getBlockY() >= fort.getPadList().get(i).getFLTower().getLocation().getBlockY() 
+															&& p.get(w1).getLocation().getBlockY() <= fort.getPadList().get(i).getLocation().getBlockY() + fort.getPadList().get(i).getHeight()
+															&& p.get(w1).getLocation().getZ() > fort.getPadList().get(i).getFLTower().getLocation().getBlockZ() 
+															&& p.get(w1).getLocation().getZ() < fort.getPadList().get(i).getBRTower().getLocation().getBlockZ())
 													{
 														//Player is in teleportation area
 														tel = true;
-														log.info("Player teleported.");//DEBUG
-														p.get(w1).teleport(new Location(fort.getPadList().get(k).getLocation().getWorld(),
-																fort.getPadList().get(i).getFLTower().getLocation().getBlockX() + (fort.getPadList().get(k).getFLTower().getLocation().getBlockX() - p.get(w1).getLocation().getX()),
-																fort.getPadList().get(i).getFLTower().getLocation().getBlockY() + (fort.getPadList().get(k).getFLTower().getLocation().getBlockY() - p.get(w1).getLocation().getY()),
-																fort.getPadList().get(i).getFLTower().getLocation().getBlockZ() + (fort.getPadList().get(k).getFLTower().getLocation().getBlockZ() - p.get(w1).getLocation().getZ())));
+												//		log.info("Player teleported.");//DEBUG
+														right = Math.abs(p.get(w1).getLocation().getZ() - fort.getPadList().get(i).getFLTower().getLocation().getBlockZ());
+														back = Math.abs(p.get(w1).getLocation().getX() - fort.getPadList().get(i).getFLTower().getLocation().getBlockX());
+														up = Math.abs(p.get(w1).getLocation().getY() - fort.getPadList().get(i).getFLTower().getLocation().getBlockY());
+														
+														p.get(w1).teleport(getRelativeLocation(back, right, up, fort.getPadList().get(k).getDirection(), fort.getPadList().get(k).getFLTower().getLocation()));
+														p.get(w1).getLocation().setYaw(getRelativeRotation(fort.getPadList().get(i).getDirection(), fort.getPadList().get(k).getDirection(), p.get(w1).getLocation().getYaw()));
+														
 														if(p.get(w1).getVehicle() != null)
 														{
-															p.get(w1).getVehicle().teleport(new Location(fort.getPadList().get(k).getLocation().getWorld(),
-																	fort.getPadList().get(i).getFLTower().getLocation().getBlockX() + (fort.getPadList().get(k).getFLTower().getLocation().getBlockX() - p.get(w1).getVehicle().getLocation().getX()),
-																	fort.getPadList().get(i).getFLTower().getLocation().getBlockY() + (fort.getPadList().get(k).getFLTower().getLocation().getBlockY() - p.get(w1).getVehicle().getLocation().getY()),
-																	fort.getPadList().get(i).getFLTower().getLocation().getBlockZ() + (fort.getPadList().get(k).getFLTower().getLocation().getBlockZ() - p.get(w1).getVehicle().getLocation().getZ())));
+															right = Math.abs(p.get(w1).getVehicle().getLocation().getZ() - fort.getPadList().get(i).getFLTower().getLocation().getBlockZ());
+															back = Math.abs(p.get(w1).getVehicle().getLocation().getX() - fort.getPadList().get(i).getFLTower().getLocation().getBlockX());
+															up = Math.abs(p.get(w1).getVehicle().getLocation().getY() - fort.getPadList().get(i).getFLTower().getLocation().getBlockY());
+															
+															p.get(w1).getVehicle().teleport(getRelativeLocation(back, right, up, fort.getPadList().get(k).getDirection(), fort.getPadList().get(k).getFLTower().getLocation()));
+															p.get(w1).getVehicle().getLocation().setYaw(getRelativeRotation(fort.getPadList().get(i).getDirection(), fort.getPadList().get(k).getDirection(), p.get(w1).getVehicle().getLocation().getYaw()));
 														}
 													}
 													break;
 												case 0x5://-x = back, left = +z
-													if(p.get(w1).getLocation().getBlockX() < fort.getPadList().get(k).getFLTower().getLocation().getBlockX() && p.get(w1).getLocation().getBlockX() > fort.getPadList().get(k).getFRTower().getLocation().getBlockX()
-															&& p.get(w1).getLocation().getBlockY() >= fort.getPadList().get(k).getFLTower().getLocation().getBlockY() && p.get(w1).getLocation().getBlockY() <= fort.getPadList().get(k).getLocation().getBlockY() + fort.getPadList().get(k).getHeight()
-															&& p.get(w1).getLocation().getZ() < fort.getPadList().get(k).getFLTower().getLocation().getBlockZ() && p.get(w1).getLocation().getZ() > fort.getPadList().get(k).getBLTower().getLocation().getBlockZ())
+													if(p.get(w1).getLocation().getBlockX() < fort.getPadList().get(i).getFLTower().getLocation().getBlockX() 
+															&& p.get(w1).getLocation().getBlockX() > fort.getPadList().get(i).getBRTower().getLocation().getBlockX()
+															&& p.get(w1).getLocation().getBlockY() >= fort.getPadList().get(i).getFLTower().getLocation().getBlockY() 
+															&& p.get(w1).getLocation().getBlockY() <= fort.getPadList().get(i).getLocation().getBlockY() + fort.getPadList().get(i).getHeight()
+															&& p.get(w1).getLocation().getZ() < fort.getPadList().get(i).getFLTower().getLocation().getBlockZ() 
+															&& p.get(w1).getLocation().getZ() > fort.getPadList().get(i).getBRTower().getLocation().getBlockZ())
 													{
 														//Player is in teleportation area
 														tel = true;
-														log.info("Player teleported.");//DEBUG
-														p.get(w1).teleport(new Location(fort.getPadList().get(k).getLocation().getWorld(),
-																fort.getPadList().get(i).getFLTower().getLocation().getBlockX() + (fort.getPadList().get(k).getFLTower().getLocation().getBlockX() - p.get(w1).getLocation().getX()),
-																fort.getPadList().get(i).getFLTower().getLocation().getBlockY() + (fort.getPadList().get(k).getFLTower().getLocation().getBlockY() - p.get(w1).getLocation().getY()),
-																fort.getPadList().get(i).getFLTower().getLocation().getBlockZ() + (fort.getPadList().get(k).getFLTower().getLocation().getBlockZ() - p.get(w1).getLocation().getZ())));
+													//	log.info("Player teleported.");//DEBUG
+														right = Math.abs(p.get(w1).getLocation().getZ() - fort.getPadList().get(i).getFLTower().getLocation().getBlockZ());
+														back = Math.abs(p.get(w1).getLocation().getX() - fort.getPadList().get(i).getFLTower().getLocation().getBlockX());
+														up = Math.abs(p.get(w1).getLocation().getY() - fort.getPadList().get(i).getFLTower().getLocation().getBlockY());
+														
+														p.get(w1).teleport(getRelativeLocation(back, right, up, fort.getPadList().get(k).getDirection(), fort.getPadList().get(k).getFLTower().getLocation()));
+														p.get(w1).getLocation().setYaw(getRelativeRotation(fort.getPadList().get(i).getDirection(), fort.getPadList().get(k).getDirection(), p.get(w1).getLocation().getYaw()));
+														
 														if(p.get(w1).getVehicle() != null)
 														{
-															p.get(w1).getVehicle().teleport(new Location(fort.getPadList().get(k).getLocation().getWorld(),
-																	fort.getPadList().get(i).getFLTower().getLocation().getBlockX() + (fort.getPadList().get(k).getFLTower().getLocation().getBlockX() - p.get(w1).getVehicle().getLocation().getX()),
-																	fort.getPadList().get(i).getFLTower().getLocation().getBlockY() + (fort.getPadList().get(k).getFLTower().getLocation().getBlockY() - p.get(w1).getVehicle().getLocation().getY()),
-																	fort.getPadList().get(i).getFLTower().getLocation().getBlockZ() + (fort.getPadList().get(k).getFLTower().getLocation().getBlockZ() - p.get(w1).getVehicle().getLocation().getZ())));
+															right = Math.abs(p.get(w1).getVehicle().getLocation().getZ() - fort.getPadList().get(i).getFLTower().getLocation().getBlockZ());
+															back = Math.abs(p.get(w1).getVehicle().getLocation().getX() - fort.getPadList().get(i).getFLTower().getLocation().getBlockX());
+															up = Math.abs(p.get(w1).getVehicle().getLocation().getY() - fort.getPadList().get(i).getFLTower().getLocation().getBlockY());
+															
+															p.get(w1).getVehicle().teleport(getRelativeLocation(back, right, up, fort.getPadList().get(k).getDirection(), fort.getPadList().get(k).getFLTower().getLocation()));
+															p.get(w1).getVehicle().getLocation().setYaw(getRelativeRotation(fort.getPadList().get(i).getDirection(), fort.getPadList().get(k).getDirection(), p.get(w1).getVehicle().getLocation().getYaw()));
 														}
 													}
 													break;
@@ -680,82 +653,114 @@ public class FortificationListener implements Listener {
 													switch(fort.getPadList().get(k).getDirection())
 													{
 													case 0x2://+z = back, left = +x
-														if(p.get(w1).getLocation().getBlockX() < fort.getPadList().get(i).getFLTower().getLocation().getBlockX() && p.get(w1).getLocation().getBlockX() > fort.getPadList().get(i).getFRTower().getLocation().getBlockX()
-																&& p.get(w1).getLocation().getBlockY() >= fort.getPadList().get(i).getFLTower().getLocation().getBlockY() && p.get(w1).getLocation().getBlockY() <= fort.getPadList().get(k).getLocation().getBlockY() + fort.getPadList().get(i).getHeight()
-																&& p.get(w1).getLocation().getZ() > fort.getPadList().get(i).getFLTower().getLocation().getBlockZ() && p.get(w1).getLocation().getZ() < fort.getPadList().get(i).getBLTower().getLocation().getBlockZ())
+														if(p.get(w1).getLocation().getBlockX() < fort.getPadList().get(k).getFLTower().getLocation().getBlockX() 
+																&& p.get(w1).getLocation().getBlockX() > fort.getPadList().get(k).getBRTower().getLocation().getBlockX()
+																&& p.get(w1).getLocation().getBlockY() >= fort.getPadList().get(k).getFLTower().getLocation().getBlockY() 
+																&& p.get(w1).getLocation().getBlockY() <= fort.getPadList().get(k).getLocation().getBlockY() + fort.getPadList().get(k).getHeight()
+																&& p.get(w1).getLocation().getZ() > fort.getPadList().get(k).getFLTower().getLocation().getBlockZ() 
+																&& p.get(w1).getLocation().getZ() < fort.getPadList().get(k).getBRTower().getLocation().getBlockZ())
 														{
 															//Player is in teleportation area, teleport them to equivalent spot on connected telepad.
-															log.info("Player teleported.");//DEBUG
-															p.get(w1).teleport(new Location(fort.getPadList().get(i).getLocation().getWorld(),
-																	fort.getPadList().get(i).getFLTower().getLocation().getBlockX() + (fort.getPadList().get(k).getFLTower().getLocation().getBlockX() - p.get(w1).getLocation().getX()),
-																	fort.getPadList().get(i).getFLTower().getLocation().getBlockY() + (fort.getPadList().get(k).getFLTower().getLocation().getBlockY() - p.get(w1).getLocation().getY()),
-																	fort.getPadList().get(i).getFLTower().getLocation().getBlockZ() + (fort.getPadList().get(k).getFLTower().getLocation().getBlockZ() - p.get(w1).getLocation().getZ())));
+													//		log.info("Player teleported.");//DEBUG
+															back = Math.abs(p.get(w1).getLocation().getZ() - fort.getPadList().get(k).getFLTower().getLocation().getBlockZ());
+															right = Math.abs(p.get(w1).getLocation().getX() - fort.getPadList().get(k).getFLTower().getLocation().getBlockX());
+															up = Math.abs(p.get(w1).getLocation().getY() - fort.getPadList().get(k).getFLTower().getLocation().getBlockY());
+															
+															p.get(w1).teleport(getRelativeLocation(back, right, up, fort.getPadList().get(i).getDirection(), fort.getPadList().get(i).getFLTower().getLocation()));
+															p.get(w1).getLocation().setYaw(getRelativeRotation(fort.getPadList().get(k).getDirection(), fort.getPadList().get(i).getDirection(), p.get(w1).getLocation().getYaw()));
+															
 															if(p.get(w1).getVehicle() != null)
 															{
-																p.get(w1).getVehicle().teleport(new Location(fort.getPadList().get(k).getLocation().getWorld(),
-																		fort.getPadList().get(i).getFLTower().getLocation().getBlockX() + (fort.getPadList().get(k).getFLTower().getLocation().getBlockX() - p.get(w1).getVehicle().getLocation().getX()),
-																		fort.getPadList().get(i).getFLTower().getLocation().getBlockY() + (fort.getPadList().get(k).getFLTower().getLocation().getBlockY() - p.get(w1).getVehicle().getLocation().getY()),
-																		fort.getPadList().get(i).getFLTower().getLocation().getBlockZ() + (fort.getPadList().get(k).getFLTower().getLocation().getBlockZ() - p.get(w1).getVehicle().getLocation().getZ())));
+																back = Math.abs(p.get(w1).getVehicle().getLocation().getZ() - fort.getPadList().get(k).getFLTower().getLocation().getBlockZ());
+																right = Math.abs(p.get(w1).getVehicle().getLocation().getX() - fort.getPadList().get(k).getFLTower().getLocation().getBlockX());
+																up = Math.abs(p.get(w1).getVehicle().getLocation().getY() - fort.getPadList().get(k).getFLTower().getLocation().getBlockY());
+																
+																p.get(w1).getVehicle().teleport(getRelativeLocation(back, right, up, fort.getPadList().get(i).getDirection(), fort.getPadList().get(i).getFLTower().getLocation()));
+																p.get(w1).getVehicle().getLocation().setYaw(getRelativeRotation(fort.getPadList().get(k).getDirection(), fort.getPadList().get(i).getDirection(), p.get(w1).getVehicle().getLocation().getYaw()));
 															}
 														}
 														break;
 													case 0x3://-z = back, left = -x
-														if(p.get(w1).getLocation().getBlockX() > fort.getPadList().get(i).getFLTower().getLocation().getBlockX() && p.get(w1).getLocation().getBlockX() < fort.getPadList().get(i).getFRTower().getLocation().getBlockX()
-																&& p.get(w1).getLocation().getBlockY() >= fort.getPadList().get(i).getFLTower().getLocation().getBlockY() && p.get(w1).getLocation().getBlockY() <= fort.getPadList().get(k).getLocation().getBlockY() + fort.getPadList().get(i).getHeight()
-																&& p.get(w1).getLocation().getZ() < fort.getPadList().get(i).getFLTower().getLocation().getBlockZ() && p.get(w1).getLocation().getZ() > fort.getPadList().get(i).getBLTower().getLocation().getBlockZ())
+														if(p.get(w1).getLocation().getBlockX() > fort.getPadList().get(k).getFLTower().getLocation().getBlockX() 
+																&& p.get(w1).getLocation().getBlockX() < fort.getPadList().get(k).getBRTower().getLocation().getBlockX()
+																&& p.get(w1).getLocation().getBlockY() >= fort.getPadList().get(k).getFLTower().getLocation().getBlockY() 
+																&& p.get(w1).getLocation().getBlockY() <= fort.getPadList().get(k).getLocation().getBlockY() + fort.getPadList().get(k).getHeight()
+																&& p.get(w1).getLocation().getZ() < fort.getPadList().get(k).getFLTower().getLocation().getBlockZ() 
+																&& p.get(w1).getLocation().getZ() > fort.getPadList().get(k).getBRTower().getLocation().getBlockZ())
 														{
 															//Player is in teleportation area, teleport them to equivalent spot on connected telepad.
-															log.info("Player teleported.");//DEBUG
-															p.get(w1).teleport(new Location(fort.getPadList().get(i).getLocation().getWorld(),
-																	fort.getPadList().get(i).getFLTower().getLocation().getBlockX() + (fort.getPadList().get(k).getFLTower().getLocation().getBlockX() - p.get(w1).getLocation().getX()),
-																	fort.getPadList().get(i).getFLTower().getLocation().getBlockY() + (fort.getPadList().get(k).getFLTower().getLocation().getBlockY() - p.get(w1).getLocation().getY()),
-																	fort.getPadList().get(i).getFLTower().getLocation().getBlockZ() + (fort.getPadList().get(k).getFLTower().getLocation().getBlockZ() - p.get(w1).getLocation().getZ())));
+														//	log.info("Player teleported.");//DEBUG
+															back = Math.abs(p.get(w1).getLocation().getZ() - fort.getPadList().get(k).getFLTower().getLocation().getBlockZ());
+															right = Math.abs(p.get(w1).getLocation().getX() - fort.getPadList().get(k).getFLTower().getLocation().getBlockX());
+															up = Math.abs(p.get(w1).getLocation().getY() - fort.getPadList().get(k).getFLTower().getLocation().getBlockY());
+															
+															p.get(w1).teleport(getRelativeLocation(back, right, up, fort.getPadList().get(i).getDirection(), fort.getPadList().get(i).getFLTower().getLocation()));
+															p.get(w1).getLocation().setYaw(getRelativeRotation(fort.getPadList().get(k).getDirection(), fort.getPadList().get(i).getDirection(), p.get(w1).getLocation().getYaw()));
+															
 															if(p.get(w1).getVehicle() != null)
 															{
-																p.get(w1).getVehicle().teleport(new Location(fort.getPadList().get(i).getLocation().getWorld(),
-																		fort.getPadList().get(i).getFLTower().getLocation().getBlockX() + (fort.getPadList().get(k).getFLTower().getLocation().getBlockX() - p.get(w1).getVehicle().getLocation().getX()),
-																		fort.getPadList().get(i).getFLTower().getLocation().getBlockY() + (fort.getPadList().get(k).getFLTower().getLocation().getBlockY() - p.get(w1).getVehicle().getLocation().getY()),
-																		fort.getPadList().get(i).getFLTower().getLocation().getBlockZ() + (fort.getPadList().get(k).getFLTower().getLocation().getBlockZ() - p.get(w1).getVehicle().getLocation().getZ())));
+																back = Math.abs(p.get(w1).getVehicle().getLocation().getZ() - fort.getPadList().get(k).getFLTower().getLocation().getBlockZ());
+																right = Math.abs(p.get(w1).getVehicle().getLocation().getX() - fort.getPadList().get(k).getFLTower().getLocation().getBlockX());
+																up = Math.abs(p.get(w1).getVehicle().getLocation().getY() - fort.getPadList().get(k).getFLTower().getLocation().getBlockY());
+																
+																p.get(w1).getVehicle().teleport(getRelativeLocation(back, right, up, fort.getPadList().get(i).getDirection(), fort.getPadList().get(i).getFLTower().getLocation()));
+																p.get(w1).getVehicle().getLocation().setYaw(getRelativeRotation(fort.getPadList().get(k).getDirection(), fort.getPadList().get(i).getDirection(), p.get(w1).getVehicle().getLocation().getYaw()));
 															}
 														}
 														break;
 													case 0x4://+x = back, left = -z
-														if(p.get(w1).getLocation().getBlockX() > fort.getPadList().get(i).getFLTower().getLocation().getBlockX() && p.get(w1).getLocation().getBlockX() < fort.getPadList().get(i).getFRTower().getLocation().getBlockX()
-																&& p.get(w1).getLocation().getBlockY() >= fort.getPadList().get(i).getFLTower().getLocation().getBlockY() && p.get(w1).getLocation().getBlockY() <= fort.getPadList().get(k).getLocation().getBlockY() + fort.getPadList().get(i).getHeight()
-																&& p.get(w1).getLocation().getZ() > fort.getPadList().get(i).getFLTower().getLocation().getBlockZ() && p.get(w1).getLocation().getZ() < fort.getPadList().get(i).getBLTower().getLocation().getBlockZ())
+														if(p.get(w1).getLocation().getBlockX() > fort.getPadList().get(k).getFLTower().getLocation().getBlockX() 
+																&& p.get(w1).getLocation().getBlockX() < fort.getPadList().get(k).getBRTower().getLocation().getBlockX()
+																&& p.get(w1).getLocation().getBlockY() >= fort.getPadList().get(k).getFLTower().getLocation().getBlockY() 
+																&& p.get(w1).getLocation().getBlockY() <= fort.getPadList().get(k).getLocation().getBlockY() + fort.getPadList().get(k).getHeight()
+																&& p.get(w1).getLocation().getZ() > fort.getPadList().get(k).getFLTower().getLocation().getBlockZ() 
+																&& p.get(w1).getLocation().getZ() < fort.getPadList().get(k).getBRTower().getLocation().getBlockZ())
 														{
 															//Player is in teleportation area, teleport them to equivalent spot on connected telepad.
-															log.info("Player teleported.");//DEBUG
-															p.get(w1).teleport(new Location(fort.getPadList().get(i).getLocation().getWorld(),
-																	fort.getPadList().get(i).getFLTower().getLocation().getBlockX() + (fort.getPadList().get(k).getFLTower().getLocation().getBlockX() - p.get(w1).getLocation().getX()),
-																	fort.getPadList().get(i).getFLTower().getLocation().getBlockY() + (fort.getPadList().get(k).getFLTower().getLocation().getBlockY() - p.get(w1).getLocation().getY()),
-																	fort.getPadList().get(i).getFLTower().getLocation().getBlockZ() + (fort.getPadList().get(k).getFLTower().getLocation().getBlockZ() - p.get(w1).getLocation().getZ())));
+														//	log.info("Player teleported.");//DEBUG
+															back = Math.abs(p.get(w1).getLocation().getZ() - fort.getPadList().get(k).getFLTower().getLocation().getBlockZ());
+															right = Math.abs(p.get(w1).getLocation().getX() - fort.getPadList().get(k).getFLTower().getLocation().getBlockX());
+															up = Math.abs(p.get(w1).getLocation().getY() - fort.getPadList().get(k).getFLTower().getLocation().getBlockY());
+															
+															p.get(w1).teleport(getRelativeLocation(back, right, up, fort.getPadList().get(i).getDirection(), fort.getPadList().get(i).getFLTower().getLocation()));
+															p.get(w1).getLocation().setYaw(getRelativeRotation(fort.getPadList().get(k).getDirection(), fort.getPadList().get(i).getDirection(), p.get(w1).getLocation().getYaw()));
+															
 															if(p.get(w1).getVehicle() != null)
 															{
-																p.get(w1).getVehicle().teleport(new Location(fort.getPadList().get(i).getLocation().getWorld(),
-																		fort.getPadList().get(i).getFLTower().getLocation().getBlockX() + (fort.getPadList().get(k).getFLTower().getLocation().getBlockX() - p.get(w1).getVehicle().getLocation().getX()),
-																		fort.getPadList().get(i).getFLTower().getLocation().getBlockY() + (fort.getPadList().get(k).getFLTower().getLocation().getBlockY() - p.get(w1).getVehicle().getLocation().getY()),
-																		fort.getPadList().get(i).getFLTower().getLocation().getBlockZ() + (fort.getPadList().get(k).getFLTower().getLocation().getBlockZ() - p.get(w1).getVehicle().getLocation().getZ())));
+																back = Math.abs(p.get(w1).getVehicle().getLocation().getZ() - fort.getPadList().get(k).getFLTower().getLocation().getBlockZ());
+																right = Math.abs(p.get(w1).getVehicle().getLocation().getX() - fort.getPadList().get(k).getFLTower().getLocation().getBlockX());
+																up = Math.abs(p.get(w1).getVehicle().getLocation().getY() - fort.getPadList().get(k).getFLTower().getLocation().getBlockY());
+																
+																p.get(w1).getVehicle().teleport(getRelativeLocation(back, right, up, fort.getPadList().get(i).getDirection(), fort.getPadList().get(i).getFLTower().getLocation()));
+																p.get(w1).getVehicle().getLocation().setYaw(getRelativeRotation(fort.getPadList().get(k).getDirection(), fort.getPadList().get(i).getDirection(), p.get(w1).getVehicle().getLocation().getYaw()));
 															}
 														}
 														break;
 													case 0x5://-x = back, left = +z
-														if(p.get(w1).getLocation().getBlockX() < fort.getPadList().get(i).getFLTower().getLocation().getBlockX() && p.get(w1).getLocation().getBlockX() > fort.getPadList().get(i).getFRTower().getLocation().getBlockX()
-																&& p.get(w1).getLocation().getBlockY() >= fort.getPadList().get(i).getFLTower().getLocation().getBlockY() && p.get(w1).getLocation().getBlockY() <= fort.getPadList().get(k).getLocation().getBlockY() + fort.getPadList().get(i).getHeight()
-																&& p.get(w1).getLocation().getZ() < fort.getPadList().get(i).getFLTower().getLocation().getBlockZ() && p.get(w1).getLocation().getZ() > fort.getPadList().get(i).getBLTower().getLocation().getBlockZ())
+														if(p.get(w1).getLocation().getBlockX() < fort.getPadList().get(k).getFLTower().getLocation().getBlockX() 
+																&& p.get(w1).getLocation().getBlockX() > fort.getPadList().get(k).getBRTower().getLocation().getBlockX()
+																&& p.get(w1).getLocation().getBlockY() >= fort.getPadList().get(k).getFLTower().getLocation().getBlockY() 
+																&& p.get(w1).getLocation().getBlockY() <= fort.getPadList().get(k).getLocation().getBlockY() + fort.getPadList().get(k).getHeight()
+																&& p.get(w1).getLocation().getZ() < fort.getPadList().get(k).getFLTower().getLocation().getBlockZ() 
+																&& p.get(w1).getLocation().getZ() > fort.getPadList().get(k).getBRTower().getLocation().getBlockZ())
 														{
 															//Player is in teleportation area, teleport them to equivalent spot on connected telepad.
-															log.info("Player teleported.");//DEBUG
-															p.get(w1).teleport(new Location(fort.getPadList().get(i).getLocation().getWorld(),
-																	fort.getPadList().get(i).getFLTower().getLocation().getBlockX() + (fort.getPadList().get(k).getFLTower().getLocation().getBlockX() - p.get(w1).getLocation().getX()),
-																	fort.getPadList().get(i).getFLTower().getLocation().getBlockY() + (fort.getPadList().get(k).getFLTower().getLocation().getBlockY() - p.get(w1).getLocation().getY() ),
-																	fort.getPadList().get(i).getFLTower().getLocation().getBlockZ() + (fort.getPadList().get(k).getFLTower().getLocation().getBlockZ() - p.get(w1).getLocation().getZ())));
+														//	log.info("Player teleported.");//DEBUG
+															back = Math.abs(p.get(w1).getLocation().getZ() - fort.getPadList().get(k).getFLTower().getLocation().getBlockZ());
+															right = Math.abs(p.get(w1).getLocation().getX() - fort.getPadList().get(k).getFLTower().getLocation().getBlockX());
+															up = Math.abs(p.get(w1).getLocation().getY() - fort.getPadList().get(k).getFLTower().getLocation().getBlockY());
+															
+															p.get(w1).teleport(getRelativeLocation(back, right, up, fort.getPadList().get(i).getDirection(), fort.getPadList().get(i).getFLTower().getLocation()));
+															p.get(w1).getLocation().setYaw(getRelativeRotation(fort.getPadList().get(k).getDirection(), fort.getPadList().get(i).getDirection(), p.get(w1).getLocation().getYaw()));
+															
 															if(p.get(w1).getVehicle() != null)
 															{
-																p.get(w1).getVehicle().teleport(new Location(fort.getPadList().get(i).getLocation().getWorld(),
-																		fort.getPadList().get(i).getFLTower().getLocation().getBlockX() + (fort.getPadList().get(k).getFLTower().getLocation().getBlockX() - p.get(w1).getVehicle().getLocation().getX()),
-																		fort.getPadList().get(i).getFLTower().getLocation().getBlockY() + (fort.getPadList().get(k).getFLTower().getLocation().getBlockY() - p.get(w1).getVehicle().getLocation().getY()),
-																		fort.getPadList().get(i).getFLTower().getLocation().getBlockZ() + (fort.getPadList().get(k).getFLTower().getLocation().getBlockZ() - p.get(w1).getVehicle().getLocation().getZ())));
+																back = Math.abs(p.get(w1).getVehicle().getLocation().getZ() - fort.getPadList().get(k).getFLTower().getLocation().getBlockZ());
+																right = Math.abs(p.get(w1).getVehicle().getLocation().getX() - fort.getPadList().get(k).getFLTower().getLocation().getBlockX());
+																up = Math.abs(p.get(w1).getVehicle().getLocation().getY() - fort.getPadList().get(k).getFLTower().getLocation().getBlockY());
+																
+																p.get(w1).getVehicle().teleport(getRelativeLocation(back, right, up, fort.getPadList().get(i).getDirection(), fort.getPadList().get(i).getFLTower().getLocation()));
+																p.get(w1).getVehicle().getLocation().setYaw(getRelativeRotation(fort.getPadList().get(k).getDirection(), fort.getPadList().get(i).getDirection(), p.get(w1).getVehicle().getLocation().getYaw()));
 															}
 														}
 														break;
@@ -765,7 +770,8 @@ public class FortificationListener implements Listener {
 												{
 													tel = false;
 												}
-											}
+											}//for//*/
+											return;
 										}
 									}
 									else
@@ -774,8 +780,8 @@ public class FortificationListener implements Listener {
 										fort.getPadList().remove(k);
 										fort.getPadList().get(k).getLocation().getBlock().setType(Material.AIR);
 										fort.getPadList().get(k).getLocation().getWorld().dropItem(new Location(fort.getPadList().get(k).getLocation().getWorld(),
-												fort.getPadList().get(k).getLocation().getBlock().getX(), fort.getPadList().get(k).getLocation().getBlock().getY(),
-												fort.getPadList().get(k).getLocation().getBlock().getZ()), new ItemStack(Material.SIGN, 1));
+										fort.getPadList().get(k).getLocation().getBlock().getX(), fort.getPadList().get(k).getLocation().getBlock().getY(),
+										fort.getPadList().get(k).getLocation().getBlock().getZ()), new ItemStack(Material.SIGN, 1));
 									}
 								}
 							}
@@ -3280,68 +3286,81 @@ public class FortificationListener implements Listener {
 						//If sign is on ice...
 						if(w.getBlockAt(x, y, z+1).getType().toString().equalsIgnoreCase(webturretblockId) || webturretblockId.equalsIgnoreCase(Material.AIR.toString()))
 						{
-								if(w.getBlockAt(x, y, z+2+weblength).getType().equals(Material.AIR) ||
-										w.getBlockAt(x, y, z+2+weblength).getType().equals(Material.WATER) ||
-										w.getBlockAt(x, y, z+2+weblength).getType().equals(Material.STATIONARY_WATER))
+							int webDist = weblength;
+							try
+							{
+								webDist = Integer.parseInt(l3);
+								if(webDist > weblength)
 								{
-									w.getBlockAt(x, y, z+2+weblength).setType(Material.WEB);
-									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x, y, z+2+weblength, w, 30), webTime*20);
+									webDist = weblength;
 								}
-								if(w.getBlockAt(x, y, z+2+weblength+1).getType().equals(Material.AIR) ||
-										w.getBlockAt(x, y, z+2+weblength+1).getType().equals(Material.WATER) ||
-										w.getBlockAt(x, y, z+2+weblength+1).getType().equals(Material.STATIONARY_WATER))
+							}
+							catch(Exception e)
+							{
+								webDist = weblength;
+							}
+								if(w.getBlockAt(x, y, z+2+webDist).getType().equals(Material.AIR) ||
+										w.getBlockAt(x, y, z+2+webDist).getType().equals(Material.WATER) ||
+										w.getBlockAt(x, y, z+2+webDist).getType().equals(Material.STATIONARY_WATER))
 								{
-									w.getBlockAt(x, y, z+2+weblength+1).setType(Material.WEB);
-									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x, y, z+2+weblength+1, w, 30), webTime*20);
+									w.getBlockAt(x, y, z+2+webDist).setType(Material.WEB);
+									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x, y, z+2+webDist, w, 30), webTime*20);
 								}
-								if(w.getBlockAt(x, y, z+2+weblength-1).getType().equals(Material.AIR) ||
-										w.getBlockAt(x, y, z+2+weblength-1).getType().equals(Material.WATER) ||
-										w.getBlockAt(x, y, z+2+weblength-1).getType().equals(Material.STATIONARY_WATER))
+								if(w.getBlockAt(x, y, z+2+webDist+1).getType().equals(Material.AIR) ||
+										w.getBlockAt(x, y, z+2+webDist+1).getType().equals(Material.WATER) ||
+										w.getBlockAt(x, y, z+2+webDist+1).getType().equals(Material.STATIONARY_WATER))
 								{
-									w.getBlockAt(x, y, z+2+weblength-1).setType(Material.WEB);
-									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x, y, z+2+weblength-1, w, 30), webTime*20);
+									w.getBlockAt(x, y, z+2+webDist+1).setType(Material.WEB);
+									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x, y, z+2+webDist+1, w, 30), webTime*20);
 								}
-								if(w.getBlockAt(x-1, y, z+2+weblength).getType().equals(Material.AIR) ||
-										w.getBlockAt(x-1, y, z+2+weblength).getType().equals(Material.WATER) ||
-										w.getBlockAt(x-1, y, z+2+weblength).getType().equals(Material.STATIONARY_WATER))
+								if(w.getBlockAt(x, y, z+2+webDist-1).getType().equals(Material.AIR) ||
+										w.getBlockAt(x, y, z+2+webDist-1).getType().equals(Material.WATER) ||
+										w.getBlockAt(x, y, z+2+webDist-1).getType().equals(Material.STATIONARY_WATER))
 								{
-									w.getBlockAt(x-1, y, z+2+weblength).setType(Material.WEB);
-									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x-1, y, z+2+weblength, w, 30), webTime*20);
+									w.getBlockAt(x, y, z+2+webDist-1).setType(Material.WEB);
+									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x, y, z+2+webDist-1, w, 30), webTime*20);
 								}
-								if(w.getBlockAt(x+1, y, z+2+weblength).getType().equals(Material.AIR) ||
-										w.getBlockAt(x+1, y, z+2+weblength).getType().equals(Material.WATER) ||
-										w.getBlockAt(x+1, y, z+2+weblength).getType().equals(Material.STATIONARY_WATER))
+								if(w.getBlockAt(x-1, y, z+2+webDist).getType().equals(Material.AIR) ||
+										w.getBlockAt(x-1, y, z+2+webDist).getType().equals(Material.WATER) ||
+										w.getBlockAt(x-1, y, z+2+webDist).getType().equals(Material.STATIONARY_WATER))
 								{
-									w.getBlockAt(x+1, y, z+2+weblength).setType(Material.WEB);
-									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x+1, y, z+2+weblength, w, 30), webTime*20);
+									w.getBlockAt(x-1, y, z+2+webDist).setType(Material.WEB);
+									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x-1, y, z+2+webDist, w, 30), webTime*20);
 								}
-								if(w.getBlockAt(x+1, y, z+2+weblength+1).getType().equals(Material.AIR) ||
-										w.getBlockAt(x+1, y, z+2+weblength+1).getType().equals(Material.WATER) ||
-										w.getBlockAt(x+1, y, z+2+weblength+1).getType().equals(Material.STATIONARY_WATER))
+								if(w.getBlockAt(x+1, y, z+2+webDist).getType().equals(Material.AIR) ||
+										w.getBlockAt(x+1, y, z+2+webDist).getType().equals(Material.WATER) ||
+										w.getBlockAt(x+1, y, z+2+webDist).getType().equals(Material.STATIONARY_WATER))
 								{
-									w.getBlockAt(x+1, y, z+2+weblength+1).setType(Material.WEB);
-									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x+1, y, z+2+weblength+1, w, 30), webTime*20);
+									w.getBlockAt(x+1, y, z+2+webDist).setType(Material.WEB);
+									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x+1, y, z+2+webDist, w, 30), webTime*20);
 								}
-								if(w.getBlockAt(x-1, y, z+2+weblength+1).getType().equals(Material.AIR) ||
-										w.getBlockAt(x-1, y, z+2+weblength+1).getType().equals(Material.WATER) ||
-										w.getBlockAt(x-1, y, z+2+weblength+1).getType().equals(Material.STATIONARY_WATER))
+								if(w.getBlockAt(x+1, y, z+2+webDist+1).getType().equals(Material.AIR) ||
+										w.getBlockAt(x+1, y, z+2+webDist+1).getType().equals(Material.WATER) ||
+										w.getBlockAt(x+1, y, z+2+webDist+1).getType().equals(Material.STATIONARY_WATER))
 								{
-									w.getBlockAt(x-1, y, z+2+weblength+1).setType(Material.WEB);
-									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x-1, y, z+2+weblength+1, w, 30), webTime*20);
+									w.getBlockAt(x+1, y, z+2+webDist+1).setType(Material.WEB);
+									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x+1, y, z+2+webDist+1, w, 30), webTime*20);
 								}
-								if(w.getBlockAt(x+1, y, z+2+weblength-1).getType().equals(Material.AIR) ||
-										w.getBlockAt(x+1, y, z+2+weblength-1).getType().equals(Material.WATER) ||
-										w.getBlockAt(x+1, y, z+2+weblength-1).getType().equals(Material.STATIONARY_WATER))
+								if(w.getBlockAt(x-1, y, z+2+webDist+1).getType().equals(Material.AIR) ||
+										w.getBlockAt(x-1, y, z+2+webDist+1).getType().equals(Material.WATER) ||
+										w.getBlockAt(x-1, y, z+2+webDist+1).getType().equals(Material.STATIONARY_WATER))
 								{
-									w.getBlockAt(x+1, y, z+2+weblength-1).setType(Material.WEB);
-									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x+1, y, z+2+weblength-1, w, 30), webTime*20);
+									w.getBlockAt(x-1, y, z+2+webDist+1).setType(Material.WEB);
+									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x-1, y, z+2+webDist+1, w, 30), webTime*20);
 								}
-								if(w.getBlockAt(x-1, y, z+2+weblength-1).getType().equals(Material.AIR) ||
-										w.getBlockAt(x-1, y, z+2+weblength-1).getType().equals(Material.WATER) ||
-										w.getBlockAt(x-1, y, z+2+weblength-1).getType().equals(Material.STATIONARY_WATER))
+								if(w.getBlockAt(x+1, y, z+2+webDist-1).getType().equals(Material.AIR) ||
+										w.getBlockAt(x+1, y, z+2+webDist-1).getType().equals(Material.WATER) ||
+										w.getBlockAt(x+1, y, z+2+webDist-1).getType().equals(Material.STATIONARY_WATER))
 								{
-									w.getBlockAt(x-1, y, z+2+weblength-1).setType(Material.WEB);
-									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x-1, y, z+2+weblength-1, w, 30), webTime*20);
+									w.getBlockAt(x+1, y, z+2+webDist-1).setType(Material.WEB);
+									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x+1, y, z+2+webDist-1, w, 30), webTime*20);
+								}
+								if(w.getBlockAt(x-1, y, z+2+webDist-1).getType().equals(Material.AIR) ||
+										w.getBlockAt(x-1, y, z+2+webDist-1).getType().equals(Material.WATER) ||
+										w.getBlockAt(x-1, y, z+2+webDist-1).getType().equals(Material.STATIONARY_WATER))
+								{
+									w.getBlockAt(x-1, y, z+2+webDist-1).setType(Material.WEB);
+									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x-1, y, z+2+webDist-1, w, 30), webTime*20);
 								}
 						}
 					}
@@ -3352,74 +3371,83 @@ public class FortificationListener implements Listener {
 						if(w.getBlockAt(x, y, z-1).getType().toString().equalsIgnoreCase(webturretblockId) ||
 								webturretblockId.equalsIgnoreCase(Material.AIR.toString()))
 						{
-							if(w.getBlockAt(x, y, z-1).getType().toString().equalsIgnoreCase(webturretblockId) ||
-									webturretblockId.equalsIgnoreCase(Material.AIR.toString()))
+							int webDist = weblength;
+							try
 							{
-								if(w.getBlockAt(x, y, z-2-weblength).getType().equals(Material.AIR) ||
-										w.getBlockAt(x, y, z-2-weblength).getType().equals(Material.WATER) ||
-										w.getBlockAt(x, y, z-2-weblength).getType().equals(Material.STATIONARY_WATER))
+								webDist = Integer.parseInt(l3);
+								if(webDist > weblength)
 								{
-									w.getBlockAt(x, y, z-2-weblength).setType(Material.WEB);
-									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x, y, z-2-weblength, w, 30), webTime*20);
+									webDist = weblength;
 								}
-								if(w.getBlockAt(x, y, z-2-weblength+1).getType().equals(Material.AIR) ||
-										w.getBlockAt(x, y, z-2-weblength+1).getType().equals(Material.WATER) ||
-										w.getBlockAt(x, y, z-2-weblength+1).getType().equals(Material.STATIONARY_WATER))
-								{
-									w.getBlockAt(x, y, z-2-weblength+1).setType(Material.WEB);
-									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x, y, z-2-weblength+1, w, 30), webTime*20);
-								}
-								if(w.getBlockAt(x, y, z-2-weblength-1).getType().equals(Material.AIR) ||
-										w.getBlockAt(x, y, z-2-weblength-1).getType().equals(Material.WATER) ||
-										w.getBlockAt(x, y, z-2-weblength-1).getType().equals(Material.STATIONARY_WATER))
-								{
-									w.getBlockAt(x, y, z-2-weblength-1).setType(Material.WEB);
-									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x, y, z-2-weblength-1, w, 30), webTime*20);
-								}
-								if(w.getBlockAt(x-1, y, z-2-weblength).getType().equals(Material.AIR)||
-										w.getBlockAt(x-1, y, z-2-weblength).getType().equals(Material.WATER) ||
-										w.getBlockAt(x-1, y, z-2-weblength).getType().equals(Material.STATIONARY_WATER))
-								{
-									w.getBlockAt(x-1, y, z-2-weblength).setType(Material.WEB);
-									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x-1, y, z-2-weblength, w, 30), webTime*20);
-								}
-								if(w.getBlockAt(x+1, y, z-2-weblength).getType().equals(Material.AIR) ||
-										w.getBlockAt(x+1, y, z-2-weblength).getType().equals(Material.WATER) ||
-										w.getBlockAt(x+1, y, z-2-weblength).getType().equals(Material.STATIONARY_WATER))
-								{
-									w.getBlockAt(x+1, y, z-2-weblength).setType(Material.WEB);
-									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x+1, y, z-2-weblength, w, 30), webTime*20);
-								}
-								if(w.getBlockAt(x+1, y, z-2-weblength+1).getType().equals(Material.AIR) ||
-										w.getBlockAt(x+1, y, z-2-weblength+1).getType().equals(Material.WATER) ||
-										w.getBlockAt(x+1, y, z-2-weblength+1).getType().equals(Material.STATIONARY_WATER))
-								{
-									w.getBlockAt(x+1, y, z-2-weblength+1).setType(Material.WEB);
-									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x+1, y, z-2-weblength+1, w, 30), webTime*20);
-								}
-								if(w.getBlockAt(x-1, y, z-2-weblength+1).getType().equals(Material.AIR) ||
-										w.getBlockAt(x-1, y, z-2-weblength+1).getType().equals(Material.WATER) ||
-										w.getBlockAt(x-1, y, z-2-weblength+1).getType().equals(Material.STATIONARY_WATER))
-								{
-									w.getBlockAt(x-1, y, z-2-weblength+1).setType(Material.WEB);
-									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x-1, y, z-2-weblength+1, w, 30), webTime*20);
-								}
-								if(w.getBlockAt(x+1, y, z-2-weblength-1).getType().equals(Material.AIR) ||
-										w.getBlockAt(x+1, y, z-2-weblength-1).getType().equals(Material.WATER) ||
-										w.getBlockAt(x+1, y, z-2-weblength-1).getType().equals(Material.STATIONARY_WATER))
-								{
-									w.getBlockAt(x+1, y, z-2-weblength-1).setType(Material.WEB);
-									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x+1, y, z-2-weblength-1, w, 30), webTime*20);
-								}
-								if(w.getBlockAt(x-1, y, z-2-weblength-1).getType().equals(Material.AIR) ||
-										w.getBlockAt(x-1, y, z-2-weblength-1).getType().equals(Material.WATER) ||
-										w.getBlockAt(x-1, y, z-2-weblength-1).getType().equals(Material.STATIONARY_WATER))
-								{
-									w.getBlockAt(x-1, y, z-2-weblength-1).setType(Material.WEB);
-									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x-1, y, z-2-weblength-1, w, 30), webTime*20);
-								}
-					}
-					}
+							}
+							catch(Exception e)
+							{
+								webDist = weblength;
+							}
+							if(w.getBlockAt(x, y, z-2-webDist).getType().equals(Material.AIR) ||
+									w.getBlockAt(x, y, z-2-webDist).getType().equals(Material.WATER) ||
+									w.getBlockAt(x, y, z-2-webDist).getType().equals(Material.STATIONARY_WATER))
+							{
+								w.getBlockAt(x, y, z-2-webDist).setType(Material.WEB);
+								fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x, y, z-2-webDist, w, 30), webTime*20);
+							}
+							if(w.getBlockAt(x, y, z-2-webDist+1).getType().equals(Material.AIR) ||
+									w.getBlockAt(x, y, z-2-webDist+1).getType().equals(Material.WATER) ||
+									w.getBlockAt(x, y, z-2-webDist+1).getType().equals(Material.STATIONARY_WATER))
+							{
+								w.getBlockAt(x, y, z-2-webDist+1).setType(Material.WEB);
+								fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x, y, z-2-webDist+1, w, 30), webTime*20);
+							}
+							if(w.getBlockAt(x, y, z-2-webDist-1).getType().equals(Material.AIR) ||
+									w.getBlockAt(x, y, z-2-webDist-1).getType().equals(Material.WATER) ||
+									w.getBlockAt(x, y, z-2-webDist-1).getType().equals(Material.STATIONARY_WATER))
+							{
+								w.getBlockAt(x, y, z-2-webDist-1).setType(Material.WEB);
+								fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x, y, z-2-webDist-1, w, 30), webTime*20);
+							}
+							if(w.getBlockAt(x-1, y, z-2-webDist).getType().equals(Material.AIR)||
+									w.getBlockAt(x-1, y, z-2-webDist).getType().equals(Material.WATER) ||
+									w.getBlockAt(x-1, y, z-2-webDist).getType().equals(Material.STATIONARY_WATER))
+							{
+								w.getBlockAt(x-1, y, z-2-webDist).setType(Material.WEB);
+								fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x-1, y, z-2-webDist, w, 30), webTime*20);
+							}
+							if(w.getBlockAt(x+1, y, z-2-webDist).getType().equals(Material.AIR) ||
+									w.getBlockAt(x+1, y, z-2-webDist).getType().equals(Material.WATER) ||
+									w.getBlockAt(x+1, y, z-2-webDist).getType().equals(Material.STATIONARY_WATER))
+							{
+								w.getBlockAt(x+1, y, z-2-webDist).setType(Material.WEB);
+								fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x+1, y, z-2-webDist, w, 30), webTime*20);
+							}
+							if(w.getBlockAt(x+1, y, z-2-webDist+1).getType().equals(Material.AIR) ||
+									w.getBlockAt(x+1, y, z-2-webDist+1).getType().equals(Material.WATER) ||
+									w.getBlockAt(x+1, y, z-2-webDist+1).getType().equals(Material.STATIONARY_WATER))
+							{
+								w.getBlockAt(x+1, y, z-2-webDist+1).setType(Material.WEB);
+								fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x+1, y, z-2-webDist+1, w, 30), webTime*20);
+							}
+							if(w.getBlockAt(x-1, y, z-2-webDist+1).getType().equals(Material.AIR) ||
+									w.getBlockAt(x-1, y, z-2-webDist+1).getType().equals(Material.WATER) ||
+									w.getBlockAt(x-1, y, z-2-webDist+1).getType().equals(Material.STATIONARY_WATER))
+							{
+								w.getBlockAt(x-1, y, z-2-webDist+1).setType(Material.WEB);
+								fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x-1, y, z-2-webDist+1, w, 30), webTime*20);
+							}
+							if(w.getBlockAt(x+1, y, z-2-webDist-1).getType().equals(Material.AIR) ||
+									w.getBlockAt(x+1, y, z-2-webDist-1).getType().equals(Material.WATER) ||
+									w.getBlockAt(x+1, y, z-2-webDist-1).getType().equals(Material.STATIONARY_WATER))
+							{
+								w.getBlockAt(x+1, y, z-2-webDist-1).setType(Material.WEB);
+								fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x+1, y, z-2-webDist-1, w, 30), webTime*20);
+							}
+							if(w.getBlockAt(x-1, y, z-2-webDist-1).getType().equals(Material.AIR) ||
+									w.getBlockAt(x-1, y, z-2-webDist-1).getType().equals(Material.WATER) ||
+									w.getBlockAt(x-1, y, z-2-webDist-1).getType().equals(Material.STATIONARY_WATER))
+							{
+								w.getBlockAt(x-1, y, z-2-webDist-1).setType(Material.WEB);
+								fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x-1, y, z-2-webDist-1, w, 30), webTime*20);
+							}
+						}
 					}
 						
 					//Sign facing north, so fire north, x increases
@@ -3429,72 +3457,81 @@ public class FortificationListener implements Listener {
 						if(w.getBlockAt(x+1, y, z).getType().toString().equalsIgnoreCase(webturretblockId) ||
 								webturretblockId.equalsIgnoreCase(Material.AIR.toString()))
 						{
-							if(w.getBlockAt(x+1, y, z).getType().toString().equalsIgnoreCase(webturretblockId) ||
-									webturretblockId.equalsIgnoreCase(Material.AIR.toString()))
+							int webDist = weblength;
+							try
 							{
-								if(w.getBlockAt(x+2+weblength, y, z).getType().equals(Material.AIR) ||
-										w.getBlockAt(x+2+weblength, y, z).getType().equals(Material.WATER) ||
-										w.getBlockAt(x+2+weblength, y, z).getType().equals(Material.STATIONARY_WATER))
+								webDist = Integer.parseInt(l3);
+								if(webDist > weblength)
 								{
-									w.getBlockAt(x+2+weblength, y, z).setType(Material.WEB);
-									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x+2+weblength, y, z, w, 30), webTime*20);
+									webDist = weblength;
 								}
-								if(w.getBlockAt(x+2+weblength, y, z+1).getType().equals(Material.AIR) ||
-										w.getBlockAt(x+2+weblength, y, z+1).getType().equals(Material.WATER) ||
-										w.getBlockAt(x+2+weblength, y, z+1).getType().equals(Material.STATIONARY_WATER))
-								{
-									w.getBlockAt(x+2+weblength, y, z+1).setType(Material.WEB);
-									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x+2+weblength, y, z+1, w, 30), webTime*20);
-								}
-								if(w.getBlockAt(x+2+weblength, y, z-1).getType().equals(Material.AIR) ||
-										w.getBlockAt(x+2+weblength, y, z-1).getType().equals(Material.WATER) ||
-										w.getBlockAt(x+2+weblength, y, z-1).getType().equals(Material.STATIONARY_WATER))
-								{
-									w.getBlockAt(x+2+weblength, y, z-1).setType(Material.WEB);
-									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x+2+weblength, y, z-1, w, 30), webTime*20);
-								}
-								if(w.getBlockAt(x+2+weblength-1, y, z).getType().equals(Material.AIR) ||
-										w.getBlockAt(x+2+weblength-1, y, z).getType().equals(Material.WATER) ||
-										w.getBlockAt(x+2+weblength-1, y, z).getType().equals(Material.STATIONARY_WATER))
-								{
-									w.getBlockAt(x+2+weblength-1, y, z).setType(Material.WEB);
-									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x+2+weblength-1, y, z, w, 30), webTime*20);
-								}
-								if(w.getBlockAt(x+2+weblength+1, y, z).getType().equals(Material.AIR) ||
-										w.getBlockAt(x+2+weblength+1, y, z).getType().equals(Material.WATER) ||
-										w.getBlockAt(x+2+weblength+1, y, z).getType().equals(Material.STATIONARY_WATER))
-								{
-									w.getBlockAt(x+2+weblength+1, y, z).setType(Material.WEB);
-									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x+2+weblength+1, y, z, w, 30), webTime*20);
-								}
-								if(w.getBlockAt(x+2+weblength+1, y, z+1).getType().equals(Material.AIR) ||
-										w.getBlockAt(x+2+weblength+1, y, z+1).getType().equals(Material.WATER) ||
-										w.getBlockAt(x+2+weblength+1, y, z+1).getType().equals(Material.STATIONARY_WATER))
-								{
-									w.getBlockAt(x+2+weblength+1, y, z+1).setType(Material.WEB);
-									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x+2+weblength+1, y, z+1, w, 30), webTime*20);
-								}
-								if(w.getBlockAt(x+2+weblength-1, y, z+1).getType().equals(Material.AIR) ||
-										w.getBlockAt(x+2+weblength-1, y, z+1).getType().equals(Material.WATER) ||
-										w.getBlockAt(x+2+weblength-1, y, z+1).getType().equals(Material.STATIONARY_WATER))
-								{
-									w.getBlockAt(x+2+weblength-1, y, z+1).setType(Material.WEB);
-									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x+2+weblength-1, y, z+1, w, 30), webTime*20);
-								}
-								if(w.getBlockAt(x+2+weblength+1, y, z-1).getType().equals(Material.AIR) ||
-										w.getBlockAt(x+2+weblength+1, y, z-1).getType().equals(Material.WATER) ||
-										w.getBlockAt(x+2+weblength+1, y, z-1).getType().equals(Material.STATIONARY_WATER))
-								{
-									w.getBlockAt(x+2+weblength+1, y, z-1).setType(Material.WEB);
-									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x+2+weblength+1, y, z-1, w, 30), webTime*20);
-								}
-								if(w.getBlockAt(x+2+weblength-1, y, z-1).getType().equals(Material.AIR) ||
-										w.getBlockAt(x+2+weblength-1, y, z-1).getType().equals(Material.WATER) ||
-										w.getBlockAt(x+2+weblength-1, y, z-1).getType().equals(Material.STATIONARY_WATER))
-								{
-									w.getBlockAt(x+2+weblength-1, y, z-1).setType(Material.WEB);
-									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x+2+weblength-1, y, z-1, w, 30), webTime*20);
-								}
+							}
+							catch(Exception e)
+							{
+								webDist = weblength;
+							}
+							if(w.getBlockAt(x+2+webDist, y, z).getType().equals(Material.AIR) ||
+									w.getBlockAt(x+2+webDist, y, z).getType().equals(Material.WATER) ||
+									w.getBlockAt(x+2+webDist, y, z).getType().equals(Material.STATIONARY_WATER))
+							{
+								w.getBlockAt(x+2+weblength, y, z).setType(Material.WEB);
+								fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x+2+webDist, y, z, w, 30), webTime*20);
+							}
+							if(w.getBlockAt(x+2+webDist, y, z+1).getType().equals(Material.AIR) ||
+									w.getBlockAt(x+2+webDist, y, z+1).getType().equals(Material.WATER) ||
+									w.getBlockAt(x+2+webDist, y, z+1).getType().equals(Material.STATIONARY_WATER))
+							{
+								w.getBlockAt(x+2+webDist, y, z+1).setType(Material.WEB);
+								fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x+2+webDist, y, z+1, w, 30), webTime*20);
+							}
+							if(w.getBlockAt(x+2+webDist, y, z-1).getType().equals(Material.AIR) ||
+									w.getBlockAt(x+2+webDist, y, z-1).getType().equals(Material.WATER) ||
+									w.getBlockAt(x+2+webDist, y, z-1).getType().equals(Material.STATIONARY_WATER))
+							{
+								w.getBlockAt(x+2+webDist, y, z-1).setType(Material.WEB);
+								fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x+2+webDist, y, z-1, w, 30), webTime*20);
+							}
+							if(w.getBlockAt(x+2+webDist-1, y, z).getType().equals(Material.AIR) ||
+									w.getBlockAt(x+2+webDist-1, y, z).getType().equals(Material.WATER) ||
+									w.getBlockAt(x+2+webDist-1, y, z).getType().equals(Material.STATIONARY_WATER))
+							{
+								w.getBlockAt(x+2+webDist-1, y, z).setType(Material.WEB);
+								fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x+2+webDist-1, y, z, w, 30), webTime*20);
+							}
+							if(w.getBlockAt(x+2+webDist+1, y, z).getType().equals(Material.AIR) ||
+									w.getBlockAt(x+2+webDist+1, y, z).getType().equals(Material.WATER) ||
+									w.getBlockAt(x+2+webDist+1, y, z).getType().equals(Material.STATIONARY_WATER))
+							{
+								w.getBlockAt(x+2+webDist+1, y, z).setType(Material.WEB);
+								fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x+2+webDist+1, y, z, w, 30), webTime*20);
+							}
+							if(w.getBlockAt(x+2+webDist+1, y, z+1).getType().equals(Material.AIR) ||
+									w.getBlockAt(x+2+webDist+1, y, z+1).getType().equals(Material.WATER) ||
+									w.getBlockAt(x+2+webDist+1, y, z+1).getType().equals(Material.STATIONARY_WATER))
+							{
+								w.getBlockAt(x+2+webDist+1, y, z+1).setType(Material.WEB);
+								fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x+2+webDist+1, y, z+1, w, 30), webTime*20);
+							}
+							if(w.getBlockAt(x+2+webDist-1, y, z+1).getType().equals(Material.AIR) ||
+									w.getBlockAt(x+2+webDist-1, y, z+1).getType().equals(Material.WATER) ||
+									w.getBlockAt(x+2+webDist-1, y, z+1).getType().equals(Material.STATIONARY_WATER))
+							{
+								w.getBlockAt(x+2+webDist-1, y, z+1).setType(Material.WEB);
+								fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x+2+webDist-1, y, z+1, w, 30), webTime*20);
+							}
+							if(w.getBlockAt(x+2+webDist+1, y, z-1).getType().equals(Material.AIR) ||
+									w.getBlockAt(x+2+webDist+1, y, z-1).getType().equals(Material.WATER) ||
+									w.getBlockAt(x+2+webDist+1, y, z-1).getType().equals(Material.STATIONARY_WATER))
+							{
+								w.getBlockAt(x+2+webDist+1, y, z-1).setType(Material.WEB);
+								fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x+2+webDist+1, y, z-1, w, 30), webTime*20);
+							}
+							if(w.getBlockAt(x+2+webDist-1, y, z-1).getType().equals(Material.AIR) ||
+									w.getBlockAt(x+2+webDist-1, y, z-1).getType().equals(Material.WATER) ||
+									w.getBlockAt(x+2+webDist-1, y, z-1).getType().equals(Material.STATIONARY_WATER))
+							{
+								w.getBlockAt(x+2+webDist-1, y, z-1).setType(Material.WEB);
+								fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x+2+webDist-1, y, z-1, w, 30), webTime*20);
 							}
 						}
 					}
@@ -3505,72 +3542,82 @@ public class FortificationListener implements Listener {
 						if(w.getBlockAt(x-1, y, z).getType().toString().equalsIgnoreCase(webturretblockId) ||
 								webturretblockId.equalsIgnoreCase(Material.AIR.toString()))
 						{
-							if(w.getBlockAt(x-1, y, z).getType().toString().equalsIgnoreCase(webturretblockId) ||
-									webturretblockId.equalsIgnoreCase(Material.AIR.toString()))
+							int webDist = weblength;
+							try
 							{
-								if(w.getBlockAt(x-2-weblength, y, z).getType().equals(Material.AIR) ||
-										w.getBlockAt(x-2-weblength, y, z).getType().equals(Material.WATER) ||
-										w.getBlockAt(x-2-weblength, y, z).getType().equals(Material.STATIONARY_WATER))
+								webDist = Integer.parseInt(l3);
+								if(webDist > weblength)
 								{
-									w.getBlockAt(x-2-weblength, y, z).setType(Material.WEB);
-									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x-2-weblength, y, z, w, 30), webTime*20);
+									webDist = weblength;
 								}
-								if(w.getBlockAt(x-2-weblength, y, z+1).getType().equals(Material.AIR) ||
-										w.getBlockAt(x-2-weblength, y, z+1).getType().equals(Material.WATER) ||
-										w.getBlockAt(x-2-weblength, y, z+1).getType().equals(Material.STATIONARY_WATER))
-								{
-									w.getBlockAt(x-2-weblength, y, z+1).setType(Material.WEB);
-									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x-2-weblength, y, z+1, w, 30), webTime*20);
-								}
-								if(w.getBlockAt(x-2-weblength, y, z-1).getType().equals(Material.AIR) ||
-										w.getBlockAt(x-2-weblength, y, z-1).getType().equals(Material.WATER) ||
-										w.getBlockAt(x-2-weblength, y, z-1).getType().equals(Material.STATIONARY_WATER))
-								{
-									w.getBlockAt(x-2-weblength, y, z-1).setType(Material.WEB);
-									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x-2-weblength, y, z-1, w, 30), webTime*20);
-								}
-								if(w.getBlockAt(x-2-weblength-1, y, z).getType().equals(Material.AIR) ||
-										w.getBlockAt(x-2-weblength-1, y, z).getType().equals(Material.WATER) ||
-										w.getBlockAt(x-2-weblength-1, y, z).getType().equals(Material.STATIONARY_WATER))
-								{
-									w.getBlockAt(x-2-weblength-1, y, z).setType(Material.WEB);
-									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x-2-weblength-1, y, z, w, 30), webTime*20);
-								}
-								if(w.getBlockAt(x-2-weblength+1, y, z).getType().equals(Material.AIR) ||
-										w.getBlockAt(x-2-weblength+1, y, z).getType().equals(Material.WATER) ||
-										w.getBlockAt(x-2-weblength+1, y, z).getType().equals(Material.STATIONARY_WATER))
-								{
-									w.getBlockAt(x-2-weblength+1, y, z).setType(Material.WEB);
-									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x-2-weblength+1, y, z, w, 30), webTime*20);
-								}
-								if(w.getBlockAt(x-2-weblength+1, y, z+1).getType().equals(Material.AIR) ||
-										w.getBlockAt(x-2-weblength+1, y, z+1).getType().equals(Material.WATER) ||
-										w.getBlockAt(x-2-weblength+1, y, z+1).getType().equals(Material.STATIONARY_WATER))
-								{
-									w.getBlockAt(x-2-weblength+1, y, z+1).setType(Material.WEB);
-									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x-2-weblength+1, y, z+1, w, 30), webTime*20);
-								}
-								if(w.getBlockAt(x-2-weblength-1, y, z+1).getType().equals(Material.AIR) ||
-										w.getBlockAt(x-2-weblength-1, y, z+1).getType().equals(Material.WATER) ||
-										w.getBlockAt(x-2-weblength-1, y, z+1).getType().equals(Material.STATIONARY_WATER))
-								{
-									w.getBlockAt(x-2-weblength-1, y, z+1).setType(Material.WEB);
-									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x-2-weblength-1, y, z+1, w, 30), webTime*20);
-								}
-								if(w.getBlockAt(x-2-weblength+1, y, z-1).getType().equals(Material.AIR) ||
-										w.getBlockAt(x-2-weblength+1, y, z-1).getType().equals(Material.WATER) ||
-										w.getBlockAt(x-2-weblength+1, y, z-1).getType().equals(Material.STATIONARY_WATER))
-								{
-									w.getBlockAt(x-2-weblength+1, y, z-1).setType(Material.WEB);
-									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x-2-weblength+1, y, z-1, w, 30), webTime*20);
-								}
-								if(w.getBlockAt(x-2-weblength-1, y, z-1).getType().equals(Material.AIR) ||
-										w.getBlockAt(x-2-weblength-1, y, z-1).getType().equals(Material.WATER) ||
-										w.getBlockAt(x-2-weblength-1, y, z-1).getType().equals(Material.STATIONARY_WATER))
-								{
-									w.getBlockAt(x-2-weblength-1, y, z-1).setType(Material.WEB);
-									fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x-2-weblength-1, y, z-1, w, 30), webTime*20);
-								}
+							}
+							catch(Exception e)
+							{
+								webDist = weblength;
+							}
+
+							if(w.getBlockAt(x-2-webDist, y, z).getType().equals(Material.AIR) ||
+									w.getBlockAt(x-2-webDist, y, z).getType().equals(Material.WATER) ||
+									w.getBlockAt(x-2-webDist, y, z).getType().equals(Material.STATIONARY_WATER))
+							{
+								w.getBlockAt(x-2-webDist, y, z).setType(Material.WEB);
+								fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x-2-webDist, y, z, w, 30), webTime*20);
+							}
+							if(w.getBlockAt(x-2-webDist, y, z+1).getType().equals(Material.AIR) ||
+									w.getBlockAt(x-2-webDist, y, z+1).getType().equals(Material.WATER) ||
+									w.getBlockAt(x-2-webDist, y, z+1).getType().equals(Material.STATIONARY_WATER))
+							{
+								w.getBlockAt(x-2-webDist, y, z+1).setType(Material.WEB);
+								fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x-2-webDist, y, z+1, w, 30), webTime*20);
+							}
+							if(w.getBlockAt(x-2-webDist, y, z-1).getType().equals(Material.AIR) ||
+									w.getBlockAt(x-2-webDist, y, z-1).getType().equals(Material.WATER) ||
+									w.getBlockAt(x-2-webDist, y, z-1).getType().equals(Material.STATIONARY_WATER))
+							{
+								w.getBlockAt(x-2-webDist, y, z-1).setType(Material.WEB);
+								fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x-2-webDist, y, z-1, w, 30), webTime*20);
+							}
+							if(w.getBlockAt(x-2-webDist-1, y, z).getType().equals(Material.AIR) ||
+									w.getBlockAt(x-2-webDist-1, y, z).getType().equals(Material.WATER) ||
+									w.getBlockAt(x-2-webDist-1, y, z).getType().equals(Material.STATIONARY_WATER))
+							{
+								w.getBlockAt(x-2-webDist-1, y, z).setType(Material.WEB);
+								fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x-2-webDist-1, y, z, w, 30), webTime*20);
+							}
+							if(w.getBlockAt(x-2-webDist+1, y, z).getType().equals(Material.AIR) ||
+									w.getBlockAt(x-2-webDist+1, y, z).getType().equals(Material.WATER) ||
+									w.getBlockAt(x-2-webDist+1, y, z).getType().equals(Material.STATIONARY_WATER))
+							{
+								w.getBlockAt(x-2-webDist+1, y, z).setType(Material.WEB);
+								fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x-2-webDist+1, y, z, w, 30), webTime*20);
+							}
+							if(w.getBlockAt(x-2-webDist+1, y, z+1).getType().equals(Material.AIR) ||
+									w.getBlockAt(x-2-webDist+1, y, z+1).getType().equals(Material.WATER) ||
+									w.getBlockAt(x-2-webDist+1, y, z+1).getType().equals(Material.STATIONARY_WATER))
+							{
+								w.getBlockAt(x-2-webDist+1, y, z+1).setType(Material.WEB);
+								fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x-2-webDist+1, y, z+1, w, 30), webTime*20);
+							}
+							if(w.getBlockAt(x-2-webDist-1, y, z+1).getType().equals(Material.AIR) ||
+									w.getBlockAt(x-2-webDist-1, y, z+1).getType().equals(Material.WATER) ||
+									w.getBlockAt(x-2-webDist-1, y, z+1).getType().equals(Material.STATIONARY_WATER))
+							{
+								w.getBlockAt(x-2-webDist-1, y, z+1).setType(Material.WEB);
+								fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x-2-webDist-1, y, z+1, w, 30), webTime*20);
+							}
+							if(w.getBlockAt(x-2-webDist+1, y, z-1).getType().equals(Material.AIR) ||
+									w.getBlockAt(x-2-webDist+1, y, z-1).getType().equals(Material.WATER) ||
+									w.getBlockAt(x-2-webDist+1, y, z-1).getType().equals(Material.STATIONARY_WATER))
+							{
+								w.getBlockAt(x-2-webDist+1, y, z-1).setType(Material.WEB);
+								fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x-2-webDist+1, y, z-1, w, 30), webTime*20);
+							}
+							if(w.getBlockAt(x-2-webDist-1, y, z-1).getType().equals(Material.AIR) ||
+									w.getBlockAt(x-2-webDist-1, y, z-1).getType().equals(Material.WATER) ||
+									w.getBlockAt(x-2-webDist-1, y, z-1).getType().equals(Material.STATIONARY_WATER))
+							{
+								w.getBlockAt(x-2-webDist-1, y, z-1).setType(Material.WEB);
+								fort.getServer().getScheduler().scheduleSyncDelayedTask(fort, new RemoveBlock(x-2-webDist-1, y, z-1, w, 30), webTime*20);
 							}
 						}
 					}
@@ -3578,7 +3625,7 @@ public class FortificationListener implements Listener {
 				}
 				
 				//Flame Turret - Shoots fire out to flamelength
-				if(l1.equalsIgnoreCase("flame"))
+				if(l1.equalsIgnoreCase("flame") || l1.equals("fire"))
 				{
 					//Sign facing east, so fire west, z increases
 					if(w.getBlockAt(x, y, z).getData() == 0x2)
@@ -3665,6 +3712,25 @@ public class FortificationListener implements Listener {
 				//Arrow Turret - fires an arrow in direction it is facing.
 				if(l1.equalsIgnoreCase("arrow") || l1.equalsIgnoreCase("default") || l1.equalsIgnoreCase("") || l1 == null)
 				{
+					float arrowSpeed = 1f;
+					float arrowSpread = 7f;
+					try
+					{
+						arrowSpeed = Float.parseFloat(l3);
+					}
+					catch(Exception e)
+					{
+						arrowSpeed = 1f;
+					}
+					
+					try
+					{
+						arrowSpread = Float.parseFloat(l4);
+					}
+					catch(Exception e)
+					{
+						arrowSpread = 7f;
+					}
 					//Sign facing east, so fire west, z increases
 					if(w.getBlockAt(x, y, z).getData() == 0x2)
 					{
@@ -3673,9 +3739,9 @@ public class FortificationListener implements Listener {
 								arrowturretblockId.equalsIgnoreCase(Material.AIR.toString()))
 						{
 							//fire arrow
-							Location target = new Location(w,x,y+1.5,z+10);
-							Location origin = new Location(w,x,y+1.5,z+1.5);
-							w.spawnArrow(origin, new Vector(target.getX()-origin.getX(),target.getY()-origin.getY(),target.getZ()-origin.getZ()), 1.0F, 7);
+							Location target = new Location(w,x,y+0.5,z+10);
+							Location origin = new Location(w,x,y+0.5,z+1.5);
+							w.spawnArrow(origin, new Vector(target.getX()-origin.getX(),target.getY()-origin.getY(),target.getZ()-origin.getZ()), arrowSpeed, arrowSpread);
 						}
 					}
 					//Sign facing west, so fire east, z decreases
@@ -3687,7 +3753,7 @@ public class FortificationListener implements Listener {
 							//fire arrow
 							Location target = new Location(w,x,y+1.5,z-10);
 							Location origin = new Location(w,x,y+1.5,z-1.5);
-							w.spawnArrow(origin, new Vector(target.getX()-origin.getX(),target.getY()-origin.getY(),target.getZ()-origin.getZ()), 1.0F, 7);
+							w.spawnArrow(origin, new Vector(target.getX()-origin.getX(),target.getY()-origin.getY(),target.getZ()-origin.getZ()), arrowSpeed, arrowSpread);
 						}
 					}
 						
@@ -3700,7 +3766,7 @@ public class FortificationListener implements Listener {
 							//fire arrow
 							Location target = new Location(w,x+10,y+1.5,z);
 							Location origin = new Location(w,x+1.5,y+1.5,z);
-							w.spawnArrow(origin, new Vector(target.getX()-origin.getX(),target.getY()-origin.getY(),target.getZ()-origin.getZ()), 1.0F, 7);
+							w.spawnArrow(origin, new Vector(target.getX()-origin.getX(),target.getY()-origin.getY(),target.getZ()-origin.getZ()), arrowSpeed, arrowSpread);
 						}
 					}
 					//Sign facing south, so fire south, x decreases
@@ -3712,7 +3778,7 @@ public class FortificationListener implements Listener {
 							//fire arrow
 							Location target = new Location(w,x-10,y+1.5,z);
 							Location origin = new Location(w,x-1.5,y+1.5,z);
-							w.spawnArrow(origin, new Vector(target.getX()-origin.getX(),target.getY()-origin.getY(),target.getZ()-origin.getZ()), 1.0F, 7);
+							w.spawnArrow(origin, new Vector(target.getX()-origin.getX(),target.getY()-origin.getY(),target.getZ()-origin.getZ()), arrowSpeed, arrowSpread);
 						}
 					}
 				}
@@ -3974,14 +4040,14 @@ public class FortificationListener implements Listener {
 								}
 							}//for i
 							player.sendMessage(ChatColor.RED + "Telepad - tower missing, integrity compromised.");
-							player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+							player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
 							player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 							return;
 						}
 						else
 						{
 							player.sendMessage(ChatColor.RED + "You must use a block of id: " + fort.getTeleblockId() + " behind the [Telepad] sign");
-							player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setTypeId(0);
+							player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
 							player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 							return;
 						}
@@ -4577,6 +4643,19 @@ public class FortificationListener implements Listener {
 							player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 							return;
 						}
+						float test = -2f;
+						try
+						{
+							test = Float.parseFloat(e.getLine(2));
+						}
+						catch(Exception ex)
+						{
+							test = -2f;
+						}
+						if(test > weblength || test < 0)
+						{
+							e.setLine(2, Integer.toString(weblength));
+						}
 						if(fort.isEcon())
 						{
 							if(e.getPlayer() != null)
@@ -4702,7 +4781,15 @@ public class FortificationListener implements Listener {
 									&& !filter.equalsIgnoreCase("townignore") && !filter.equalsIgnoreCase("nationignore") && !filter.equalsIgnoreCase("nationdetect")
 									&& !filter.equalsIgnoreCase("townalert") && !filter.equalsIgnoreCase("nationalert")
 									&& !filter.equalsIgnoreCase("allydetect") && !filter.equalsIgnoreCase("enemydetect") && !filter.equalsIgnoreCase("healthrange")
-									&& !filter.equalsIgnoreCase("armorDetect") && !filter.equalsIgnoreCase("armorIgnore"))
+									&& !filter.equalsIgnoreCase("armorDetect") && !filter.equalsIgnoreCase("armorIgnore") && !filter.equalsIgnoreCase("armor")
+									&& !filter.equalsIgnoreCase("tool") && !filter.equalsIgnoreCase("weapon") && !filter.equalsIgnoreCase("item")
+									&& !filter.equalsIgnoreCase("player") && !filter.equalsIgnoreCase("town") && !filter.equalsIgnoreCase("nation")
+									&& !filter.equalsIgnoreCase("faction") && !filter.equalsIgnoreCase("enemy") && !filter.equalsIgnoreCase("ally")
+									&& !filter.equalsIgnoreCase("fire") && !filter.equalsIgnoreCase("fireIgnore") && !filter.equalsIgnoreCase("fireDetect")
+									&& !filter.equalsIgnoreCase("sprint") && !filter.equalsIgnoreCase("sprintDetect") && !filter.equalsIgnoreCase("sprintIgnore") 
+									&& !filter.equalsIgnoreCase("sneak") && !filter.equalsIgnoreCase("sneakDetect") && !filter.equalsIgnoreCase("SneakIgnore")
+									&& !filter.equalsIgnoreCase("permission") && !filter.equalsIgnoreCase("permDetect") && !filter.equalsIgnoreCase("permIgnore")
+									&& !filter.equalsIgnoreCase("foodRange"))
 							{
 								//invalid sensor type
 								player.sendMessage(ChatColor.RED + "Invalid sensor type, type /fort sensor for a list of sensor types.");

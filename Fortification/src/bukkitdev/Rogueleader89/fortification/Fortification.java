@@ -14,6 +14,7 @@ import java.util.logging.Logger;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.block.Sign;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -25,8 +26,6 @@ import org.bukkit.plugin.RegisteredServiceProvider;
 
 import net.milkbowl.vault.economy.Economy;
 
-
-
 /**
 *
 * @author Rogueleader89
@@ -35,7 +34,7 @@ public class Fortification extends JavaPlugin
 {
 	protected static final Logger log = Logger.getLogger("Minecraft");
 	private String name = "fortification";
-	private String version = "0.95";
+	private String version = "1.0";
 	private int flamelength = 5;
 	private String flameturretblockId = "NETHERRACK";
 	private int weblength;
@@ -276,7 +275,11 @@ public class Fortification extends JavaPlugin
 				    BufferedWriter bw = new BufferedWriter(new FileWriter(teleData)); //FileWriter(file, true) prevents overriding
 				    for(int i = 0; i < getPadList().size(); i++)
 				    {
-				    	//recband,sendband,world,x,y,z,direction, t1x,t1y,t1z, s1x,s1y,s1z,s2x,s2y,s2z
+				    	//recband[0],sendband[1],world[2],x[3],y[4],z[5],direction[6],                                        --7
+				    	//flt1x[7],flt1y[8],flt1z[9],fls1x[10],fls1y[11],fls1z[12],fls2x[13],fls2y[14],fls2z[15]              --9
+				    	//blt1x[25],blt1y[26],blt1z[27],bls1x[28],bls1y[29],bls1z[30],bls2x[31],bls2y[32],bls2z[33]           --9
+				    	//brt1x[34],brt1y[35],brt1z[36],brs1x[37],brs1y[38],brs1z[39],brs2x[40],brs2y[41],brs2z[42]           --9      = 43
+				    	//frt1x[16],frt1y[17],frt1z[18],frs1x[19],frs1y[20],frs1z[21],frs2x[22],frs2y[23],frs2z[24]           --9
 				    	bw.write(getPadList().get(i).getRecBand() + "," + getPadList().get(i).getSendBand() + "," + getPadList().get(i).getLocation().getWorld().getName() + ","
 				    	+ getPadList().get(i).getLocation().getX() + "," + getPadList().get(i).getLocation().getY() + "," + getPadList().get(i).getLocation().getZ() + ","
 				    			+ getPadList().get(i).getDirection() + "," + getPadList().get(i).getFLTower().getLocation().getBlockX() + "," + getPadList().get(i).getFLTower().getLocation().getBlockY()
@@ -284,6 +287,7 @@ public class Fortification extends JavaPlugin
 				    			  + "," + getPadList().get(i).getFLTower().getS1Location().getBlockY() + "," + getPadList().get(i).getFLTower().getS1Location().getBlockZ() 
 				    			  + "," + getPadList().get(i).getFLTower().getS2Location().getBlockX()
 				    			  + "," + getPadList().get(i).getFLTower().getS2Location().getBlockY() + "," + getPadList().get(i).getFLTower().getS2Location().getBlockZ()
+				    			  
 				    			  + "," + getPadList().get(i).getBLTower().getLocation().getBlockX()
 				    			 + "," + getPadList().get(i).getBLTower().getLocation().getBlockY() + "," + getPadList().get(i).getBLTower().getLocation().getBlockZ()
 				    			  + "," + getPadList().get(i).getBLTower().getS1Location().getBlockX()
@@ -328,7 +332,8 @@ public class Fortification extends JavaPlugin
 			        //do your stuff
 			    	String[] s = l.split(",");
 			    	//receiver band, world, x, y, z
-			    	getReceiverList().add(new Receiver(new Location(this.getServer().getWorld(s[1]),Double.parseDouble(s[2]),Double.parseDouble(s[3]),Double.parseDouble(s[4])), s[0]));
+			    	getReceiverList().add(new Receiver(new Location(this.getServer().getWorld(s[1]),Double.parseDouble(s[2]),
+			    			Double.parseDouble(s[3]),Double.parseDouble(s[4])), s[0]));
 			    }
 			    br.close();
 			}
@@ -341,37 +346,107 @@ public class Fortification extends JavaPlugin
 		{
 			//No receivers exist, a file will be created when the server reboots
 		}
-		
-		//Telepad Data
-				if(file.exists())
+		if(recList.size() > 0)
+		{
+			for(int i = 0; i < recList.size(); i++)
+			{
+				if(recList.get(i).getLocation().getBlock().getType() == Material.WALL_SIGN && recList.get(i).getLocation().getBlock() instanceof Sign)
 				{
-					try
+					Sign s = (Sign)recList.get(i).getLocation().getBlock().getState();
+					if(s.getLine(1).equalsIgnoreCase("[receiver]") || s.getLine(1).equalsIgnoreCase("[reciever]"))
 					{
-					    BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(teleData)));
-					    String l;
-					    while((l=br.readLine()) != null)
-					    {
-					        //do your stuff
-					    	String[] s = l.split(",");
-					    	//receiver band, world, x, y, z -- Array out of bounds here. Arrayoutofboundsexception: 43 at line 355
-					    	getPadList().add(new Telepad(this, new Location(this.getServer().getWorld(s[2]),Double.parseDouble(s[3]),Double.parseDouble(s[4]),Double.parseDouble(s[5])), 
-					    			new TelepadTower(new Location(this.getServer().getWorld(s[2]),Integer.parseInt(s[6]),Integer.parseInt(s[7]),Integer.parseInt(s[8])), new Location(this.getServer().getWorld(s[2]),Integer.parseInt(s[9]),Integer.parseInt(s[10]),Integer.parseInt(s[11])), new Location(this.getServer().getWorld(s[2]),Integer.parseInt(s[12]),Integer.parseInt(s[13]),Integer.parseInt(s[14])), this), 
-					    			new TelepadTower(new Location(this.getServer().getWorld(s[2]),Integer.parseInt(s[15]),Integer.parseInt(s[16]),Integer.parseInt(s[17])), new Location(this.getServer().getWorld(s[2]),Integer.parseInt(s[18]),Integer.parseInt(s[18]),Integer.parseInt(s[20])), new Location(this.getServer().getWorld(s[2]),Integer.parseInt(s[30]),Integer.parseInt(s[31]),Integer.parseInt(s[32])), this), 
-					    			new TelepadTower(new Location(this.getServer().getWorld(s[2]),Integer.parseInt(s[33]),Integer.parseInt(s[34]),Integer.parseInt(s[35])), new Location(this.getServer().getWorld(s[2]),Integer.parseInt(s[36]),Integer.parseInt(s[37]),Integer.parseInt(s[38])), new Location(this.getServer().getWorld(s[2]),Integer.parseInt(s[39]),Integer.parseInt(s[40]),Integer.parseInt(s[41])), this), 
-					    			new TelepadTower(new Location(this.getServer().getWorld(s[2]),Integer.parseInt(s[42]),Integer.parseInt(s[43]),Integer.parseInt(s[44])), new Location(this.getServer().getWorld(s[2]),Integer.parseInt(s[45]),Integer.parseInt(s[46]),Integer.parseInt(s[47])), new Location(this.getServer().getWorld(s[2]),Integer.parseInt(s[48]),Integer.parseInt(s[49]),Integer.parseInt(s[50])), this), 
-					    			Byte.parseByte(s[6]), s[0], s[1]));
-					    }
-					    br.close();
+						if(!s.getLine(0).equalsIgnoreCase(recList.get(i).getBand()))
+						{
+							recList.remove(i);
+						}
 					}
-					catch(IOException ioe)
+					else
 					{
-						//error
+						recList.remove(i);
 					}
 				}
 				else
 				{
-					//No receivers exist, a file will be created when the server reboots
+					recList.remove(i);
 				}
+			}
+		}
+		
+		//Telepad Data
+		if(file.exists())
+		{
+			try
+			{
+			    BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(teleData)));
+			    String l;
+			    while((l=br.readLine()) != null)
+			    {
+			        //do your stuff
+			    	String[] s = l.split(",");
+			    	
+			    	//recband[0],sendband[1],world[2],x[3],y[4],z[5],direction[6],                                        --7
+			    	//flt1x[7],flt1y[8],flt1z[9],fls1x[10],fls1y[11],fls1z[12],fls2x[13],fls2y[14],fls2z[15]              --9
+			    	//blt1x[25],blt1y[26],blt1z[27],bls1x[28],bls1y[29],bls1z[30],bls2x[31],bls2y[32],bls2z[33]           --9
+			    	//brt1x[16],brt1y[17],brt1z[18],brs1x[19],brs1y[20],brs1z[21],brs2x[22],brs2y[23],brs2z[24]           --9
+			    	//frt1x[34],frt1y[35],frt1z[36],frs1x[37],frs1y[38],frs1z[39],frs2x[40],frs2y[41],frs2z[42]           --9      = 43
+			    	getPadList().add(new Telepad(this, new Location(this.getServer().getWorld(s[2]),Double.parseDouble(s[3]),Double.parseDouble(s[4]),Double.parseDouble(s[5])), 
+			    			new TelepadTower(new Location(this.getServer().getWorld(s[2]),Integer.parseInt(s[7]),Integer.parseInt(s[8]),
+			    					Integer.parseInt(s[9])), new Location(this.getServer().getWorld(s[2]),Integer.parseInt(s[10]),Integer.parseInt(s[11]),
+			    							Integer.parseInt(s[12])), new Location(this.getServer().getWorld(s[2]),Integer.parseInt(s[13]),
+			    									Integer.parseInt(s[14]),Integer.parseInt(s[15])), this), 
+			    			new TelepadTower(new Location(this.getServer().getWorld(s[2]),Integer.parseInt(s[16]),Integer.parseInt(s[17]),
+			    					Integer.parseInt(s[18])), new Location(this.getServer().getWorld(s[2]),Integer.parseInt(s[19]),Integer.parseInt(s[20]),
+			    							Integer.parseInt(s[21])), new Location(this.getServer().getWorld(s[2]),Integer.parseInt(s[22]),
+			    									Integer.parseInt(s[23]),Integer.parseInt(s[24])), this), 
+			    			new TelepadTower(new Location(this.getServer().getWorld(s[2]),Integer.parseInt(s[25]),Integer.parseInt(s[26]),
+			    					Integer.parseInt(s[27])), new Location(this.getServer().getWorld(s[2]),Integer.parseInt(s[28]),Integer.parseInt(s[29]),
+			    							Integer.parseInt(s[30])), new Location(this.getServer().getWorld(s[2]),Integer.parseInt(s[31]),
+			    									Integer.parseInt(s[32]),Integer.parseInt(s[33])), this), 
+			    			new TelepadTower(new Location(this.getServer().getWorld(s[2]),Integer.parseInt(s[34]),Integer.parseInt(s[35]),
+			    					Integer.parseInt(s[36])), new Location(this.getServer().getWorld(s[2]),Integer.parseInt(s[37]),Integer.parseInt(s[38]),
+			    							Integer.parseInt(s[39])), new Location(this.getServer().getWorld(s[2]),Integer.parseInt(s[40]),
+			    									Integer.parseInt(s[41]),Integer.parseInt(s[42])), this), 
+			    			Byte.parseByte(s[6]), s[0], s[1]));
+			    }
+			    br.close();
+			}
+			catch(IOException ioe)
+			{
+				//error
+				log.info("[Fortification]: Error loading Telepad Data file.");
+			}
+		}
+		else
+		{
+			//No telepads exist, a file will be created when the server reboots
+		}
+		if(padList.size() > 0)
+		{
+	//		log.info("[Fortification] " + padList.size() + " telepads were loaded.");
+			boolean[] delete = new boolean[padList.size()];
+			for(int i = 0; i < padList.size(); i++)
+			{
+				delete[i] = !padList.get(i).checkIntegrity() || !padList.get(i).validateSign();
+				if(delete[i])
+				{
+					if(padList.get(i).getLocation().getBlock() instanceof Sign)
+					{
+						Sign s = (Sign)padList.get(i).getLocation().getBlock();
+						s.setLine(0, "Invalid");
+						s.setLine(1, "Telepad");	
+					}
+				}
+			}
+			for(int k = 0; k < padList.size(); k++)
+			{
+		//		log.info(k + ": " + padList.get(k).getRecBand() + ", " + padList.get(k).getLocation().toString());
+				if(delete[k])
+				{
+		//			log.info("[Fortification]: Deleting loaded non-existant telepad");
+					padList.remove(k);
+				}
+			}
+		}
 	}
 	
 	public void factionSetup()
@@ -455,7 +530,8 @@ public class Fortification extends JavaPlugin
             public boolean onCommand(CommandSender sender, Command command, String label, String[] args) 
             {
             	Player player = null;
-            	if(sender instanceof Player){
+            	if(sender instanceof Player)
+            	{
             		player = (Player)sender;
             	}
             	else
@@ -467,7 +543,43 @@ public class Fortification extends JavaPlugin
 	            			loadproperties();
 	            			factionSetup();
 	            			townySetup();
+	            			log.info("Fortification config files reloaded.");
 	            			//permissionSetup();
+	            		}
+	            		else if(args[0].equalsIgnoreCase("verifydata"))
+	            		{
+	            			for(int i = 0; i < padList.size(); i++)
+	            			{
+	            				if(!padList.get(i).checkIntegrity() || !padList.get(i).validateSign())
+	            				{
+	            					padList.remove(i);
+	            				}
+	            			}
+	            			if(recList.size() > 0)
+	            			{
+	            				for(int i = 0; i < recList.size(); i++)
+	            				{
+	            					if(recList.get(i).getLocation().getBlock().getType() == Material.WALL_SIGN && recList.get(i).getLocation().getBlock() instanceof Sign)
+	            					{
+	            						Sign s = (Sign)recList.get(i).getLocation().getBlock().getState();
+	            						if(s.getLine(1).equalsIgnoreCase("[receiver]") || s.getLine(1).equalsIgnoreCase("[reciever]"))
+	            						{
+	            							if(!s.getLine(0).equalsIgnoreCase(recList.get(i).getBand()))
+	            							{
+	            								recList.remove(i);
+	            							}
+	            						}
+	            						else
+	            						{
+	            							recList.remove(i);
+	            						}
+	            					}
+	            					else
+	            					{
+	            						recList.remove(i);
+	            					}
+	            				}
+	            			}
 	            		}
 	            		else if(args[0].equalsIgnoreCase("radio"))
 	            		{
@@ -637,19 +749,23 @@ public class Fortification extends JavaPlugin
 	            				}
 	            			}
 	            		}
-	            		else{
+	            		else
+	            		{
 	            			//sender.sendMessage("This command is only available to ingame players.");
 	            			log.info("This command is only available to ingame players.");
 	            		}
             		}
-            		else{
+            		else
+            		{
             			//sender.sendMessage("This command is only available to ingame players.");
             			log.info("This command is only available to ingame players.");
             		}
             		
             	}
-            	if(player != null){
-            		if(args.length == 0){
+            	if(player != null)
+            	{
+            		if(args.length == 0)
+            		{
 		            	player.sendMessage("You have the following fortification permissions:");
 		   
 		            	if(player.hasPermission( "fortification.msgsign") || player.hasPermission( "fortification.*")){
@@ -686,8 +802,10 @@ public class Fortification extends JavaPlugin
 							player.sendMessage(ChatColor.GOLD + "/fort chest");
 						}
             		}
-            		else if(args.length > 0){
-            			if(args[0].equalsIgnoreCase("costs")){
+            		else if(args.length > 0)
+            		{
+            			if(args[0].equalsIgnoreCase("costs"))
+            			{
             				if(isEcon()){
             				player.sendMessage(ChatColor.GOLD + "Mechanism Prices:");
             				   
@@ -722,167 +840,283 @@ public class Fortification extends JavaPlugin
             					player.sendMessage(ChatColor.GOLD + "Chest Shield: " + chestshieldCost);
             				}
             			}
-            				else{
+            				else
+            				{
             					player.sendMessage(ChatColor.GOLD + "This server is not running a supported economy plugin.");
             				}
             			}
-            			if(args[0].equalsIgnoreCase("reload"))
+            			if(args[0].equalsIgnoreCase("reload") && (player.hasPermission("fortification.admin") || player.isOp()))
             			{
             				reloadConfig();
                 			loadproperties();
                 			factionSetup();
                 			townySetup();
+                			player.sendMessage(ChatColor.GOLD + "Fortification config file reloaded.");
             			}
-				if(args[0].equalsIgnoreCase("msgsign"))
-				{
-					if(!player.hasPermission( "fortification.msgsign") || !player.hasPermission( "fortification.*"))
+            			else if(args[0].equalsIgnoreCase("verifydata")  && (player.hasPermission("fortification.admin") || player.isOp()))
+	            		{
+	            			for(int i = 0; i < padList.size(); i++)
+	            			{
+	            				if(!padList.get(i).checkIntegrity() || !padList.get(i).validateSign())
+	            				{
+	            					padList.remove(i);
+	            				}
+	            			}
+	            			if(recList.size() > 0)
+	            			{
+	            				for(int i = 0; i < recList.size(); i++)
+	            				{
+	            					if(recList.get(i).getLocation().getBlock().getType() == Material.WALL_SIGN && recList.get(i).getLocation().getBlock() instanceof Sign)
+	            					{
+	            						Sign s = (Sign)recList.get(i).getLocation().getBlock().getState();
+	            						if(s.getLine(1).equalsIgnoreCase("[receiver]") || s.getLine(1).equalsIgnoreCase("[reciever]"))
+	            						{
+	            							if(!s.getLine(0).equalsIgnoreCase(recList.get(i).getBand()))
+	            							{
+	            								recList.remove(i);
+	            							}
+	            						}
+	            						else
+	            						{
+	            							recList.remove(i);
+	            						}
+	            					}
+	            					else
+	            					{
+	            						recList.remove(i);
+	            					}
+	            				}
+	            			}
+	            		}
+					if(args[0].equalsIgnoreCase("msgsign"))
 					{
-						player.sendMessage(ChatColor.RED + "You do not have permission to build message signs.");
-					}
-					else{
-					player.sendMessage(ChatColor.GOLD + "Sends the text on lines 3 and 4 of the sign to the player on line 1 of the sign. Note: Player name must be full and exact.");
-					}
-				}
-				if(args[0].equalsIgnoreCase("teleblock")){
-					if(!player.hasPermission( "fortification.shield.teleblock") || !player.hasPermission( "fortification.*") || !player.hasPermission( "fortification.shield.*")){
-						player.sendMessage(ChatColor.RED + "You do not have permission to build teleblock shields.");
-					}
-					else{
-					player.sendMessage(ChatColor.GOLD + "Creates a shield that blocks teleportation within " + teleblockrange + " blocks of it. Must be built on " + Material.getMaterial(teleblockId).name());
-					}
-				}
-				if(args[0].equalsIgnoreCase("arrowturret")){
-					if(!player.hasPermission( "fortification.turret.arrow") || !player.hasPermission( "fortification.*") || !player.hasPermission( "fortification.turret.*")){
-						player.sendMessage(ChatColor.RED + "You do not have permission to build arrow turrets.");
-					}
-					else{
-					player.sendMessage(ChatColor.GOLD + "Fires an arrow in the direction it is facing. Must be built on " + Material.getMaterial(arrowturretId).name());
-					}
-				}
-				if(args[0].equalsIgnoreCase("equalssign")){
-					if(!player.hasPermission( "fortification.equalsign") || !player.hasPermission( "fortification.*")){
-						player.sendMessage(ChatColor.RED + "You do not have permission to build equals signs.");
-					}
-					else{
-					player.sendMessage(ChatColor.GOLD + "Compares the first line of the sign to the third line, activates the lever on the back of the sign block if they are equal.");
-					}
-				}
-				if(args[0].equalsIgnoreCase("sendsign")){
-				if(!player.hasPermission( "fortification.sendsign") || !player.hasPermission( "fortification.*")){
-						player.sendMessage(ChatColor.RED + "You do not have permission to build send signs.");
-					}
-					else{
-					player.sendMessage(ChatColor.GOLD + "Send signs send the text from one sign to another when they recieve redstone power.");
-					player.sendMessage(ChatColor.GOLD + "Send signs are placed on the line you want to move. So if you wanted to move the first line of a sign below");
-					player.sendMessage(ChatColor.GOLD + "the send sign to a sign above it you would type [Send U] on the first line. If left to right then [Send R] and so on.");
-					if(sendoverwrite){
-					player.sendMessage(ChatColor.GOLD + "Text sent to another sign via a send sign will overwrite the existing text on the chosen line of that sign.");
-					}
-					else{
-						player.sendMessage(ChatColor.GOLD + "Text will not be moved to the destination sign if text already exists on the targetted line.");
-					}
-					if(!commandsend){
-						player.sendMessage(ChatColor.GOLD + "Sign commands can not be sent to other signs via a send sign.");
-					}
-					}
-				}
-				if(args[0].equalsIgnoreCase("trapdoor"))
-				{
-					if(!player.hasPermission( "fortification.trapdoor") || !player.hasPermission( "fortification.*"))
-					{
-						player.sendMessage(ChatColor.RED + "You do not have permission to build trap doors.");
-					}
-					else
-					{
-						player.sendMessage(ChatColor.GOLD + "Trap doors remove blocks of the type they are made of up to " + maxtraplength + " blocks infront of them when they recieve redstone power.");
-						if(replacetrap)
+						if(!player.hasPermission( "fortification.msgsign") || !player.hasPermission( "fortification.*"))
 						{
-							player.sendMessage(ChatColor.GOLD + "When powered off, all air blocks within the trap door's range are replaced by blocks of the type they are made of.");
+							player.sendMessage(ChatColor.RED + "You do not have permission to build message signs.");
 						}
-						player.sendMessage(ChatColor.GOLD + "They may be made out of materials with the following Ids:");
-						player.sendMessage(ChatColor.GOLD + config.getString("allowed-trapdoor-blocks"));
+						else
+						{
+							player.sendMessage(ChatColor.GOLD + "Sends the text on lines 3 and 4 of the sign to the player on line 1 of the sign. Note: Player name must be full and exact.");
+						}
 					}
-				}
-				if(args[0].equalsIgnoreCase("flameturret")) 
-				{
-					if(player.hasPermission( "fortification.turret.flame") || player.hasPermission( "fortification.*") || player.hasPermission( "fortification.turret.*"))
+					if(args[0].equalsIgnoreCase("teleblock"))
 					{
-				        		player.sendMessage(ChatColor.GOLD + "Lights the first " + flamelength + " blocks infront of the turret on fire. Flame turrets must be made out of block id " + flameturretblockId + ". Flames only appear on smooth, level ground.");
-				    }
+						if(!player.hasPermission( "fortification.shield.teleblock") || !player.hasPermission( "fortification.*") || !player.hasPermission( "fortification.shield.*"))
+						{
+							player.sendMessage(ChatColor.RED + "You do not have permission to build teleblock shields.");
+						}
+						else
+						{
+							player.sendMessage(ChatColor.GOLD + "Creates a shield that blocks teleportation within " + teleblockrange + " blocks of it. Must be built on " + Material.getMaterial(teleblockId).name());
+						}
+					}
+					if(args[0].equalsIgnoreCase("arrowturret"))
+					{
+						if(!player.hasPermission( "fortification.turret.arrow") || !player.hasPermission( "fortification.*") || !player.hasPermission( "fortification.turret.*"))
+						{
+							player.sendMessage(ChatColor.RED + "You do not have permission to build arrow turrets.");
+						}
+						else
+						{
+						player.sendMessage(ChatColor.GOLD + "Fires an arrow in the direction it is facing. Must be built on " + Material.getMaterial(arrowturretId).name());
+						}
+					}
+					if(args[0].equalsIgnoreCase("equalssign")){
+						if(!player.hasPermission( "fortification.equalsign") || !player.hasPermission( "fortification.*"))
+						{
+							player.sendMessage(ChatColor.RED + "You do not have permission to build equals signs.");
+						}
+						else
+						{
+							player.sendMessage(ChatColor.GOLD + "Compares the first line of the sign to the third line, activates the lever on the back of the sign block if they are equal.");
+						}
+					}
+					if(args[0].equalsIgnoreCase("sendsign"))
+					{
+						if(!player.hasPermission( "fortification.sendsign") || !player.hasPermission( "fortification.*"))
+						{
+							player.sendMessage(ChatColor.RED + "You do not have permission to build send signs.");
+						}
+						else
+						{
+							player.sendMessage(ChatColor.GOLD + "Send signs send the text from one sign to another when they recieve redstone power.");
+							player.sendMessage(ChatColor.GOLD + "Send signs are placed on the line you want to move. So if you wanted to move the first line of a sign below");
+							player.sendMessage(ChatColor.GOLD + "the send sign to a sign above it you would type [Send U] on the first line. If left to right then [Send R] and so on.");
+							if(sendoverwrite)
+							{
+							player.sendMessage(ChatColor.GOLD + "Text sent to another sign via a send sign will overwrite the existing text on the chosen line of that sign.");
+							}
+							else
+							{
+								player.sendMessage(ChatColor.GOLD + "Text will not be moved to the destination sign if text already exists on the targetted line.");
+							}
+							if(!commandsend)
+							{
+								player.sendMessage(ChatColor.GOLD + "Sign commands can not be sent to other signs via a send sign.");
+							}
+						}
+					}
+					if(args[0].equalsIgnoreCase("trapdoor"))
+					{
+						if(!player.hasPermission( "fortification.trapdoor") || !player.hasPermission( "fortification.*"))
+						{
+							player.sendMessage(ChatColor.RED + "You do not have permission to build trap doors.");
+						}
+						else
+						{
+							player.sendMessage(ChatColor.GOLD + "Trap doors remove blocks of the type they are made of up to " + maxtraplength + " blocks infront of them when they recieve redstone power.");
+							if(replacetrap)
+							{
+								player.sendMessage(ChatColor.GOLD + "When powered off, all air blocks within the trap door's range are replaced by blocks of the type they are made of.");
+							}
+							player.sendMessage(ChatColor.GOLD + "They may be made out of materials with the following Ids:");
+							player.sendMessage(ChatColor.GOLD + config.getString("allowed-trapdoor-blocks"));
+						}
+					}
+					if(args[0].equalsIgnoreCase("flameturret")) 
+					{
+						if(player.hasPermission( "fortification.turret.flame") || player.hasPermission( "fortification.*") || player.hasPermission( "fortification.turret.*"))
+						{
+					        		player.sendMessage(ChatColor.GOLD + "Lights the first " + flamelength + " blocks infront of the turret on fire. Flame turrets must be made out of block id " + flameturretblockId + ". Flames only appear on smooth, level ground.");
+					    }
+						else
+						{
+							player.sendMessage(ChatColor.RED + "you do not have permission to build flame turrets.");
+						}
+					}
+					if(args[0].equalsIgnoreCase("webturret")){
+						if(player.hasPermission( "fortification.turret.web") || player.hasPermission( "fortification.*") || player.hasPermission( "fortification.turret.*"))
+						{
+					        		player.sendMessage(ChatColor.GOLD + "Fires web out " + weblength + " blocks infront of the turret. Web turrets must be made out of block id " + webturretblockId + ". The web lasts " + Integer.toString(webtime) + " seconds.");
+						}
 					else
 					{
-						player.sendMessage(ChatColor.RED + "you do not have permission to build flame turrets.");
+						player.sendMessage(ChatColor.RED + "you do not have permission to build web turrets.");
 					}
-				}
-				if(args[0].equalsIgnoreCase("webturret")){
-					if(player.hasPermission( "fortification.turret.web") || player.hasPermission( "fortification.*") || player.hasPermission( "fortification.turret.*"))
+					}
+					
+					if(args[0].equalsIgnoreCase("sensor")) 
 					{
-				        		player.sendMessage(ChatColor.GOLD + "Fires web out " + weblength + " blocks infront of the turret. Web turrets must be made out of block id " + webturretblockId + ". The web lasts " + Integer.toString(webtime) + " seconds.");
-					}
-				else
-				{
-					player.sendMessage(ChatColor.RED + "you do not have permission to build web turrets.");
-				}
-				}
-				
-				if(args[0].equalsIgnoreCase("sensor")) {
-					if(player.hasPermission( "fortification.sensor") || player.hasPermission( "fortification.*")){
-					        	if(args.length > 1){
-					        	if(args[1].equalsIgnoreCase("playerdetect")){
+						if(player.hasPermission( "fortification.sensor") || player.hasPermission( "fortification.*"))
+						{
+				        	if(args.length > 1)
+				        	{
+					        	if(args[1].equalsIgnoreCase("playerdetect"))
+					        	{
 					        		player.sendMessage(ChatColor.GOLD + "Triggers only if a player listed on line 3 or line 4 is detected.");
 					        	}
-					        	else if(args[1].equalsIgnoreCase("playerignore")){
+					        	else if(args[1].equalsIgnoreCase("playerignore"))
+					        	{
 					        		player.sendMessage(ChatColor.GOLD + "Triggers only if the detected player is not listed on line 3 or line 4.");
 					        	}
-					        	else if(args[1].equalsIgnoreCase("factiondetect")){
+					        	else if(args[1].equalsIgnoreCase("factiondetect"))
+					        	{
 					        		player.sendMessage(ChatColor.GOLD + "Triggers only if a player that is in a faction listed on lines 3 or 4 is detected.");
 					        	}
-					        	else if(args[1].equalsIgnoreCase("factionignore")){
+					        	else if(args[1].equalsIgnoreCase("factionignore"))
+					        	{
 					        		player.sendMessage(ChatColor.GOLD + "Triggers only if the detected player is not in a faction listed on lines 3 or 4.");
 					        	}
-					        	else if(args[1].equalsIgnoreCase("default")){
+					        	else if(args[1].equalsIgnoreCase("default"))
+					        	{
 					        		player.sendMessage(ChatColor.GOLD + "Triggers any time a player is detected within " + sensorlength + " blocks in the direction the sensor is facing.");
 					        	}
-					        	else if(args[1].equalsIgnoreCase("itemdetect")){
+					        	else if(args[1].equalsIgnoreCase("itemdetect"))
+					        	{
 					        		player.sendMessage(ChatColor.GOLD + "Triggers only if the detected player is carrying an item of one of the ids specified on line 3 or 4.");
 					        	}
-					        	else if(args[1].equalsIgnoreCase("itemignore")){
+					        	else if(args[1].equalsIgnoreCase("itemignore"))
+					        	{
 					        		player.sendMessage(ChatColor.GOLD + "Triggers only if the detected player is not carrying an item of one of the ids specified on line 3 or 4.");
 					        	}
-					        	else if(args[1].equalsIgnoreCase("weapondetect")){
+					        	else if(args[1].equalsIgnoreCase("weapondetect"))
+					        	{
 					        		player.sendMessage(ChatColor.GOLD + "Triggers only if the detected player is carrying a weapon: sword or bow.");
 					        	}
-					        	else if(args[1].equalsIgnoreCase("weapondetect")){
+					        	else if(args[1].equalsIgnoreCase("weapondetect"))
+					        	{
 					        		player.sendMessage(ChatColor.GOLD + "Triggers only if the detected player is not carrying a weapon: sword or bow.");
 					        	}
-					        	else if(args[1].equalsIgnoreCase("areaalert")){
+					        	else if(args[1].equalsIgnoreCase("areaalert"))
+					        	{
 					        		player.sendMessage(ChatColor.GOLD + "Sends out local message " + sensorBroadcastDist + " blocks distance from the sensor. Triggers on detecting any player except the two listed on lines 3 and 4.");
 					        	}
-					        	else if(args[1].equalsIgnoreCase("factionalert")){
+					        	else if(args[1].equalsIgnoreCase("factionalert"))
+					        	{
 					        		player.sendMessage(ChatColor.GOLD + "Sends a message to all members of the factions listed on lines 3 and 4. Triggers on detecting any player except those in the factions listed.");
 					        	}
-					        	else if(args[1].equalsIgnoreCase("tooldetect")){
+					        	else if(args[1].equalsIgnoreCase("tooldetect") || args[1].equalsIgnoreCase("tool"))
+					        	{
 					        		player.sendMessage(ChatColor.GOLD + "Triggers only if the detected player is carrying a tool: pick, shovel, axe, or shears.");
 					        	}
-					        	else if(args[1].equalsIgnoreCase("toolignore")){
+					        	else if(args[1].equalsIgnoreCase("toolignore"))
+					        	{
 					        		player.sendMessage(ChatColor.GOLD + "Triggers only if the detected player is not carrying a tool: pick, shovel, axe, or shears.");
 					        	}
-					        	else {
+					        	else if(args[1].equalsIgnoreCase("armor") || args[1].equalsIgnoreCase("armordetect"))
+					        	{
+					        		player.sendMessage(ChatColor.GOLD + "Triggers only if the detected player is carrying armor: helmet, chestplate, legs.");
+					        	}
+					        	else if(args[1].equalsIgnoreCase("armorignore"))
+					        	{
+					        		player.sendMessage(ChatColor.GOLD + "Triggers only if the detected player is on fire.");
+					        	}
+					        	else if(args[1].equalsIgnoreCase("fire") || args[1].equalsIgnoreCase("firedetect"))
+					        	{
+					        		player.sendMessage(ChatColor.GOLD + "Triggers only if the detected player is on fire.");
+					        	}
+					        	else if(args[1].equalsIgnoreCase("fireignore"))
+					        	{
+					        		player.sendMessage(ChatColor.GOLD + "Triggers only if the detected player is not on fire");
+					        	}
+					        	else if(args[1].equalsIgnoreCase("foodrange"))
+					        	{
+					        		player.sendMessage(ChatColor.GOLD + "Triggers only if the detected player's food bar falls within the specified range. Line 3 = Min Food, Line 4 = Max Food.");
+					        	}
+					        	else if(args[1].equalsIgnoreCase("sprint") || args[1].equalsIgnoreCase("sprintdetect"))
+					        	{
+					        		player.sendMessage(ChatColor.GOLD + "Triggers only if the detected player is sprinting.");
+					        	}
+					        	else if(args[1].equalsIgnoreCase("sprintignore"))
+					        	{
+					        		player.sendMessage(ChatColor.GOLD + "Triggers only if the detected player is not sprinting.");
+					        	}
+					        	else if(args[1].equalsIgnoreCase("sneak") || args[1].equalsIgnoreCase("sneakdetect"))
+					        	{
+					        		player.sendMessage(ChatColor.GOLD + "Triggers only if the detected player is sneaking.");
+					        	}
+					        	else if(args[1].equalsIgnoreCase("sneakignore"))
+					        	{
+					        		player.sendMessage(ChatColor.GOLD + "Triggers only if the detected player is not sneaking.");
+					        	}
+					        	else if(args[1].equalsIgnoreCase("permission") || args[1].equalsIgnoreCase("permdetect"))
+					        	{
+					        		player.sendMessage(ChatColor.GOLD + "Triggers only if the detected player has either of the permission nodes on lines 3 and 4 of the sign.");
+					        	}
+					        	else if(args[1].equalsIgnoreCase("permignore"))
+					        	{
+					        		player.sendMessage(ChatColor.GOLD + "Triggers only if the detected player does not have either of the permission nodes on lines 3 and 4 of the sign.");
+					        	}
+					        	else 
+					        	{
 					        		player.sendMessage(ChatColor.RED + "Invalid sensor type, type /fort sensor for a list of sensor types.");
 					        	}
-					        	}
-					        	else{
-					        	
-					          player.sendMessage(ChatColor.GOLD + "Sensor Types: playerdetect, playerignore, factiondetect, factionignore, itemdetect, itemignore, weapondetect, weaponignore, tooldetect, toolignore, areaalert, factionalert, default.");
-					          player.sendMessage(ChatColor.GOLD + "To learn more about a specific sensor type /fort sensor [type]");
-					          player.sendMessage(ChatColor.GOLD + "Sensors can detect players up to " + sensorlength + " blocks infront of them and 1 block above or below the level of the sensor.");
-					        	}
-					}
-					        else {
-					          player.sendMessage(ChatColor.RED + "You do not have permission to build sensors.");
-					        }
-	            		}
+				        	}
+				        	else
+				        	{
+				        		player.sendMessage(ChatColor.GOLD + "Sensor Types:" + ChatColor.WHITE + " player, playerdetect, playerignore, faction, factiondetect, factionignore, item, itemdetect, itemignore, weapon, weapondetect, weaponignore, tool, tooldetect, toolignore, armor, armordetect, armorignore, fire, firedetect, fireignore, sneak, sneakdetect, sneakignore, sprint, sprintdetect, sprintignore, permission, permdetect, permignore, areaalert, factionalert, default.");
+				            	player.sendMessage(ChatColor.GOLD + "To learn more about a specific sensor type /fort sensor [type]");
+				            	player.sendMessage(ChatColor.GOLD + "Sensors can detect players up to " + sensorlength + " blocks infront of them and 1 block above or below the level of the sensor.");
+				        	}
+						}
+				        else 
+				        {
+				          player.sendMessage(ChatColor.RED + "You do not have permission to build sensors.");
+				        }
+	        		}
 				}
+        		if(args.length > 0)
+        		{
             		if(args[0].equalsIgnoreCase("radio") && args.length > 1)
             		{
             			for(int i = 0; i < getReceiverList().size(); i++)
@@ -1062,6 +1296,7 @@ public class Fortification extends JavaPlugin
             				}
             			}
             		}
+            	}
             }
             	return true;
             }

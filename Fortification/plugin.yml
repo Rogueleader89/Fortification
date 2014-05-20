@@ -1,0 +1,8 @@
+name: Fortification
+version: 1.0
+main: bukkitdev.Rogueleader89.fortification.Fortification
+softdepend: [Factions, Towny, Vault, Spout]
+commands:
+  fort:
+    description: Displays fortification plugin commands.
+    usage: /<command> [topic].
