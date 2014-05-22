@@ -59,6 +59,9 @@ public class Fortification extends JavaPlugin
 	private boolean factionsEnabled = false;
 	private boolean permissionsEnabled = true;
 	private boolean msgOnlyBuilder;
+	
+	private int shieldRadius = 10;
+	private Material[] shieldMaterials = { Material.GLASS, Material.STAINED_GLASS };
 //	private File f = new File(getDataFolder().getPath() + "/config.yml");
 
 	private FileConfiguration config;
@@ -99,6 +102,7 @@ public class Fortification extends JavaPlugin
     
     private List<Receiver> recList = new ArrayList<Receiver>();
     private List<Telepad> padList = new ArrayList<Telepad>();
+    private List<Shield> shieldList = new ArrayList<Shield>();
 	
     public void saveproperties()
 	{
@@ -538,7 +542,8 @@ public class Fortification extends JavaPlugin
             	{
             		if(args.length > 0)
             		{
-	            		if(args[0].equalsIgnoreCase("reload")){
+	            		if(args[0].equalsIgnoreCase("reload"))
+	            		{
 	            			reloadConfig();
 	            			loadproperties();
 	            			factionSetup();
@@ -1651,5 +1656,29 @@ public class Fortification extends JavaPlugin
 
 	public List<Telepad> getPadList() {
 		return padList;
+	}
+
+	public int getShieldRadius() {
+		return shieldRadius;
+	}
+
+	public void setShieldRadius(int shieldRadius) {
+		this.shieldRadius = shieldRadius;
+	}
+
+	public Material[] getShieldMaterials() {
+		return shieldMaterials;
+	}
+
+	public void setShieldMaterials(Material[] shieldMaterials) {
+		this.shieldMaterials = shieldMaterials;
+	}
+
+	public List<Shield> getShieldList() {
+		return shieldList;
+	}
+
+	public void setShieldList(List<Shield> shieldList) {
+		this.shieldList = shieldList;
 	}
 }

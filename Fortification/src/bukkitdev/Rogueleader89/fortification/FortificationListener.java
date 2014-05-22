@@ -5,6 +5,7 @@ import java.util.logging.Logger;
 import org.bukkit.event.block.BlockPhysicsEvent;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
+import org.bukkit.block.Chest;
 import org.bukkit.block.Sign;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -12,6 +13,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockRedstoneEvent;
 import org.bukkit.event.block.SignChangeEvent;
+import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.util.Vector;
@@ -19,6 +21,8 @@ import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
+
+
 
 
 
@@ -185,8 +189,120 @@ public class FortificationListener implements Listener
 	//	}
 		
 		@EventHandler
+		public void onEntityExplode(EntityExplodeEvent e)
+		{
+			List<Block> destroyedBlocks = e.blockList();
+			for(int j = 0; j < e.blockList().size(); j++)
+			{
+				Location l = destroyedBlocks.get(j).getLocation();
+				for(int i = 0; i < fort.getShieldMaterials().length; i++)
+				{
+					if(destroyedBlocks.get(j).getType().equals(fort.getShieldMaterials()[i]))
+					{
+						//check if the block is a part of a shield...
+						for(int k = 0; k < fort.getShieldList().size(); k++)
+						{
+							int radius = fort.getShieldList().get(k).getRadius();
+							//if((x - i1) * (x - i1) + (y - cy) * (y - cy) + (z - k) * (z - k) <= rSquared 
+							//&& (x - i1) * (x - i1) + (y - cy) * (y - cy) + (z - k) * (z - k) > (radius-1) * (radius-1)) 
+							double dist = l.distance(fort.getShieldList().get(k).getPos());
+							if(dist <= radius && dist > radius-1)
+							{
+								if(fort.getShieldList().get(k).isPowered() && fort.getShieldList().get(k).getMat().equals(destroyedBlocks.get(j).getType()))
+								{
+									if(fort.getShieldList().get(k).getChest().getInventory().contains(destroyedBlocks.get(j).getType()))
+	                    			{
+										fort.getShieldList().get(k).getChest().getInventory().removeItem(new ItemStack(destroyedBlocks.get(j).getType(), 1));
+										fort.getShieldList().get(k).getChest().update(true);
+										e.setCancelled(true);
+										return;
+	                    			}
+								}
+							}
+						}
+					//	if(fort.getShieldList().get(i))
+					}
+				}
+				
+				for(int k = 0; k < fort.getShieldList().size(); k++)
+				{
+					int radius = fort.getShieldList().get(k).getRadius();
+					//if((x - i1) * (x - i1) + (y - cy) * (y - cy) + (z - k) * (z - k) <= rSquared 
+					//&& (x - i1) * (x - i1) + (y - cy) * (y - cy) + (z - k) * (z - k) > (radius-1) * (radius-1)) 
+					double dist = l.distance(fort.getShieldList().get(k).getPos());
+					if(dist <= radius && dist > radius-1)
+					{
+						if(fort.getShieldList().get(k).isPowered())
+						{
+							if(fort.getShieldList().get(k).getChest().getInventory().contains(fort.getShieldList().get(k).getMat()))
+	            			{
+								fort.getShieldList().get(k).getChest().getInventory().removeItem(new ItemStack(fort.getShieldList().get(k).getMat(), 1));
+								fort.getShieldList().get(k).getChest().update(true);
+								e.setCancelled(true);
+								l.getBlock().setType(fort.getShieldList().get(k).getMat());
+								return;
+	            			}
+						}
+					}
+				}
+			}
+		}
+		
+		@EventHandler
 		public void onBlockBreak(BlockBreakEvent e)
 		{
+			Location l = e.getBlock().getLocation();
+			for(int i = 0; i < fort.getShieldMaterials().length; i++)
+			{
+				if(e.getBlock().getType().equals(fort.getShieldMaterials()[i]))
+				{
+					//check if the block is a part of a shield...
+					for(int k = 0; k < fort.getShieldList().size(); k++)
+					{
+						int radius = fort.getShieldList().get(k).getRadius();
+						//if((x - i1) * (x - i1) + (y - cy) * (y - cy) + (z - k) * (z - k) <= rSquared 
+						//&& (x - i1) * (x - i1) + (y - cy) * (y - cy) + (z - k) * (z - k) > (radius-1) * (radius-1)) 
+						double dist = l.distance(fort.getShieldList().get(k).getPos());
+						if(dist <= radius && dist > radius-1)
+						{
+							if(fort.getShieldList().get(k).isPowered() && fort.getShieldList().get(k).getMat().equals(e.getBlock().getType()))
+							{
+								if(fort.getShieldList().get(k).getChest().getInventory().contains(e.getBlock().getType()))
+                    			{
+									fort.getShieldList().get(k).getChest().getInventory().removeItem(new ItemStack(e.getBlock().getType(), 1));
+									fort.getShieldList().get(k).getChest().update(true);
+									e.setCancelled(true);
+									return;
+                    			}
+							}
+						}
+					}
+				//	if(fort.getShieldList().get(i))
+				}
+			}
+			
+			for(int k = 0; k < fort.getShieldList().size(); k++)
+			{
+				int radius = fort.getShieldList().get(k).getRadius();
+				//if((x - i1) * (x - i1) + (y - cy) * (y - cy) + (z - k) * (z - k) <= rSquared 
+				//&& (x - i1) * (x - i1) + (y - cy) * (y - cy) + (z - k) * (z - k) > (radius-1) * (radius-1)) 
+				double dist = l.distance(fort.getShieldList().get(k).getPos());
+				if(dist <= radius && dist > radius-1)
+				{
+					if(fort.getShieldList().get(k).isPowered())
+					{
+						if(fort.getShieldList().get(k).getChest().getInventory().contains(fort.getShieldList().get(k).getMat()))
+            			{
+							fort.getShieldList().get(k).getChest().getInventory().removeItem(new ItemStack(fort.getShieldList().get(k).getMat(), 1));
+							fort.getShieldList().get(k).getChest().update(true);
+							e.setCancelled(true);
+							l.getBlock().setType(fort.getShieldList().get(k).getMat());
+							return;
+            			}
+					}
+				}
+			}
+			
 			//TODO: Fix error here, telepads aren't being deleted properly, transmitters likely have a similar, less noticable, issue. Also console errors out trying to cast to sign..
 			//if its a sign this is really easy
 			if(e.getBlock().getType().equals(Material.WALL_SIGN) && e.getBlock() instanceof Sign)
@@ -479,7 +595,127 @@ public class FortificationListener implements Listener
 			String l2 = sign.getLine(1);
 			String l3 = sign.getLine(2);
 			String l4 = sign.getLine(3);
-	
+			
+				///////////
+				//Shields//
+				///////////
+				if(l2.equalsIgnoreCase("[shield]") && !l1.equalsIgnoreCase("teleblock") && !l1.equalsIgnoreCase("chest"))
+				{
+					for(int i = 0; i < fort.getShieldMaterials().length; i++)
+					{
+						if(l1.equalsIgnoreCase(fort.getShieldMaterials()[i].toString()))
+						{
+							Material shieldMat = fort.getShieldMaterials()[i];
+							Chest chest = null;
+							switch(b.getBlock().getData())
+							{
+								case 0x2://+z = back, left = +x
+									if(w.getBlockAt(x,y,z+1).getType().equals(Material.CHEST))
+									{
+										chest = (Chest)w.getBlockAt(x,y,z+1).getState();
+									}
+									break;
+								case 0x3://-z = back, left = -x
+									if(w.getBlockAt(x,y,z-1).getType().equals(Material.CHEST))
+									{
+										chest = (Chest)w.getBlockAt(x,y,z-1).getState();
+									}
+									break;
+								case 0x4://+x = back, left = -z
+									if(w.getBlockAt(x+1,y,z).getType().equals(Material.CHEST))
+									{
+										chest = (Chest)w.getBlockAt(x+1,y,z).getState();
+									}
+									break;
+								case 0x5://-x = back, left = +z
+									if(w.getBlockAt(x-1,y,z).getType().equals(Material.CHEST))
+									{
+										chest = (Chest)w.getBlockAt(x-1,y,z).getState();
+									}
+									break;
+							}
+							
+							
+							
+							int radius = fort.getShieldRadius();
+							try
+							{
+								radius = Integer.parseInt(l3);
+							}
+							catch(Exception e)
+							{
+								radius = fort.getShieldRadius();
+							}
+							
+							Shield shield = null;
+							for(int k = 0; k < fort.getShieldList().size(); k++)
+							{
+								if(fort.getShieldList().get(k).getPos().getBlockX() == b.getBlock().getLocation().getBlockX()
+										&& fort.getShieldList().get(k).getPos().getBlockY() == b.getBlock().getLocation().getBlockY()
+										&& fort.getShieldList().get(k).getPos().getBlockZ() == b.getBlock().getLocation().getBlockZ())
+								{
+									shield = fort.getShieldList().get(k);
+								}
+							}
+							if(shield != null)
+							{
+								shield.setPowered(powered);
+							}
+							else
+							{
+								Shield sh = new Shield(shieldMat, b.getBlock().getLocation(), radius, l4, chest);
+								sh.setPowered(true);
+								fort.getShieldList().add(sh);
+							}
+							
+				            int rSquared = radius * radius;
+				            
+				            for (int i1 = x - radius; i1 <= x + radius; i1++) 
+				            {
+				                for (int k = z - radius; k <= z + radius; k++) 
+				                {
+				                	for(int cy = y - radius; cy <= y + radius; cy++)
+				                	{
+					                    if((x - i1) * (x - i1) + (y - cy) * (y - cy) + (z - k) * (z - k) <= rSquared && (x - i1) * (x - i1) + (y - cy) * (y - cy) + (z - k) * (z - k) > (radius-1) * (radius-1)) 
+					                    {
+					                    	if(powered)
+					                    	{
+						                        final Location l = new Location(w, i1, cy, k);
+						                        if(l.getBlock().getType().equals(Material.AIR) || l.getBlock().getType().equals(Material.FIRE) 
+						                        		|| l.getBlock().getType().equals(Material.WATER) || l.getBlock().getType().equals(Material.LAVA))
+						                        {
+						                        	if(chest != null)
+						                        	{
+							                        	if(chest.getInventory().contains(shieldMat))
+					                        			{
+							                        		chest.getInventory().removeItem(new ItemStack(shieldMat, 1));
+							                        		chest.update(true);
+							                        		l.getBlock().setType(shieldMat);
+					                        			}
+						                        	}
+						                        }
+					                    	}
+					                    	else
+					                    	{
+					                    		//not powered, remove and store blocks.
+					                    		final Location l = new Location(w, i1, cy, k);
+						                        if(l.getBlock().getType().equals(shieldMat))
+						                        {
+						                        	if(chest != null)
+						                        	{
+							                        		chest.getInventory().addItem(new ItemStack(shieldMat, 1));
+							                        		chest.update(true);
+							                        		l.getBlock().setType(Material.AIR);
+						                        	}
+						                        }
+					                    	}
+					                    }
+				                	}
+				                }
+				            }//End Sphere generation loops...
+						}
+					}
+				}
 			////////////
 			//Telepads//
 			////////////
@@ -4411,12 +4647,91 @@ public class FortificationListener implements Listener
 					{
 						if(fort.isPermissionsEnabled())
 						{
-							if(!player.hasPermission("fortification.shield.*") && !player.hasPermission("fortification.*") && !player.hasPermission("fortification.shield.teleblock") && !player.hasPermission("fortification.shield.chest"))
+							if(!player.hasPermission("fortification.shield.*") && !player.hasPermission("fortification.*") &&
+									!player.hasPermission("fortification.shield.teleblock") && !player.hasPermission("fortification.shield.chest"))
 							{
 								player.sendMessage(ChatColor.RED + "You do not have permission to build shields.");
 								player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
 								player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 								return;
+							}
+						}
+						if(Material.getMaterial(e.getLine(0)) != null)
+						{
+							Material mat = Material.getMaterial(e.getLine(0));
+							for(int i = 0; i < fort.getShieldMaterials().length; i++)
+							{
+								if(mat.equals(fort.getShieldMaterials()[i]))
+								{
+									if(!player.hasPermission("fortification.shield.*") && !player.hasPermission("fortification.*") && !player.hasPermission("fortification.shield.default"))
+									{
+										player.sendMessage(ChatColor.RED + "You do not have permission to build the default shield type.");
+										player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
+										player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
+										return;
+									}
+									else
+									{
+										//Check if an economic cost is associated with this?
+										
+										//At this point we should check to make sure the radius set doesn't exceed the max, for conveniance of the player...
+										
+										//Save shield into shield list.
+										int shieldRadius = fort.getShieldRadius();
+										try
+										{
+											shieldRadius = Integer.parseInt(e.getLine(2));
+										}
+										catch(Exception ex)
+										{
+											shieldRadius = fort.getShieldRadius();
+										}
+										
+										World w = e.getBlock().getWorld();
+										int x = e.getBlock().getX();
+										int y = e.getBlock().getY();
+										int z = e.getBlock().getZ();
+										Chest chest = null;
+										switch(e.getBlock().getData())
+										{
+											case 0x2://+z = back, left = +x
+												if(w.getBlockAt(x,y,z+1).getType().equals(Material.CHEST))
+												{
+													chest = (Chest)w.getBlockAt(x,y,z+1).getState();
+												}
+												break;
+											case 0x3://-z = back, left = -x
+												if(w.getBlockAt(x,y,z-1).getType().equals(Material.CHEST))
+												{
+													chest = (Chest)w.getBlockAt(x,y,z-1).getState();
+												}
+												break;
+											case 0x4://+x = back, left = -z
+												if(w.getBlockAt(x+1,y,z).getType().equals(Material.CHEST))
+												{
+													chest = (Chest)w.getBlockAt(x+1,y,z).getState();
+												}
+												break;
+											case 0x5://-x = back, left = +z
+												if(w.getBlockAt(x-1,y,z).getType().equals(Material.CHEST))
+												{
+													chest = (Chest)w.getBlockAt(x-1,y,z).getState();
+												}
+												break;
+										}
+										
+										if(chest == null)
+										{
+											player.sendMessage(ChatColor.RED + "This shield must be built out of a sign placed on a chest.");
+											player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
+											player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
+										}
+										else
+										{
+											fort.getShieldList().add(new Shield(mat, e.getBlock().getLocation(), shieldRadius, e.getLine(3), chest));
+										}
+									}
+								}
 							}
 						}
 						if(e.getLine(0).equalsIgnoreCase("teleblock"))
@@ -4722,7 +5037,7 @@ public class FortificationListener implements Listener
 				}
 				}
 				
-					//Sensor
+				//Sensor
 				if(e.getLine(1).contains("[Sensor") || e.getLine(1).contains("[uSensor") || e.getLine(1).contains("[dSensor"))
 				{
 					int detectRange;
@@ -4771,8 +5086,10 @@ public class FortificationListener implements Listener
 						}
 						else
 						{
-							String filter = e.getLine(0);
-							if(!filter.equalsIgnoreCase("playerdetect") && !filter.equalsIgnoreCase("playerignore") && !filter.equalsIgnoreCase("factiondetect")
+						//	String filter = e.getLine(0);
+							//This is the code that use to check the validiy of sensor filters, since we have an api to add filters now 
+							//though this has to be removed or custom filters won't be usable.
+						/*	if(!filter.equalsIgnoreCase("playerdetect") && !filter.equalsIgnoreCase("playerignore") && !filter.equalsIgnoreCase("factiondetect")
 									&& !filter.equalsIgnoreCase("groupdetect") && !filter.equalsIgnoreCase("factionignore") && !filter.equalsIgnoreCase("groupignore")
 									&& !filter.equalsIgnoreCase("default") && !filter.equalsIgnoreCase("") && !filter.equalsIgnoreCase(" ") && !(filter == null)
 									&& !filter.equalsIgnoreCase("weapondetect") && !filter.equalsIgnoreCase("weaponignore") && !filter.equalsIgnoreCase("itemdetect")
@@ -4796,9 +5113,7 @@ public class FortificationListener implements Listener
 								player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
 								player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
 								return;
-							}
-							else
-							{
+							}*/
 								if(fort.isEcon())
 								{
 									if(e.getPlayer() != null)
@@ -4876,199 +5191,211 @@ public class FortificationListener implements Listener
 								}
 								if(e.getLine(0).equalsIgnoreCase("nationalert"))
 								{
-									if(fort.isMsgOnlyBuilder()){
-									if(fort.isTownyEnabled()){
-										Nation t = null;
-										try {
-											t = TownyUniverse.getDataSource().getResident(e.getPlayer().getName()).getTown().getNation();
-										} catch (Exception e2) {
-											e2.printStackTrace();
-										}
-										if(e.getLine(2).equalsIgnoreCase("") || e.getLine(2) == null){
-											
-										}
-										else{
+									if(fort.isMsgOnlyBuilder())
+									{
+										if(fort.isTownyEnabled())
+										{
+											Nation t = null;
 											try {
-												if(TownyUniverse.getDataSource().getNation(e.getLine(2)) != null)
-												{
-													if(t.equals(TownyUniverse.getDataSource().getNation(e.getLine(2)))){
-														//same nation, this is fine
-													}
-													else{
-															boolean temp = false;
-															for(int i = 0; i < TownyUniverse.getDataSource().getTown(e.getLine(2)).getNation().getAllies().size(); i++)
-															{
-																if(TownyUniverse.getDataSource().getTown(e.getLine(2)).getNation().getAllies().get(i).getName().equalsIgnoreCase(t.getName()))
-																{
-																	//allied nation, this is fine
-																	temp = true;
-																	break;
-																}
-															}
-															if(!temp){
-																player.sendMessage(ChatColor.RED + "One of the nations you listed is either neutral or an enemy to your own.");
-																player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
-																player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
-																return;
-															}
-													}
-												}
-											} catch (Exception e1) {
-												e1.printStackTrace();
+												t = TownyUniverse.getDataSource().getResident(e.getPlayer().getName()).getTown().getNation();
+											} catch (Exception e2) {
+												e2.printStackTrace();
 											}
-										}
-										if(e.getLine(3).equalsIgnoreCase("") || e.getLine(3) == null)
-										{
-										
-										}
-										else
-										{
-											try 
+											if(e.getLine(2).equalsIgnoreCase("") || e.getLine(2) == null)
 											{
-												if(TownyUniverse.getDataSource().getTown(e.getLine(3)) != null)
-												{
-													if(t.equals(TownyUniverse.getDataSource().getTown(e.getLine(3))))
+												
+											}
+											else
+											{
+												try {
+													if(TownyUniverse.getDataSource().getNation(e.getLine(2)) != null)
 													{
-														//same nation, this is fine
-													}
-													else
-													{
-															boolean temp2 = false;
-															for(int i = 0; i < TownyUniverse.getDataSource().getTown(e.getLine(3)).getNation().getAllies().size(); i++)
-															{
-																if(TownyUniverse.getDataSource().getTown(e.getLine(3)).getNation().getAllies().get(i).getName().equalsIgnoreCase(t.getName()))
+														if(t.equals(TownyUniverse.getDataSource().getNation(e.getLine(2)))){
+															//same nation, this is fine
+														}
+														else{
+																boolean temp = false;
+																for(int i = 0; i < TownyUniverse.getDataSource().getTown(e.getLine(2)).getNation().getAllies().size(); i++)
 																{
-																	//nation is allied, this is fine
-																	temp2 = true;
-																	break;
+																	if(TownyUniverse.getDataSource().getTown(e.getLine(2)).getNation().getAllies().get(i).getName().equalsIgnoreCase(t.getName()))
+																	{
+																		//allied nation, this is fine
+																		temp = true;
+																		break;
+																	}
 																}
-															}
-															if(!temp2)
-															{
-																player.sendMessage(ChatColor.RED + "One of the nations you listed is either neutral or an enemy to your own.");
-																player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
-																player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
-																return;
-															}
+																if(!temp){
+																	player.sendMessage(ChatColor.RED + "One of the nations you listed is either neutral or an enemy to your own.");
+																	player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
+																	player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
+																	return;
+																}
+														}
 													}
+												} 
+												catch (Exception e1) 
+												{
+													e1.printStackTrace();
 												}
-											} catch (Exception e1) {
-												e1.printStackTrace();
+											}
+											if(e.getLine(3).equalsIgnoreCase("") || e.getLine(3) == null)
+											{
+											
+											}
+											else
+											{
+												try 
+												{
+													if(TownyUniverse.getDataSource().getTown(e.getLine(3)) != null)
+													{
+														if(t.equals(TownyUniverse.getDataSource().getTown(e.getLine(3))))
+														{
+															//same nation, this is fine
+														}
+														else
+														{
+																boolean temp2 = false;
+																for(int i = 0; i < TownyUniverse.getDataSource().getTown(e.getLine(3)).getNation().getAllies().size(); i++)
+																{
+																	if(TownyUniverse.getDataSource().getTown(e.getLine(3)).getNation().getAllies().get(i).getName().equalsIgnoreCase(t.getName()))
+																	{
+																		//nation is allied, this is fine
+																		temp2 = true;
+																		break;
+																	}
+																}
+																if(!temp2)
+																{
+																	player.sendMessage(ChatColor.RED + "One of the nations you listed is either neutral or an enemy to your own.");
+																	player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
+																	player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
+																	return;
+																}
+														}
+													}
+												} 
+												catch (Exception e1) 
+												{
+													e1.printStackTrace();
+												}
 											}
 										}
-									}
 									}
 								}
 								if(e.getLine(0).equalsIgnoreCase("townalert"))
 								{
 									if(fort.isMsgOnlyBuilder())
 									{
-									if(fort.isTownyEnabled())
-									{
-										Towny town = (Towny)towny;
-										if(town == null)
+										if(fort.isTownyEnabled())
 										{
-											return;
-										}
-										Town t = null;
-										try 
-										{
-											t = TownyUniverse.getDataSource().getResident(e.getPlayer().getName()).getTown();
-										} catch (Exception e2) {
-											e2.printStackTrace();
-										}
-										if(e.getLine(2).equalsIgnoreCase("") || e.getLine(2) == null)
-										{
+											Towny town = (Towny)towny;
+											if(town == null)
+											{
+												return;
+											}
+											Town t = null;
+											try 
+											{
+												t = TownyUniverse.getDataSource().getResident(e.getPlayer().getName()).getTown();
+											} catch (Exception e2) {
+												e2.printStackTrace();
+											}
+											if(e.getLine(2).equalsIgnoreCase("") || e.getLine(2) == null)
+											{
+												
+											}
+											else
+											{
+												try 
+												{
+													if(TownyUniverse.getDataSource().getTown(e.getLine(2)) != null)
+													{
+														if(t.equals(TownyUniverse.getDataSource().getTown(e.getLine(2))))
+														{
+															//then this is fine
+														}
+														else{
+															if(TownyUniverse.getDataSource().getTown(e.getLine(2)).getNation().equals(t.getNation()))
+															{
+																//town is in the same nation, this is fine
+															}
+															else
+															{
+																boolean temp = false;
+																for(int i = 0; i < TownyUniverse.getDataSource().getTown(e.getLine(2)).getNation().getAllies().size(); i++)
+																{
+																	if(TownyUniverse.getDataSource().getTown(e.getLine(2)).getNation().getAllies().get(i).getName().equalsIgnoreCase(t.getNation().getName()))
+																	{
+																		//town is in an allied nation, this is fine
+																		temp = true;
+																		break;
+																	}
+																}
+																if(!temp)
+																{
+																	player.sendMessage(ChatColor.RED + "One of the towns you listed is not within the same nation as you or a nation allied to yours.");
+																	player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
+																	player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
+																	return;
+																}
+															}
+														}
+													}
+												} 
+												catch (Exception e1) 
+												{
+													e1.printStackTrace();
+												}
+											}
+											if(e.getLine(3).equalsIgnoreCase("") || e.getLine(3) == null)
+											{
 											
-										}
-										else
-										{
-											try 
+											}
+											else
 											{
-												if(TownyUniverse.getDataSource().getTown(e.getLine(2)) != null)
+												try 
 												{
-													if(t.equals(TownyUniverse.getDataSource().getTown(e.getLine(2))))
+													if(TownyUniverse.getDataSource().getTown(e.getLine(3)) != null)
 													{
-														//then this is fine
-													}
-													else{
-														if(TownyUniverse.getDataSource().getTown(e.getLine(2)).getNation().equals(t.getNation()))
+														if(t.equals(TownyUniverse.getDataSource().getTown(e.getLine(3))))
 														{
-															//town is in the same nation, this is fine
+															//then this is fine
 														}
 														else
 														{
-															boolean temp = false;
-															for(int i = 0; i < TownyUniverse.getDataSource().getTown(e.getLine(2)).getNation().getAllies().size(); i++)
+															if(TownyUniverse.getDataSource().getTown(e.getLine(3)).getNation().equals(t.getNation()))
 															{
-																if(TownyUniverse.getDataSource().getTown(e.getLine(2)).getNation().getAllies().get(i).getName().equalsIgnoreCase(t.getNation().getName()))
-																{
-																	//town is in an allied nation, this is fine
-																	temp = true;
-																	break;
-																}
+																//town is in the same nation, this is fine
 															}
-															if(!temp)
+															else
 															{
-																player.sendMessage(ChatColor.RED + "One of the towns you listed is not within the same nation as you or a nation allied to yours.");
-																player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
-																player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
-																return;
+																boolean temp2 = false;
+																for(int i = 0; i < TownyUniverse.getDataSource().getTown(e.getLine(3)).getNation().getAllies().size(); i++)
+																{
+																	if(TownyUniverse.getDataSource().getTown(e.getLine(3)).getNation().getAllies().get(i).getName().equalsIgnoreCase(t.getNation().getName()))
+																	{
+																		//town is in an allied nation, this is fine
+																		temp2 = true;
+																		break;
+																	}
+																}
+																if(!temp2)
+																{
+																	player.sendMessage(ChatColor.RED + "One of the towns you listed is not within the same nation as you or a nation allied to yours.");
+																	player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
+																	player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
+																	return;
+																}
 															}
 														}
 													}
-												}
-											} catch (Exception e1) {
-												e1.printStackTrace();
-											}
-										}
-										if(e.getLine(3).equalsIgnoreCase("") || e.getLine(3) == null)
-										{
-										
-										}
-										else
-										{
-											try 
-											{
-												if(TownyUniverse.getDataSource().getTown(e.getLine(3)) != null)
+												} 
+												catch (Exception e1) 
 												{
-													if(t.equals(TownyUniverse.getDataSource().getTown(e.getLine(3))))
-													{
-														//then this is fine
-													}
-													else
-													{
-														if(TownyUniverse.getDataSource().getTown(e.getLine(3)).getNation().equals(t.getNation()))
-														{
-															//town is in the same nation, this is fine
-														}
-														else
-														{
-															boolean temp2 = false;
-															for(int i = 0; i < TownyUniverse.getDataSource().getTown(e.getLine(3)).getNation().getAllies().size(); i++)
-															{
-																if(TownyUniverse.getDataSource().getTown(e.getLine(3)).getNation().getAllies().get(i).getName().equalsIgnoreCase(t.getNation().getName()))
-																{
-																	//town is in an allied nation, this is fine
-																	temp2 = true;
-																	break;
-																}
-															}
-															if(!temp2)
-															{
-																player.sendMessage(ChatColor.RED + "One of the towns you listed is not within the same nation as you or a nation allied to yours.");
-																player.getWorld().getBlockAt(e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()).setType(Material.AIR);
-																player.getWorld().dropItem(new Location(player.getWorld(),e.getBlock().getX(), e.getBlock().getY(), e.getBlock().getZ()), si);
-																return;
-															}
-														}
-													}
+													e1.printStackTrace();
 												}
-											} catch (Exception e1) {
-												e1.printStackTrace();
 											}
 										}
-									}
 									}
 								}
 					//			if(e.getLine(0).equalsIgnoreCase("itemdetect") || e.getLine(0).equalsIgnoreCase("itemignore"))
@@ -5092,7 +5419,6 @@ public class FortificationListener implements Listener
 					//					return;
 					//				}
 					//			}
-							}
 						}
 					}
 			//Trap door

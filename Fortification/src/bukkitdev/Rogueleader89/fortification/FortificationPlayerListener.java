@@ -1172,9 +1172,12 @@ public class FortificationPlayerListener implements Listener
 		//Nobody matching sensor requirements found
 		else
 		{
-			return false;
+			//Check to see if any plugins are hooked into the api, see if anything matches their custom sensor filters
+			SensorEvent event = new SensorEvent(l1, p, l3, l4);
+			fort.getServer().getPluginManager().callEvent(event);
+			return event.isTriggered();
 		}
-		//return false if something odd happens
+		//return false if something odd happens, this should never trigger
 		return false;
 	}
 	

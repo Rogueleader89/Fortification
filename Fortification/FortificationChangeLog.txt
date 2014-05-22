@@ -41,6 +41,9 @@ armor, tool, weapon, item, player, town, nation, faction, enemy, ally
 Receivers
  * Receiver existance is now verified for each receiver on server startup
  
+ API
+ *Added basic API so that people can implement their own sensor filters/effects.
+ 
  Caveats/Known Issues:
  Telepads and Receivers don't perfectly detect all cases in which a sign may be removed, this leads to receiving bands for both telepads and receivers to remain reserved even after the receiver/telepad no longer exists. /fort verifydata command added to allow server admins to manually fix this if not having an exact name becomes a serious issue, plugin will also fix it each time it restarts.
  Player teleportation between telepads that are not facing the same way has a 1 block margin of error, may lead to the player taking slight damage from spawning in a block
